@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 clap = "~2.33"
 regex = "~1.4"
+walkdir = "2"
