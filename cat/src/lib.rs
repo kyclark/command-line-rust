@@ -3,6 +3,7 @@ extern crate clap;
 use clap::{App, Arg};
 use std::error::Error;
 use std::fs::File;
+use std::io;
 use std::io::prelude::*;
 use std::io::BufReader;
 
@@ -45,9 +46,13 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
+    // Cf https://stackoverflow.com/questions/36088116/
+    // how-to-do-polymorphic-io-from-either-a-file-or-stdin-in-rust/49964042
     for filename in &config.files {
-        let file = File::open(filename)?;
-        let file = BufReader::new(file);
+        let file: Box<dyn BufRead> = match filename == "-" {
+            true => Box::new(BufReader::new(io::stdin())),
+            _ => Box::new(BufReader::new(File::open(filename).unwrap())),
+        };
 
         for (i, line) in file.lines().enumerate() {
             let line = line?;
