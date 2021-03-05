@@ -5,13 +5,14 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::str::FromStr;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
     files: Vec<String>,
-    lines: Option<usize>,
+    lines: usize,
     bytes: Option<u64>,
 }
 
@@ -43,19 +44,31 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let lines = matches
-        .value_of("lines")
-        .and_then(|s| s.trim().parse::<usize>().ok());
+    let lines: usize = parse_int(matches.value_of("lines").unwrap())?;
+    let bytes: Option<Result<u64, _>> =
+        matches.value_of("bytes").and_then(|b| Some(parse_int(b)));
 
-    let bytes = matches
-        .value_of("bytes")
-        .and_then(|s| s.trim().parse::<u64>().ok());
+    if let Some(Err(e)) = bytes {
+        return Err(e);
+    }
+
+    let bytes = match bytes {
+        Some(Ok(b)) => Some(b),
+        _ => None,
+    };
 
     Ok(Config {
         lines: lines,
         bytes: bytes,
         files: matches.values_of_lossy("file").unwrap(),
     })
+}
+
+// --------------------------------------------------
+fn parse_int<T: FromStr>(val: &str) -> MyResult<T> {
+    val.trim()
+        .parse::<T>()
+        .or(Err(From::from(format!("\"{}\" is not an integer", val))))
 }
 
 // --------------------------------------------------
@@ -76,8 +89,8 @@ pub fn run(config: Config) -> MyResult<()> {
                     let mut buffer = String::new();
                     handle.read_to_string(&mut buffer)?;
                     println!("{}", buffer);
-                } else if let Some(num_lines) = config.lines {
-                    for line in file.lines().take(num_lines) {
+                } else {
+                    for line in file.lines().take(config.lines) {
                         println!("{}", line?.trim());
                     }
                 }

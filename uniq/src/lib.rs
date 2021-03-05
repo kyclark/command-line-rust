@@ -4,7 +4,7 @@ use clap::{App, Arg};
 //use itertools::Itertools;
 //use std::collections::HashMap;
 use std::error::Error;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -38,15 +38,22 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
+    let file = matches.value_of("file").and_then(|v| Some(v.to_string()));
+
+    if let Some(filename) = &file {
+        if let Some(error) = File::open(filename).err() {
+            return Err(From::from(format!("{}: {}", filename, error)));
+        }
+    }
+
     Ok(Config {
-        file: matches.value_of("file").and_then(|v| Some(v.to_string())),
+        file: file,
         count: matches.is_present("count"),
     })
 }
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    println!("config {:?}", &config);
     let file: Box<dyn BufRead> = match &config.file {
         None => Box::new(BufReader::new(io::stdin())),
         Some(filename) => {
@@ -54,112 +61,30 @@ pub fn run(config: Config) -> MyResult<()> {
         }
     };
 
-    let lines = fs::read_to_string(&config.file)
-        .expect("file not found!")
-        .lines()
-        .map(|x| x.parse())
-        .collect();
-    println!("{:?}", lines);
+    let print = |line: &String, count: &u64| {
+        if line.len() > 0 && count > &0 {
+            if config.count {
+                println!("{:4} {}", &count, &line);
+            } else {
+                println!("{}", &line);
+            }
+        }
+    };
 
-    //let lines: Vec<&str> = file.lines().map(|e| e.ok()).collect();
-    //let lines = io::BufReader::new(file).lines();
-    //for line in lines {
-    //    let line = line?;
-    //    println!("{}", line);
-    //}
+    let mut last: String = "".to_string();
+    let mut count: u64 = 0;
+    let lines = io::BufReader::new(file).lines();
+    for line in lines {
+        let line = line?;
+        if &line != &last {
+            print(&last, &count);
+            count = 0;
+        }
+        count += 1;
+        last = line;
+    }
+
+    print(&last, &count);
 
     Ok(())
 }
-
-//let mut prev = "".to_string();
-//let mut count = 0;
-//for line in file.lines() {
-//    let line = line?;
-//    let current = line.trim().to_string();
-
-//    if &prev == &current {
-//        //count = count + 1;
-//        count += 1;
-//    } else {
-//        if config.count {
-//            println!("{:5} {}", &count, &current);
-//        } else {
-//            println!("{}", &current);
-//        }
-//        prev = current.to_string();
-//        count = 1;
-//    }
-//}
-
-//for (line1, line2) in file.lines().into_iter().tuples() {
-//    println!("line1 {:?}", line1);
-//    println!("line2 {:?}", line2);
-//}
-
-//let mut prev: String = "".to_string();
-////let mut last: Option<String> = None;
-////let mut curr = "".to_string();
-//let mut count = 0;
-//let mut lines = file.lines();
-//while let Some(line) = &lines.next() {
-//    if let Ok(val) = line {
-//        let val = val.to_string();
-//        let new_group = prev.len() == 0 || prev != val;
-//        //println!("line {:?}", val);
-//        //println!("prev {:?}", prev);
-//        //println!("new  {:?}", new_group);
-//        //println!("--");
-//        if new_group {
-//            let (show, show_count) = if prev.len() == 0 {
-//                (&val, 1)
-//            } else {
-//                (&prev, count)
-//            };
-//            if config.count {
-//                println!("{:5} {}", &show_count, &show);
-//            } else {
-//                println!("{}", &show);
-//            }
-//            prev = val.to_string();
-//            count = 0;
-//        } else {
-//            count += 1;
-//        }
-//    }
-//}
-
-//if config.count {
-//    println!("{:5} {}", &count, &prev);
-//} else {
-//    println!("{}", &prev);
-//}
-
-//let mut prev: Option<String> = None;
-//let mut count = 0;
-//for line in file.lines() {
-//    let line = line?;
-//    let current = Some(line.trim().to_string());
-
-//    println!("prev {:?}", &prev);
-//    println!("curr {:?}", &current);
-
-//    if Some(&prev) == Some(&current) {
-//        count = count + 1;
-//    } else {
-//        if config.count {
-//            println!("{} {:?}", &count, &current);
-//        } else {
-//            println!("{:?}", &current);
-//        }
-//        prev = Some(current.unwrap().to_string());
-//        count = 1;
-//    }
-//}
-
-//let mut seen: HashMap<String, u32> = HashMap::new();
-//for line in file.lines() {
-//    let line = line?;
-//    let count = seen.entry(line.trim().to_string()).or_insert(1);
-//    *count += 1;
-//}
-//println!("seen {:?}", &seen);
