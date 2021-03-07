@@ -2,7 +2,9 @@ extern crate clap;
 extern crate regex;
 
 use clap::{App, Arg};
-use regex::Regex;
+use textwrap;
+//use regex::Regex;
+use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
 use std::io;
@@ -14,7 +16,7 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 #[derive(Debug)]
 pub struct Config {
     file: Option<String>,
-    rotate: u32,
+    rotate: usize,
 }
 
 // --------------------------------------------------
@@ -48,17 +50,24 @@ pub fn get_args() -> MyResult<Config> {
 
     let rotate = matches
         .value_of("rotate")
-        .and_then(|v| v.parse::<u32>().ok());
+        .and_then(|v| v.parse::<usize>().ok())
+        .unwrap_or(13);
+
+    if rotate > 26 || rotate < 1 {
+        return Err(From::from(format!(
+            "--rotate \"{}\" must be between 1 and 26",
+            rotate
+        )));
+    }
 
     Ok(Config {
         file: file,
-        rotate: rotate.unwrap_or(13),
+        rotate: rotate,
     })
 }
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    println!("{:?}", config);
     let file: Box<dyn BufRead> = match &config.file {
         None => Box::new(BufReader::new(io::stdin())),
         Some(filename) => {
@@ -67,16 +76,28 @@ pub fn run(config: Config) -> MyResult<()> {
     };
 
     let lines = io::BufReader::new(file).lines();
+    let mut text: String = "".to_string();
     for line in lines {
         let line = line?;
-        println!("{}", rot(&line, &config.rotate));
+        text += &line;
     }
+
+    let rotated = rot(&text, &config.rotate);
+    let chunks = rotated
+        .chars()
+        .collect::<Vec<char>>()
+        .chunks(5)
+        .map(|c| c.iter().collect::<String>())
+        .collect::<Vec<String>>()
+        .join(" ");
+
+    println!("{}", textwrap::wrap(&chunks, 50).join("\n"));
 
     Ok(())
 }
 
 // --------------------------------------------------
-fn rot(input_text: &str, rotate: &u32) -> String {
+fn rot(input_text: &str, rotate: &usize) -> String {
     let mut text = input_text.to_uppercase();
     let nums = [
         ("1", "ONE"),
@@ -93,8 +114,24 @@ fn rot(input_text: &str, rotate: &u32) -> String {
     for (numeral, number) in &nums {
         text = text.replace(numeral, number);
     }
-    let re = Regex::new(r"[^A-Z]").unwrap();
-    re.replace_all(&text, "").to_string()
+
+    let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let shifted = vec![
+        letters[*rotate..].to_string(),
+        letters[..*rotate].to_string(),
+    ]
+    .join("");
+
+    let mut translate: HashMap<String, String> = HashMap::new();
+    for (c1, c2) in letters.chars().zip(shifted.chars()) {
+        translate.insert(c1.to_string(), c2.to_string());
+    }
+
+    text.chars()
+        .filter_map(|c| translate.get(&c.to_string()))
+        .map(|c| c.to_string())
+        .collect::<Vec<String>>()
+        .join("")
 }
 
 // --------------------------------------------------
