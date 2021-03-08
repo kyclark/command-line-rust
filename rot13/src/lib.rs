@@ -17,6 +17,8 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 pub struct Config {
     file: Option<String>,
     rotate: usize,
+    chunk: usize,
+    width: usize,
 }
 
 // --------------------------------------------------
@@ -37,6 +39,22 @@ pub fn get_args() -> MyResult<Config> {
                 .short("r")
                 .long("rotate")
                 .default_value("13"),
+        )
+        .arg(
+            Arg::with_name("chunk")
+                .value_name("CHUNK")
+                .help("Chunk size")
+                .short("c")
+                .long("chunk")
+                .default_value("5"),
+        )
+        .arg(
+            Arg::with_name("width")
+                .value_name("WIDTH")
+                .help("Text width")
+                .short("w")
+                .long("width")
+                .default_value("70"),
         )
         .get_matches();
 
@@ -60,9 +78,35 @@ pub fn get_args() -> MyResult<Config> {
         )));
     }
 
+    let chunk = matches
+        .value_of("chunk")
+        .and_then(|c| c.parse::<usize>().ok())
+        .unwrap_or(5);
+
+    if chunk < 1 {
+        return Err(From::from(format!(
+            "--chunk \"{}\" must be positive",
+            chunk
+        )));
+    }
+
+    let width = matches
+        .value_of("width")
+        .and_then(|w| w.parse::<usize>().ok())
+        .unwrap_or(70);
+
+    if width < 1 {
+        return Err(From::from(format!(
+            "--width \"{}\" must be positive",
+            width
+        )));
+    }
+
     Ok(Config {
         file: file,
         rotate: rotate,
+        chunk: chunk,
+        width: width,
     })
 }
 
@@ -83,15 +127,9 @@ pub fn run(config: Config) -> MyResult<()> {
     }
 
     let rotated = rot(&text, &config.rotate);
-    let chunks = rotated
-        .chars()
-        .collect::<Vec<char>>()
-        .chunks(5)
-        .map(|c| c.iter().collect::<String>())
-        .collect::<Vec<String>>()
-        .join(" ");
+    let chunks = chunk_text(&rotated, &config.chunk).join(" ");
 
-    println!("{}", textwrap::wrap(&chunks, 50).join("\n"));
+    println!("{}", textwrap::wrap(&chunks, config.width).join("\n"));
 
     Ok(())
 }
@@ -135,8 +173,37 @@ fn rot(input_text: &str, rotate: &usize) -> String {
 }
 
 // --------------------------------------------------
-#[test]
-fn test_rot() {
-    assert_eq!(rot("", &0), "".to_string());
-    assert_eq!(rot("abc123", &0), "ABCONETWOTHREE".to_string());
+fn chunk_text(text: &str, size: &usize) -> Vec<String> {
+    text.chars()
+        .collect::<Vec<char>>()
+        .chunks(*size)
+        .map(|c| c.iter().collect::<String>())
+        .collect::<Vec<String>>()
+}
+
+// --------------------------------------------------
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_rot() {
+        assert_eq!(rot("", &0), "".to_string());
+        assert_eq!(rot("foo bar", &1), "GPPCBS".to_string());
+        assert_eq!(rot("foo bar", &13), "SBBONE".to_string());
+        assert_eq!(rot("123", &1), "POFUXPUISFF".to_string());
+    }
+
+    #[test]
+    fn test_chunk() {
+        assert_eq!(
+            chunk_text("ABCDEFG", &3),
+            vec!["ABC".to_string(), "DEF".to_string(), "G".to_string()]
+        );
+
+        assert_eq!(
+            chunk_text("ABCDEFG", &5),
+            vec!["ABCDE".to_string(), "FG".to_string()]
+        );
+    }
 }
