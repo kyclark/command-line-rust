@@ -11,7 +11,7 @@ fn main() {
     };
 
     if let Err(e) = hangman::run(config) {
-        println!("Error: {}", e);
+        println!("{}", e);
         process::exit(1);
     }
 }

@@ -1,8 +1,8 @@
-extern crate tail;
+extern crate echo;
 use std::process;
 
 fn main() {
-    let config = match tail::get_args() {
+    let config = match echo::get_args() {
         Ok(c) => c,
         Err(e) => {
             println!("{}", e);
@@ -10,7 +10,7 @@ fn main() {
         }
     };
 
-    if let Err(e) = tail::run(config) {
+    if let Err(e) = echo::run(config) {
         println!("Error: {}", e);
         process::exit(1);
     }

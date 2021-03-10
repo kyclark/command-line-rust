@@ -1,10 +1,12 @@
 extern crate clap;
 
 use clap::{App, Arg};
+use std::collections::VecDeque;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::BufReader;
+use std::io::{BufReader, SeekFrom};
+use std::str;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -12,7 +14,7 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 pub struct Config {
     files: Vec<String>,
     lines: Option<usize>,
-    bytes: Option<u64>,
+    bytes: Option<i64>,
 }
 
 // --------------------------------------------------
@@ -49,7 +51,7 @@ pub fn get_args() -> MyResult<Config> {
 
     let bytes = matches
         .value_of("bytes")
-        .and_then(|s| s.trim().parse::<u64>().ok());
+        .and_then(|s| s.trim().parse::<i64>().ok());
 
     Ok(Config {
         lines: lines,
@@ -69,16 +71,16 @@ pub fn run(config: Config) -> MyResult<()> {
 
         match File::open(filename) {
             Ok(file) => {
-                let file = BufReader::new(file);
+                let mut file = BufReader::new(file);
 
                 if let Some(num_bytes) = config.bytes {
-                    let handle = &mut file.take(num_bytes);
-                    let mut buffer = String::new();
-                    handle.read_to_string(&mut buffer)?;
-                    println!("{}", buffer);
+                    file.seek(SeekFrom::End(num_bytes * -1))?;
+                    let mut buffer = Vec::new();
+                    file.read_to_end(&mut buffer)?;
+                    print!("{}", str::from_utf8(&buffer)?);
                 } else if let Some(num_lines) = config.lines {
-                    for line in file.lines().take(num_lines) {
-                        println!("{}", line?.trim());
+                    for line in take_lines(file, num_lines)? {
+                        println!("{}", line);
                     }
                 }
             }
@@ -87,4 +89,36 @@ pub fn run(config: Config) -> MyResult<()> {
     }
 
     Ok(())
+}
+
+// --------------------------------------------------
+fn take_lines<T: BufRead>(file: T, num: usize) -> MyResult<VecDeque<String>> {
+    let mut last: VecDeque<String> = VecDeque::with_capacity(num);
+    for line in file.lines() {
+        let line = line?;
+        last.push_back(line.to_string());
+        if last.len() > num {
+            last.pop_front();
+        }
+    }
+
+    Ok(last)
+}
+
+// --------------------------------------------------
+#[test]
+fn test_take_lines() {
+    let lines1 = io::Cursor::new(b"lorem\nipsum\r\ndolor");
+    let res1 = take_lines(lines1, 1);
+    assert!(res1.is_ok());
+    if let Ok(vec) = res1 {
+        assert_eq!(vec, vec!["dolor"]);
+    }
+
+    let lines2 = io::Cursor::new(b"lorem\nipsum\r\ndolor");
+    let res2 = take_lines(lines2, 2);
+    assert!(res2.is_ok());
+    if let Ok(vec) = res2 {
+        assert_eq!(vec, vec!["ipsum", "dolor"]);
+    }
 }

@@ -1,5 +1,5 @@
 [package]
-name = "hangman"
+name = "echo"
 version = "0.1.0"
 authors = ["Ken Youens-Clark <kyclark@gmail.com>"]
 edition = "2018"
@@ -8,6 +8,3 @@ edition = "2018"
 
 [dependencies]
 clap = "~2.33"
-itertools = "~0.10"
-rand = "~0.8"
-regex = "~1.4"
