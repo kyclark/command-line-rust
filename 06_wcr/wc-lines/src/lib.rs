@@ -140,20 +140,23 @@ pub fn count(filename: &str) -> MyResult<FileInfo> {
     //println!("{}", &contents);
 
     let file = File::open(filename)?;
-    let file = BufReader::new(file);
+    let mut file = BufReader::new(file);
     let mut num_lines = 0;
     let mut num_words = 0;
     let mut num_bytes = 0;
 
-    for line in file.lines() {
-        let line = line?;
+    let mut line = String::new();
+    loop {
+        let line_bytes = file.read_line(&mut line)?;
+        if line_bytes == 0 { break; }
         num_lines += 1;
         num_words += line
             .split_whitespace()
             .into_iter()
             .collect::<Vec<&str>>()
             .len();
-        num_bytes += line.chars().count() + 1;
+        num_bytes += line_bytes;
+        line.clear();
     }
 
     Ok(FileInfo {
