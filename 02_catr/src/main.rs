@@ -4,7 +4,8 @@ use std::process;
 fn main() {
     let config = match catr::get_args() {
         Ok(c) => c,
-        Err(_) => {
+        Err(e) => {
+            eprintln!("{}", e);
             process::exit(1);
         }
     };
