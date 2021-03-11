@@ -83,7 +83,6 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    println!("{:?}", config);
     let mut total_lines = 0;
     let mut total_words = 0;
     let mut total_bytes = 0;
@@ -115,11 +114,6 @@ pub fn run(config: Config) -> MyResult<()> {
         );
     }
 
-    //let info: Vec<MyResult<FileInfo>> =
-    //    config.files.into_iter().map(|f| count(&f)).collect();
-
-    //println!("{:?}", info);
-
     Ok(())
 }
 
@@ -134,11 +128,6 @@ fn format_field(value: &usize, show: &bool) -> String {
 
 // --------------------------------------------------
 pub fn count(filename: &str) -> MyResult<FileInfo> {
-    //let mut file = File::open(filename)?;
-    //let mut contents = String::new();
-    //file.read_to_string(&mut contents)?;
-    //println!("{}", &contents);
-
     let file = File::open(filename)?;
     let file = BufReader::new(file);
     let mut num_lines = 0;
@@ -153,7 +142,7 @@ pub fn count(filename: &str) -> MyResult<FileInfo> {
             .into_iter()
             .collect::<Vec<&str>>()
             .len();
-        num_bytes += line.chars().count() + 1;
+        num_bytes += line.chars().count() + 1; // try to add newline?
     }
 
     Ok(FileInfo {
