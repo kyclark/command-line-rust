@@ -68,7 +68,8 @@ pub fn get_args() -> MyResult<Config> {
 
     let files = matches.values_of_lossy("file").unwrap();
 
-    let bad: Vec<String> = files.iter().cloned().filter(|f| !is_file(f)).collect();
+    let bad: Vec<String> =
+        files.iter().cloned().filter(|f| !is_file(f)).collect();
 
     if !bad.is_empty() {
         let msg = format!(
@@ -166,9 +167,9 @@ fn normalize(val: &String) -> String {
 // --------------------------------------------------
 fn is_file(path: &String) -> bool {
     if let Ok(meta) = fs::metadata(path) {
-        return meta.is_file();
+        meta.is_file()
     } else {
-        return false;
+        false
     }
 }
 
@@ -212,7 +213,8 @@ mod tests {
                     let expected_file = expected_dir.join("test1__sheet1.txt");
                     assert!(expected_file.is_file());
 
-                    let contents = fs::read_to_string(expected_file).ok().unwrap();
+                    let contents =
+                        fs::read_to_string(expected_file).ok().unwrap();
                     let lines: Vec<&str> = contents.split("\n").collect();
                     assert_eq!(lines[0], "name\trank\tserial_number");
                     assert_eq!(lines[1], "Ed\tCaptain\t12345");
@@ -239,12 +241,14 @@ mod tests {
 
             let _res = match run(conf) {
                 Ok(_) => {
-                    let expected_dir = PathBuf::from(tmp_dir.path().join("test_2"));
+                    let expected_dir =
+                        PathBuf::from(tmp_dir.path().join("test_2"));
                     assert!(expected_dir.is_dir());
                     let expected_file = expected_dir.join("test_2__sheet1.csv");
                     assert!(expected_file.is_file());
 
-                    let contents = fs::read_to_string(expected_file).ok().unwrap();
+                    let contents =
+                        fs::read_to_string(expected_file).ok().unwrap();
                     let lines: Vec<&str> = contents.split("\n").collect();
                     assert_eq!(lines[0], "ice_cream_flavor,peoples_rank");
                     assert_eq!(lines[1], "chocolate,1");

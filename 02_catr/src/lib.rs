@@ -2,6 +2,7 @@ extern crate clap;
 
 use clap::{App, Arg};
 use std::error::Error;
+use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
@@ -38,8 +39,26 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
+    let files = matches.values_of_lossy("file").unwrap();
+    for file in &files {
+        if file != "-" {
+            let is_file = if let Ok(meta) = fs::metadata(file) {
+                meta.is_file()
+            } else {
+                false
+            };
+
+            if !is_file {
+                return Err(From::from(format!(
+                    "\"{}\" is not a valid file.",
+                    file
+                )));
+            }
+        }
+    }
+
     Ok(Config {
-        files: matches.values_of_lossy("file").unwrap(),
+        files: files,
         number_lines: matches.is_present("number"),
     })
 }
@@ -57,7 +76,7 @@ pub fn run(config: Config) -> MyResult<()> {
         for (i, line) in file.lines().enumerate() {
             let line = line?;
             if config.number_lines {
-                println!("{:8}: {}", i + 1, &line);
+                println!("{:6}\t{}", i + 1, &line);
             } else {
                 println!("{}", &line);
             }

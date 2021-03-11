@@ -3,9 +3,9 @@ extern crate clap;
 use clap::{App, Arg};
 use std::error::Error;
 use std::fs::File;
-use std::io::prelude::*;
 use std::io::BufReader;
 use std::str;
+use utf8_chars::BufReadCharsExt;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -130,36 +130,34 @@ fn format_field(value: &usize, show: &bool) -> String {
 // --------------------------------------------------
 pub fn count(filename: &str) -> MyResult<FileInfo> {
     let file = File::open(filename)?;
-    let file = BufReader::new(file);
-
+    let mut file = BufReader::new(file);
+    let mut iter = file.chars().into_iter().peekable();
     let mut num_lines = 0;
     let mut num_words = 0;
     let mut num_bytes = 0;
-    let mut iter = file.bytes().into_iter().peekable();
 
-    'outer: loop {
-        let byte = iter.next();
-        if byte.is_none() {
+    loop {
+        let chr = iter.next();
+        if chr.is_none() {
             break;
         }
 
-        let byte = byte.unwrap();
-        let byte = byte?;
-        num_bytes += 1;
+        let chr = chr.unwrap();
+        let chr = chr?;
+        num_bytes += chr.len_utf8();
 
         // Detect whitespace by converting to a string and trimming
-        let v = vec![byte];
-        let c = str::from_utf8(&v).unwrap();
-        if c.trim().is_empty() {
+        let mut s = [0; 2];
+        let res = chr.encode_utf8(&mut s);
+        if res.trim().is_empty() {
             num_words += 1;
         }
 
-        // Detect CR-LF (13-10)
-        if byte == 13 {
-            let next = iter.peek();
-            if let Some(next_byte) = next {
-                if let Ok(c) = next_byte {
-                    if c == &10 {
+        // Detect CR-LF (\r\n)
+        if chr == '\r' {
+            if let Some(next_chr) = iter.peek() {
+                if let Ok(c) = next_chr {
+                    if c == &'\n' {
                         num_lines += 1;
                         num_bytes += 1;
                         let _ = iter.next(); // consume the LF
@@ -167,9 +165,9 @@ pub fn count(filename: &str) -> MyResult<FileInfo> {
                 }
             } else {
                 // Possibly just a CR?
-                break 'outer;
+                break;
             }
-        } else if byte == 10 {
+        } else if chr == '\n' {
             // Just a LF
             num_lines += 1;
         }
