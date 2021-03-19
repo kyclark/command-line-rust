@@ -23,10 +23,10 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("wc")
+    let matches = App::new("piggy")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust wc")
+        .about("Rust piggy")
         .arg(
             Arg::with_name("file")
                 .value_name("FILE")
