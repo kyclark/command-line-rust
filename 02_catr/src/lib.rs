@@ -2,11 +2,10 @@ extern crate clap;
 
 use clap::{App, Arg};
 use std::error::Error;
-use std::fs;
 use std::fs::File;
-use std::io;
 use std::io::prelude::*;
-use std::io::BufReader;
+use std::io::{self, BufReader};
+use std::path::Path;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -42,13 +41,7 @@ pub fn get_args() -> MyResult<Config> {
     let files = matches.values_of_lossy("file").unwrap();
     for file in &files {
         if file != "-" {
-            let is_file = if let Ok(meta) = fs::metadata(file) {
-                meta.is_file()
-            } else {
-                false
-            };
-
-            if !is_file {
+            if !Path::new(&file).exists() {
                 return Err(From::from(format!(
                     "\"{}\" is not a valid file.",
                     file

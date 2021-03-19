@@ -5,95 +5,70 @@ use std::process::Command;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 // --------------------------------------------------
-//#[test]
-//fn bad_file() -> TestResult {
-//    let mut cmd = Command::cargo_bin("catr")?;
-//    cmd.arg("foo").unwrap().unwrap_err();
+#[test]
+fn bad_file() -> TestResult {
+    let mut cmd = Command::cargo_bin("catr")?;
+    cmd.arg("foo")
+        .assert()
+        .failure()
+        .stderr("\"foo\" is not a valid file.\n");
 
-//    Ok(())
-//}
+    Ok(())
+}
+
+// --------------------------------------------------
+fn run(args: &Vec<&str>, expected_file: &str) -> TestResult {
+    let expected = fs::read_to_string(expected_file).ok().unwrap();
+    let mut cmd = Command::cargo_bin("catr")?;
+    cmd.args(args).unwrap().assert().stdout(expected);
+
+    Ok(())
+}
 
 // --------------------------------------------------
 #[test]
 fn foo() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/foo.txt.out").ok().unwrap();
-    let mut cmd = Command::cargo_bin("catr")?;
-    cmd.arg("tests/inputs/foo.txt")
-        .unwrap()
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&vec!["tests/inputs/foo.txt"], "tests/inputs/foo.txt")
 }
 
 // --------------------------------------------------
 #[test]
 fn foo_n() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/foo.txt.n.out")
-        .ok()
-        .unwrap();
-    println!("{}", &expected);
-    let mut cmd = Command::cargo_bin("catr")?;
-    cmd.args(&["-n", "tests/inputs/foo.txt"])
-        .unwrap()
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &vec!["-n", "tests/inputs/foo.txt"],
+        "tests/inputs/foo.txt.n.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn fox() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/fox.txt.out").ok().unwrap();
-    let mut cmd = Command::cargo_bin("catr")?;
-    cmd.arg("tests/inputs/fox.txt")
-        .unwrap()
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&vec!["tests/inputs/fox.txt"], "tests/inputs/fox.txt.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn fox_n() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/fox.txt.n.out")
-        .ok()
-        .unwrap();
-    println!("{}", &expected);
-    let mut cmd = Command::cargo_bin("catr")?;
-    cmd.args(&["-n", "tests/inputs/fox.txt"])
-        .unwrap()
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &vec!["-n", "tests/inputs/fox.txt"],
+        "tests/inputs/fox.txt.n.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn all() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/all.out").ok().unwrap();
-    let mut cmd = Command::cargo_bin("catr")?;
-    cmd.args(&["tests/inputs/foo.txt", "tests/inputs/fox.txt"])
-        .unwrap()
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &vec!["tests/inputs/foo.txt", "tests/inputs/fox.txt"],
+        "tests/inputs/all.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn all_n() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/all.n.out").ok().unwrap();
-    println!("{}", &expected);
-    let mut cmd = Command::cargo_bin("catr")?;
-    cmd.args(&["tests/inputs/foo.txt", "tests/inputs/fox.txt", "-n"])
-        .unwrap()
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &vec!["tests/inputs/foo.txt", "tests/inputs/fox.txt", "-n"],
+        "tests/inputs/all.n.out",
+    )
 }

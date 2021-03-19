@@ -5,13 +5,13 @@ fn main() {
     let config = match hangman::get_args() {
         Ok(c) => c,
         Err(e) => {
-            println!("{}", e);
+            eprintln!("{}", e);
             process::exit(1);
         }
     };
 
     if let Err(e) = hangman::run(config) {
-        println!("{}", e);
+        eprintln!("{}", e);
         process::exit(1);
     }
 }

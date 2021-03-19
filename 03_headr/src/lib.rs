@@ -82,7 +82,7 @@ pub fn run(config: Config) -> MyResult<()> {
 
         match File::open(filename) {
             Ok(file) => {
-                let file = BufReader::new(file);
+                let mut file = BufReader::new(file);
 
                 if let Some(num_bytes) = config.bytes {
                     let handle = &mut file.take(num_bytes);
@@ -90,12 +90,27 @@ pub fn run(config: Config) -> MyResult<()> {
                     handle.read_to_string(&mut buffer)?;
                     println!("{}", buffer);
                 } else {
-                    for line in file.lines().take(config.lines) {
-                        println!("{}", line?.trim());
+                    // Doesn't work, strips line ending.
+                    //for line in file.lines().take(config.lines) {
+                    //    println!("{}", line?.trim());
+                    //}
+                    let mut line = String::new();
+                    let mut line_num = 0;
+                    loop {
+                        if line_num == config.lines {
+                            break;
+                        }
+                        let bytes = file.read_line(&mut line)?;
+                        if bytes == 0 {
+                            break;
+                        }
+                        print!("{}", line);
+                        line_num += 1;
+                        line.clear();
                     }
                 }
             }
-            Err(err) => println!("{}: {}", filename, err),
+            Err(err) => eprintln!("{}: {}", filename, err),
         }
     }
 

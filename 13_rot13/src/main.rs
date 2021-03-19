@@ -5,13 +5,13 @@ fn main() {
     let config = match rot13::get_args() {
         Ok(c) => c,
         Err(e) => {
-            println!("{}", e);
+            eprintln!("{}", e);
             process::exit(1);
         }
     };
 
     if let Err(e) = rot13::run(config) {
-        println!("Error: {}", e);
+        eprintln!("Error: {}", e);
         process::exit(1);
     }
 }

@@ -5,7 +5,7 @@ use std::collections::VecDeque;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::{BufReader, SeekFrom};
+use std::io::{BufReader, Cursor, SeekFrom};
 use std::str;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
@@ -108,14 +108,14 @@ fn take_lines<T: BufRead>(file: T, num: usize) -> MyResult<VecDeque<String>> {
 // --------------------------------------------------
 #[test]
 fn test_take_lines() {
-    let lines1 = io::Cursor::new(b"lorem\nipsum\r\ndolor");
+    let lines1 = Cursor::new(b"lorem\nipsum\r\ndolor");
     let res1 = take_lines(lines1, 1);
     assert!(res1.is_ok());
     if let Ok(vec) = res1 {
         assert_eq!(vec, vec!["dolor"]);
     }
 
-    let lines2 = io::Cursor::new(b"lorem\nipsum\r\ndolor");
+    let lines2 = Cursor::new(b"lorem\nipsum\r\ndolor");
     let res2 = take_lines(lines2, 2);
     assert!(res2.is_ok());
     if let Ok(vec) = res2 {
