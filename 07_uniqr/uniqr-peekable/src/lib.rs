@@ -62,7 +62,7 @@ pub fn run(config: Config) -> MyResult<()> {
     };
 
     let print = |line: &String, count: &u64| {
-        if line.len() > 0 && count > &0 {
+        if count > &0 {
             if config.count {
                 println!("{:4} {}", &count, &line);
             } else {

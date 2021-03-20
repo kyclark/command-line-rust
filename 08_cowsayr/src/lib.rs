@@ -1,6 +1,8 @@
 extern crate clap;
+extern crate regex;
 
 use clap::{App, Arg};
+use regex::Regex;
 use std::error::Error;
 use std::fs;
 use std::str::FromStr;
@@ -38,6 +40,9 @@ pub fn get_args() -> MyResult<Config> {
 
     let text = matches.value_of("input").unwrap();
     let text = fs::read_to_string(text).unwrap_or(text.trim().to_string());
+    //let re = Regex::new(r"(\r?\n){2,}").unwrap();
+    let re = Regex::new(r"[ ]+\n").unwrap();
+    let text = re.replace_all(&text, " ").trim().to_string();
     let width: usize = parse_int(matches.value_of("width").unwrap())?;
 
     if width < 1 {
@@ -60,11 +65,11 @@ fn parse_int<T: FromStr>(val: &str) -> MyResult<T> {
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
     let cow = r"
-                \   ^__^
-                 \  (oo)\_______
-                    (__)\       )\/\
-                        ||----w |
-                        ||     ||
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
     ";
 
     let width = config.width;
@@ -75,15 +80,12 @@ pub fn run(config: Config) -> MyResult<()> {
         let mut tmp: Vec<String> = vec![];
         tmp.push(format!("/ {:width$} \\", &lines.remove(0), width = width));
 
+        let last_line = &lines.pop().unwrap();
         for line in &lines {
             tmp.push(format!("| {:width$} |", line, width = width));
         }
 
-        tmp.push(format!(
-            "\\ {:width$} /",
-            &lines.pop().unwrap(),
-            width = width
-        ));
+        tmp.push(format!("\\ {:width$} /", last_line, width = width));
         tmp
     };
 

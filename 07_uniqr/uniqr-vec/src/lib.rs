@@ -60,8 +60,8 @@ pub fn run(config: Config) -> MyResult<()> {
         }
     };
 
-    let print = |line: &String, count: &u64| {
-        if line.len() > 0 && count > &0 {
+    let print = |line: &String, count: u64| {
+        if count > 0 {
             if config.count {
                 println!("{:4} {}", &count, &line);
             } else {
@@ -80,20 +80,21 @@ pub fn run(config: Config) -> MyResult<()> {
         let num_pairs = pairs.len();
 
         if num_pairs == 0 {
-            print(&lines[0], &1);
+            print(&lines[0], 1);
         } else {
             let mut count: u64 = 1;
             for (i, pair) in pairs.enumerate() {
-                //dbg!(&pair);
                 if let [line1, line2] = pair {
                     if line1 == line2 {
                         count += 1;
-                        if i + 1 == num_pairs {
-                            print(&line1, &count);
-                        }
                     } else {
-                        print(&line1, &count);
+                        print(&line1, count);
                         count = 1;
+                    }
+
+                    // Last one
+                    if i + 1 == num_pairs {
+                        print(&line2, count);
                     }
                 }
             }

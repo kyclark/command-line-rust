@@ -65,6 +65,24 @@ fn empty_n4() -> TestResult {
 
 // --------------------------------------------------
 #[test]
+fn empty_c2() -> TestResult {
+    run(
+        &vec!["tests/inputs/empty.txt", "-c", "2"],
+        "tests/inputs/empty.txt.c2.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn empty_c4() -> TestResult {
+    run(
+        &vec!["tests/inputs/empty.txt", "-c", "4"],
+        "tests/inputs/empty.txt.c4.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
 fn one() -> TestResult {
     run(&vec!["tests/inputs/one.txt"], "tests/inputs/one.txt.out")
 }
@@ -84,6 +102,24 @@ fn one_n4() -> TestResult {
     run(
         &vec!["tests/inputs/one.txt", "-n", "4"],
         "tests/inputs/one.txt.n4.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn one_c2() -> TestResult {
+    run(
+        &vec!["tests/inputs/one.txt", "-c", "2"],
+        "tests/inputs/one.txt.c2.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn one_c4() -> TestResult {
+    run(
+        &vec!["tests/inputs/one.txt", "-c", "4"],
+        "tests/inputs/one.txt.c4.out",
     )
 }
 
@@ -113,6 +149,24 @@ fn two_n4() -> TestResult {
 
 // --------------------------------------------------
 #[test]
+fn two_c2() -> TestResult {
+    run(
+        &vec!["tests/inputs/two.txt", "-c", "2"],
+        "tests/inputs/two.txt.c2.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn two_c4() -> TestResult {
+    run(
+        &vec!["tests/inputs/two.txt", "-c", "4"],
+        "tests/inputs/two.txt.c4.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
 fn three() -> TestResult {
     run(
         &vec!["tests/inputs/three.txt"],
@@ -135,5 +189,101 @@ fn three_n4() -> TestResult {
     run(
         &vec!["tests/inputs/three.txt", "-n", "4"],
         "tests/inputs/three.txt.n4.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn three_c2() -> TestResult {
+    run(
+        &vec!["tests/inputs/three.txt", "-c", "2"],
+        "tests/inputs/three.txt.c2.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn three_c4() -> TestResult {
+    run(
+        &vec!["tests/inputs/three.txt", "-c", "4"],
+        "tests/inputs/three.txt.c4.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn multiple_files() -> TestResult {
+    run(
+        &vec![
+            "tests/inputs/empty.txt",
+            "tests/inputs/one.txt",
+            "tests/inputs/three.txt",
+            "tests/inputs/two.txt",
+        ],
+        "tests/inputs/all.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn multiple_files_n2() -> TestResult {
+    run(
+        &vec![
+            "tests/inputs/empty.txt",
+            "tests/inputs/one.txt",
+            "tests/inputs/three.txt",
+            "tests/inputs/two.txt",
+            "-n",
+            "2",
+        ],
+        "tests/inputs/all.n2.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn multiple_files_n4() -> TestResult {
+    run(
+        &vec![
+            "-n",
+            "4",
+            "tests/inputs/empty.txt",
+            "tests/inputs/one.txt",
+            "tests/inputs/three.txt",
+            "tests/inputs/two.txt",
+        ],
+        "tests/inputs/all.n4.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn multiple_files_c2() -> TestResult {
+    run(
+        &vec![
+            "tests/inputs/empty.txt",
+            "tests/inputs/one.txt",
+            "tests/inputs/three.txt",
+            "tests/inputs/two.txt",
+            "-c",
+            "2",
+        ],
+        "tests/inputs/all.c2.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn multiple_files_c4() -> TestResult {
+    run(
+        &vec![
+            "-c",
+            "4",
+            "tests/inputs/empty.txt",
+            "tests/inputs/one.txt",
+            "tests/inputs/three.txt",
+            "tests/inputs/two.txt",
+        ],
+        "tests/inputs/all.c4.out",
     )
 }

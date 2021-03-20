@@ -40,6 +40,7 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("FILE")
                 .help("Input file(s)")
                 .required(true)
+                .default_value(".")
                 .min_values(1),
         )
         .arg(
@@ -69,13 +70,14 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    match find_files(&config.files, &config) {
-        Ok(files) => {
-            for info in files {
-                println!("{}", format_output(&info, &config)?);
-            }
-        }
-        Err(e) => println!("{}", &e),
+    let (entries, errors) = find_files(&config.files, &config);
+
+    for error in errors {
+        eprintln!("{}", error);
+    }
+
+    for entry in entries {
+        println!("{}", format_output(&entry, &config)?);
     }
 
     Ok(())
@@ -106,58 +108,59 @@ fn format_output(file: &FileInfo, config: &Config) -> MyResult<String> {
 fn find_files(
     paths: &Vec<String>,
     config: &Config,
-) -> Result<Vec<FileInfo>, Box<dyn Error>> {
-    let mut files = vec![];
+) -> (Vec<FileInfo>, Vec<String>) {
+    let mut results = vec![];
+    let mut errors = vec![];
+
     for path in paths {
-        let meta = fs::metadata(path)?;
-        if meta.is_file() {
-            let path_info = Path::new(path);
-            let basename = path_info.file_name().expect("basename");
-
-            files.push(FileInfo {
-                basename: basename.to_string_lossy().to_string(),
-                path: path.to_string(),
-                metadata: meta,
-            });
+        if let Ok(meta) = fs::metadata(path) {
+            if meta.is_file() {
+                let path_info = Path::new(path);
+                if let Some(basename) = path_info
+                    .file_name()
+                    .and_then(|e| Some(e.to_string_lossy().to_string()))
+                {
+                    results.push(FileInfo {
+                        basename: basename,
+                        path: path.to_string(),
+                        metadata: meta,
+                    });
+                }
+            } else if let Ok(entries) = fs::read_dir(path) {
+                for entry in entries {
+                    let entry = entry.expect("entry");
+                    if let Ok(meta) = entry.metadata() {
+                        let basename =
+                            entry.file_name().to_string_lossy().to_string();
+                        let hidden = basename.starts_with('.');
+                        if !hidden || (hidden && config.all) {
+                            results.push(FileInfo {
+                                path: entry.path().display().to_string(),
+                                basename: basename,
+                                metadata: meta,
+                            });
+                        }
+                    }
+                }
+            }
         } else {
-            for entry in fs::read_dir(path)? {
-                let entry = entry?;
-                let meta = entry.metadata()?;
-                files.push(FileInfo {
-                    path: entry.path().display().to_string(),
-                    basename: entry.file_name().to_string_lossy().to_string(),
-                    metadata: meta,
-                });
-            }
-        };
+            errors.push(format!("{}: No such file or directory", path));
+        }
     }
 
-    if files.is_empty() {
-        return Err(From::from("No input files"));
-    }
-
-    Ok(files
-        .into_iter() // TODO understand .iter and into_iter
-        .filter_map(|e| {
-            if !config.all && e.basename.starts_with('.') {
-                None
-            } else {
-                Some(e)
-            }
-        })
-        .collect())
+    (results, errors)
 }
 
 // --------------------------------------------------
 fn parse_permissions(mode: u16) -> String {
-    let user = triplet(mode, libc::S_IRUSR, libc::S_IWUSR, libc::S_IXUSR);
-    let group = triplet(mode, libc::S_IRGRP, libc::S_IWGRP, libc::S_IXGRP);
-    let other = triplet(mode, libc::S_IROTH, libc::S_IWOTH, libc::S_IXOTH);
+    let user = show_perm(mode, libc::S_IRUSR, libc::S_IWUSR, libc::S_IXUSR);
+    let group = show_perm(mode, libc::S_IRGRP, libc::S_IWGRP, libc::S_IXGRP);
+    let other = show_perm(mode, libc::S_IROTH, libc::S_IWOTH, libc::S_IXOTH);
     [user, group, other].join("")
 }
 
 // --------------------------------------------------
-fn triplet(mode: u16, read: u16, write: u16, execute: u16) -> String {
+fn show_perm(mode: u16, read: u16, write: u16, execute: u16) -> String {
     match (mode & read, mode & write, mode & execute) {
         (0, 0, 0) => "---",
         (_, 0, 0) => "r--",
@@ -169,4 +172,25 @@ fn triplet(mode: u16, read: u16, write: u16, execute: u16) -> String {
         (_, _, _) => "rwx",
     }
     .to_string()
+}
+
+// --------------------------------------------------
+#[test]
+fn test_show_perm() {
+    assert_eq!(
+        show_perm(33188u16, libc::S_IRUSR, libc::S_IWUSR, libc::S_IXUSR),
+        "rw-"
+    );
+    assert_eq!(
+        show_perm(33188u16, libc::S_IRGRP, libc::S_IWGRP, libc::S_IXGRP),
+        "r--"
+    );
+    assert_eq!(
+        show_perm(32768u16, libc::S_IRGRP, libc::S_IWGRP, libc::S_IXGRP),
+        "---"
+    );
+    assert_eq!(
+        show_perm(33279u16, libc::S_IROTH, libc::S_IWOTH, libc::S_IXOTH),
+        "rwx"
+    );
 }

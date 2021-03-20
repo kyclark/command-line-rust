@@ -8,5 +8,5 @@ edition = "2018"
 
 [dependencies]
 clap = "~2.33"
-# textwrap = { version = "~0.13", features = [ "hyphenation" ] }
 textwrap = "~0.13"
+regex = "~1.4"

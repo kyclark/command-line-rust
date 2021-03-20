@@ -1,5 +1,5 @@
        0       0       0 tests/inputs/empty.txt
        1       4      23 tests/inputs/one.txt
-       2       4      23 tests/inputs/two.txt
+       2       4      25 tests/inputs/two.txt
        3       4      28 tests/inputs/three.txt
-       6      12      74 total
+       6      12      76 total

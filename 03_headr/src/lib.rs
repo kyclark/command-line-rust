@@ -73,10 +73,11 @@ fn parse_int<T: FromStr>(val: &str) -> MyResult<T> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    let num_files = &config.files.len();
+    let num_files = config.files.len();
+    let print_separators = num_files > 1;
 
-    for filename in &config.files {
-        if num_files > &1 {
+    for (file_num, filename) in config.files.iter().enumerate() {
+        if print_separators {
             println!("==> {} <==", &filename);
         }
 
@@ -88,7 +89,9 @@ pub fn run(config: Config) -> MyResult<()> {
                     let handle = &mut file.take(num_bytes);
                     let mut buffer = String::new();
                     handle.read_to_string(&mut buffer)?;
-                    println!("{}", buffer);
+                    if buffer.len() > 0 {
+                        print!("{}", buffer);
+                    }
                 } else {
                     // Doesn't work, strips line ending.
                     //for line in file.lines().take(config.lines) {
@@ -111,6 +114,10 @@ pub fn run(config: Config) -> MyResult<()> {
                 }
             }
             Err(err) => eprintln!("{}: {}", filename, err),
+        }
+
+        if print_separators && file_num + 1 != num_files {
+            println!("");
         }
     }
 

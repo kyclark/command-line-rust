@@ -1,90 +1,249 @@
-use assert_cmd::prelude::*;
-use std::process::Command;
-//use predicates::prelude::*;
+use assert_cmd::Command;
+use predicates::prelude::*;
+use std::fs;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 // --------------------------------------------------
-#[test]
-fn test1() -> TestResult {
-    let mut cmd = Command::cargo_bin("uniqr")?;
-    cmd.arg("tests/inputs/one.txt")
-        .unwrap()
+fn run<'a>(
+    filename: &'a str,
+    args: &'a mut Vec<&'a str>,
+    expected_file: &str,
+) -> TestResult {
+    let expected = fs::read_to_string(expected_file).ok().unwrap();
+
+    let input = fs::read_to_string(filename).ok().unwrap();
+    let _cmd_stdin = Command::cargo_bin("uniqr")?
+        .args(&*args)
+        .write_stdin(input)
         .assert()
-        .stdout("one\n");
+        .stdout(predicate::str::contains(&expected));
+
+    args.push(filename);
+    let _cmd = Command::cargo_bin("uniqr")?
+        .args(args)
+        .assert()
+        .stdout(predicate::str::contains(expected));
 
     Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn test2() -> TestResult {
-    let mut cmd = Command::cargo_bin("uniqr")?;
-    cmd.args(&["-c", "tests/inputs/one.txt"])
-        .unwrap()
-        .assert()
-        .stdout("   1 one\n");
-
-    Ok(())
+fn empty() -> TestResult {
+    run(
+        "tests/inputs/empty.txt",
+        &mut vec![],
+        "tests/inputs/empty.txt.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
-fn test3() -> TestResult {
-    let mut cmd = Command::cargo_bin("uniqr")?;
-    cmd.args(&["tests/inputs/two.txt"])
-        .unwrap()
-        .assert()
-        .stdout("one\n");
-
-    Ok(())
+fn empty_c() -> TestResult {
+    run(
+        "tests/inputs/empty.txt",
+        &mut vec!["-c"],
+        "tests/inputs/empty.txt.c.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
-fn test4() -> TestResult {
-    let mut cmd = Command::cargo_bin("uniqr")?;
-    cmd.args(&["-c", "tests/inputs/two.txt"])
-        .unwrap()
-        .assert()
-        .stdout("   2 one\n");
-
-    Ok(())
+fn one() -> TestResult {
+    run(
+        "tests/inputs/one.txt",
+        &mut vec![],
+        "tests/inputs/one.txt.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
-fn test5() -> TestResult {
-    let mut cmd = Command::cargo_bin("uniqr")?;
-    let expected =
-        vec!["one", "two", "one", "three", "one", "four", ""].join("\n");
-
-    cmd.args(&["tests/inputs/three.txt"])
-        .unwrap()
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+fn one_c() -> TestResult {
+    run(
+        "tests/inputs/one.txt",
+        &mut vec!["-c"],
+        "tests/inputs/one.txt.c.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
-fn test6() -> TestResult {
-    let expected = vec![
-        "   2 one",
-        "   2 two",
-        "   1 one",
-        "   3 three",
-        "   1 one",
-        "   4 four",
-        "",
-    ]
-    .join("\n");
-    let mut cmd = Command::cargo_bin("uniqr")?;
-    cmd.args(&["--counts", "tests/inputs/three.txt"])
-        .unwrap()
-        .assert()
-        .stdout(expected);
+fn two() -> TestResult {
+    run(
+        "tests/inputs/two.txt",
+        &mut vec![],
+        "tests/inputs/two.txt.out",
+    )
+}
 
-    Ok(())
+// --------------------------------------------------
+#[test]
+fn two_c() -> TestResult {
+    run(
+        "tests/inputs/two.txt",
+        &mut vec!["-c"],
+        "tests/inputs/two.txt.c.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn three() -> TestResult {
+    run(
+        "tests/inputs/three.txt",
+        &mut vec![],
+        "tests/inputs/three.txt.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn three_c() -> TestResult {
+    run(
+        "tests/inputs/three.txt",
+        &mut vec!["-c"],
+        "tests/inputs/three.txt.c.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn skip() -> TestResult {
+    run(
+        "tests/inputs/skip.txt",
+        &mut vec![],
+        "tests/inputs/skip.txt.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn skip_c() -> TestResult {
+    run(
+        "tests/inputs/skip.txt",
+        &mut vec!["-c"],
+        "tests/inputs/skip.txt.c.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t1() -> TestResult {
+    run(
+        "tests/inputs/t1.txt",
+        &mut vec![],
+        "tests/inputs/t1.txt.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t1_c() -> TestResult {
+    run(
+        "tests/inputs/t1.txt",
+        &mut vec!["-c"],
+        "tests/inputs/t1.txt.c.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t2() -> TestResult {
+    run(
+        "tests/inputs/t2.txt",
+        &mut vec![],
+        "tests/inputs/t2.txt.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t2_c() -> TestResult {
+    run(
+        "tests/inputs/t2.txt",
+        &mut vec!["-c"],
+        "tests/inputs/t2.txt.c.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t3() -> TestResult {
+    run(
+        "tests/inputs/t3.txt",
+        &mut vec![],
+        "tests/inputs/t3.txt.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t3_c() -> TestResult {
+    run(
+        "tests/inputs/t3.txt",
+        &mut vec!["-c"],
+        "tests/inputs/t3.txt.c.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t4() -> TestResult {
+    run(
+        "tests/inputs/t4.txt",
+        &mut vec![],
+        "tests/inputs/t4.txt.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t4_c() -> TestResult {
+    run(
+        "tests/inputs/t4.txt",
+        &mut vec!["-c"],
+        "tests/inputs/t4.txt.c.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t5() -> TestResult {
+    run(
+        "tests/inputs/t5.txt",
+        &mut vec![],
+        "tests/inputs/t5.txt.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t5_c() -> TestResult {
+    run(
+        "tests/inputs/t5.txt",
+        &mut vec!["-c"],
+        "tests/inputs/t5.txt.c.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t6() -> TestResult {
+    run(
+        "tests/inputs/t6.txt",
+        &mut vec![],
+        "tests/inputs/t6.txt.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn t6_c() -> TestResult {
+    run(
+        "tests/inputs/t6.txt",
+        &mut vec!["-c"],
+        "tests/inputs/t6.txt.c.out",
+    )
 }

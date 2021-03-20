@@ -1,0 +1,10 @@
+==> tests/inputs/empty.txt <==
+
+==> tests/inputs/one.txt <==
+Öne line, four words.
+
+==> tests/inputs/three.txt <==
+Three
+
+==> tests/inputs/two.txt <==
+Two lines.
