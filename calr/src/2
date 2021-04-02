@@ -1,0 +1,205 @@
+extern crate clap;
+
+use chrono::prelude::*;
+use clap::{App, Arg};
+use std::error::Error;
+use std::str::FromStr;
+
+type MyResult<T> = Result<T, Box<dyn Error>>;
+
+#[derive(Debug)]
+pub struct Config {
+    month: Option<u32>,
+    year: i32,
+}
+
+// --------------------------------------------------
+pub fn get_args() -> MyResult<Config> {
+    let matches = App::new("calr")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust cal")
+        .arg(
+            Arg::with_name("month")
+                .value_name("MONTH")
+                .short("m")
+                .help("Month number or name"),
+        )
+        .arg(Arg::with_name("year").value_name("YEAR").help("Year"))
+        .get_matches();
+
+    let local: DateTime<Local> = Local::now();
+
+    let mut month = match matches.value_of("month") {
+        Some(m) => {
+            let month = parse_month(m)?;
+            Some(month)
+        }
+        _ => None,
+    };
+
+    let mut year = match matches.value_of("year") {
+        Some(y) => {
+            let year: i32 = parse_int(y)?;
+            if year < 1 || year > 9999 {
+                return Err(From::from(format!(
+                    "year \"{}\" not in the range 1..9999",
+                    y
+                )));
+            }
+            Some(year)
+        }
+        _ => None,
+    };
+
+    if month.is_none() && year.is_none() {
+        month = Some(local.month());
+        year = Some(local.year());
+    }
+
+    Ok(Config {
+        month: month,
+        year: year.unwrap(),
+    })
+}
+
+// --------------------------------------------------
+pub fn run(config: Config) -> MyResult<()> {
+    println!("{:?}", config);
+
+    let months: Vec<u32> = match config.month {
+        Some(m) => vec![m],
+        _ => (1..=12).collect(),
+    };
+
+    let names = vec![
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ];
+
+    let num_months = &months.len();
+    for month in &months {
+        let start = Utc.ymd(config.year, *month, 1);
+        if let Some(month_name) = names.iter().nth(month as usize - 1) {
+            println!(
+                "{:^20}",
+                if &num_months == &1 {
+                    format!("{} {}", month_name, config.year)
+                } else {
+                    month_name.to_string()
+                }
+            );
+            println!("Su Mo Tu We Th Fr Sa");
+            println!("{:?} {:?}", start, start.weekday());
+        }
+    }
+
+    Ok(())
+}
+
+// --------------------------------------------------
+fn parse_month(month: &str) -> MyResult<u32> {
+    let names = vec![
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ];
+
+    if let Ok(num) = parse_int(&month) {
+        if num > 0 && num < 13 {
+            return Ok(num);
+        } else {
+            return Err(From::from(format!("Invalid month \"{}\"", num)));
+        }
+    }
+
+    let lower = &month.to_lowercase();
+    let matches: Vec<usize> = names
+        .iter()
+        .enumerate()
+        .filter_map(|(i, name)| {
+            if name.to_lowercase().starts_with(lower) {
+                Some(i + 1)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    if matches.len() == 1 {
+        Ok(matches[0] as u32)
+    } else {
+        Err(From::from(format!("Unknown month \"{}\"", month)))
+    }
+}
+
+// --------------------------------------------------
+#[test]
+fn test_parse_month() {
+    let one = parse_month("1");
+    assert!(one.is_ok());
+    if let Ok(val) = one {
+        assert_eq!(val, 1);
+    }
+
+    let twelve = parse_month("12");
+    assert!(twelve.is_ok());
+    if let Ok(val) = twelve {
+        assert_eq!(val, 12);
+    }
+
+    let zero = parse_month("0");
+    assert!(zero.is_err());
+
+    let thirteen = parse_month("13");
+    assert!(thirteen.is_err());
+
+    let jan = parse_month("jan");
+    assert!(jan.is_ok());
+    if let Ok(val) = jan {
+        assert_eq!(val, 1);
+    }
+
+    let bad = parse_month("foo");
+    assert!(bad.is_err());
+}
+
+// --------------------------------------------------
+fn parse_int<T: FromStr>(val: &str) -> MyResult<T> {
+    val.trim()
+        .parse::<T>()
+        .or(Err(From::from(format!("\"{}\" is not an integer", val))))
+}
+
+// --------------------------------------------------
+#[test]
+fn test_parse_int() {
+    let one = parse_int::<usize>("1");
+    assert!(one.is_ok());
+
+    if let Ok(val) = one {
+        assert_eq!(val, 1);
+    }
+
+    let bad = parse_int::<usize>("foo");
+    assert!(bad.is_err());
+}
