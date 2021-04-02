@@ -3,7 +3,7 @@ extern crate clap;
 use chrono::prelude::*;
 use chrono::{Datelike, NaiveDate};
 use clap::{App, Arg};
-use itertools::multizip;
+use itertools::izip;
 use std::error::Error;
 use std::str::FromStr;
 
@@ -67,30 +67,46 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    println!("{:?}", config);
-
     let month_nums: Vec<u32> = match config.month {
         Some(m) => vec![m],
         _ => (1..=12).collect(),
     };
-    let print_year = month_nums.len() == 12;
-
+    let show_year = month_nums.len() < 12;
     let months: Vec<Vec<String>> = month_nums
         .iter()
-        .map(|month| format_month(config.year, *month, print_year))
+        .map(|month| format_month(config.year, *month, show_year))
         .collect();
 
-    //for month in &months {
-    //    println!("{}", format_month(config.year, *month, print_year));
-    //}
-    //
+    if !show_year {
+        println!("{:32}", config.year);
+    }
 
-    //println!("{}", months.join("\n"));
+    let default = " ".repeat(22);
+    let wanted = 8;
+    for chunk in months.chunks(3) {
+        match chunk {
+            [m1] => println!("{}\n{}", m1.join("\n"), default),
+            [m1, m2, m3] => {
+                let mut block1 = m1.to_vec();
+                let mut block2 = m2.to_vec();
+                let mut block3 = m3.to_vec();
+                while block1.len() < wanted {
+                    block1.push(default.clone());
+                }
+                while block2.len() < wanted {
+                    block2.push(default.clone());
+                }
+                while block3.len() < wanted {
+                    block3.push(default.clone());
+                }
 
-    for x in months.chunks(3) {
-        if let [m1, m2, m3] = x {
-            println!("{:?}", multizip(x));
-        }
+                for lines in izip!(block1, block2, block3) {
+                    println!("{}{}{}", lines.0, lines.1, lines.2);
+                }
+                println!("");
+            }
+            _ => {}
+        };
     }
 
     Ok(())
@@ -238,17 +254,17 @@ fn format_month(year: i32, month: u32, print_year: bool) -> Vec<String> {
     let mut lines: Vec<String> = vec![];
     if let Some(month_name) = names.iter().nth(month as usize - 1) {
         lines.push(format!(
-            "{:^20}",
+            "{:^20}  ",
             if print_year {
                 format!("{} {}", month_name, year)
             } else {
                 month_name.to_string()
             }
         ));
-        lines.push(format!("Su Mo Tu We Th Fr Sa"));
+        lines.push(format!("Su Mo Tu We Th Fr Sa  "));
 
         for week in days.chunks(7) {
-            lines.push(format!("{}", week.join(" ")));
+            lines.push(format!("{:20}  ", week.join(" ")));
         }
     }
 
