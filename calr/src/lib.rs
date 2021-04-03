@@ -3,6 +3,7 @@ extern crate clap;
 use chrono::prelude::*;
 use chrono::{Datelike, NaiveDate};
 use clap::{App, Arg};
+use colorize::AnsiColor;
 use itertools::izip;
 use std::error::Error;
 use std::str::FromStr;
@@ -14,6 +15,21 @@ pub struct Config {
     month: Option<u32>,
     year: i32,
 }
+
+static MONTH_NAMES: [&str; 12] = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+];
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
@@ -29,8 +45,6 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(Arg::with_name("year").value_name("YEAR").help("Year"))
         .get_matches();
-
-    let local: DateTime<Local> = Local::now();
 
     let mut month = match matches.value_of("month") {
         Some(m) => {
@@ -54,14 +68,15 @@ pub fn get_args() -> MyResult<Config> {
         _ => None,
     };
 
+    let today = Local::now();
     if month.is_none() && year.is_none() {
-        month = Some(local.month());
-        year = Some(local.year());
+        month = Some(today.month());
+        year = Some(today.year());
     }
 
     Ok(Config {
         month: month,
-        year: year.unwrap(),
+        year: year.unwrap_or(today.year()),
     })
 }
 
@@ -72,38 +87,26 @@ pub fn run(config: Config) -> MyResult<()> {
         _ => (1..=12).collect(),
     };
     let show_year = month_nums.len() < 12;
+    let today = Local::now();
     let months: Vec<Vec<String>> = month_nums
         .iter()
-        .map(|month| format_month(config.year, *month, show_year))
+        .map(|month| format_month(config.year, *month, show_year, today))
         .collect();
 
     if !show_year {
         println!("{:32}", config.year);
     }
 
-    let default = " ".repeat(22);
-    let wanted = 8;
-    for chunk in months.chunks(3) {
+    for (i, chunk) in months.chunks(3).enumerate() {
         match chunk {
-            [m1] => println!("{}\n{}", m1.join("\n"), default),
+            [m1] => println!("{}", m1.join("\n")),
             [m1, m2, m3] => {
-                let mut block1 = m1.to_vec();
-                let mut block2 = m2.to_vec();
-                let mut block3 = m3.to_vec();
-                while block1.len() < wanted {
-                    block1.push(default.clone());
-                }
-                while block2.len() < wanted {
-                    block2.push(default.clone());
-                }
-                while block3.len() < wanted {
-                    block3.push(default.clone());
-                }
-
-                for lines in izip!(block1, block2, block3) {
+                for lines in izip!(m1, m2, m3) {
                     println!("{}{}{}", lines.0, lines.1, lines.2);
                 }
-                println!("");
+                if i < 3 {
+                    println!("");
+                }
             }
             _ => {}
         };
@@ -114,21 +117,6 @@ pub fn run(config: Config) -> MyResult<()> {
 
 // --------------------------------------------------
 fn parse_month(month: &str) -> MyResult<u32> {
-    let names = vec![
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ];
-
     if let Ok(num) = parse_int(&month) {
         if num > 0 && num < 13 {
             return Ok(num);
@@ -138,7 +126,7 @@ fn parse_month(month: &str) -> MyResult<u32> {
     }
 
     let lower = &month.to_lowercase();
-    let matches: Vec<usize> = names
+    let matches: Vec<usize> = MONTH_NAMES
         .iter()
         .enumerate()
         .filter_map(|(i, name)| {
@@ -221,22 +209,20 @@ fn last_day_in_month(year: i32, month: u32) -> NaiveDate {
 }
 
 // --------------------------------------------------
-fn format_month(year: i32, month: u32, print_year: bool) -> Vec<String> {
-    let names = vec![
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-    ];
+#[test]
+fn test_last_day_in_month() {
+    assert_eq!(last_day_in_month(2020, 1), NaiveDate::from_ymd(2020, 1, 31));
+    assert_eq!(last_day_in_month(2020, 2), NaiveDate::from_ymd(2020, 2, 29));
+    assert_eq!(last_day_in_month(2020, 4), NaiveDate::from_ymd(2020, 4, 30));
+}
 
+// --------------------------------------------------
+fn format_month(
+    year: i32,
+    month: u32,
+    print_year: bool,
+    today: DateTime<chrono::Local>,
+) -> Vec<String> {
     let first = NaiveDate::from_ymd(year, month, 1);
     let last = last_day_in_month(year, month);
     let mut days: Vec<String> = (1..first.weekday().number_from_sunday())
@@ -244,15 +230,24 @@ fn format_month(year: i32, month: u32, print_year: bool) -> Vec<String> {
         .iter()
         .map(|_| "  ".to_string())
         .collect();
+
+    let is_today = |n: &u32| year == today.year() && *n == today.day();
     let nums: Vec<String> = (first.day()..=last.day())
         .collect::<Vec<u32>>()
         .iter()
-        .map(|d| format!("{:2}", d))
+        .map(|num| {
+            let day = format!("{:2}", num);
+            if is_today(num) {
+                day.reverse()
+            } else {
+                day
+            }
+        })
         .collect();
     days.extend(nums);
 
     let mut lines: Vec<String> = vec![];
-    if let Some(month_name) = names.iter().nth(month as usize - 1) {
+    if let Some(month_name) = MONTH_NAMES.iter().nth(month as usize - 1) {
         lines.push(format!(
             "{:^20}  ",
             if print_year {
@@ -264,17 +259,44 @@ fn format_month(year: i32, month: u32, print_year: bool) -> Vec<String> {
         lines.push(format!("Su Mo Tu We Th Fr Sa  "));
 
         for week in days.chunks(7) {
-            lines.push(format!("{:20}  ", week.join(" ")));
+            lines.push(format!("{}  ", week.join(" ")));
         }
+    }
+
+    let default = " ".repeat(22);
+    while lines.len() < 8 {
+        lines.push(default.clone());
     }
 
     lines
 }
 
 // --------------------------------------------------
-//fn paste(vals: Vec<Vec<String>>, sep: &str) -> String {
-//    let mut ret: Vec<String> = vec![];
-//    println!("{:?}", multizip(*vals));
+#[test]
+fn test_format_month() {
+    let today: DateTime<Local> = Local::now();
+    let april = vec![
+        "     April 2020       ",
+        "Su Mo Tu We Th Fr Sa  ",
+        "          1  2  3  4  ",
+        " 5  6  7  8  9 10 11  ",
+        "12 13 14 15 16 17 18  ",
+        "19 20 21 22 23 24 25  ",
+        "26 27 28 29 30        ",
+        "                      ",
+    ];
 
-//    return "foo".to_string();
-//}
+    assert_eq!(format_month(2020, 4, true, today), april);
+
+    let may = vec![
+        "      May 2020        ",
+        "Su Mo Tu We Th Fr Sa  ",
+        "                1  2  ",
+        " 3  4  5  6  7  8  9  ",
+        "10 11 12 13 14 15 16  ",
+        "17 18 19 20 21 22 23  ",
+        "24 25 26 27 28 29 30  ",
+        "31                    ",
+    ];
+    assert_eq!(format_month(2020, 5, true, today), may);
+}

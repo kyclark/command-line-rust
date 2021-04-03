@@ -5,3 +5,4 @@ OUTDIR="tests/expected"
 
 cal 2020 > $OUTDIR/2020.txt
 cal 4 2020 > $OUTDIR/4-2020.txt
+cal 5 2020 > $OUTDIR/5-2020.txt

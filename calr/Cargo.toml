@@ -10,6 +10,7 @@ edition = "2018"
 clap = "2"
 chrono = "0.4"
 itertools = "0.10"
+colorize = "0.1"
 
 [dev-dependencies]
 assert_cmd = "0.10"
