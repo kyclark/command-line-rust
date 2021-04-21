@@ -1,14 +1,12 @@
 extern crate clap;
 
+use anyhow::{anyhow, Result};
 use chrono::prelude::*;
 use chrono::{Datelike, NaiveDate};
 use clap::{App, Arg};
 use colorize::AnsiColor;
 use itertools::izip;
-use std::error::Error;
 use std::str::FromStr;
-
-type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
@@ -32,7 +30,7 @@ static MONTH_NAMES: [&str; 12] = [
 ];
 
 // --------------------------------------------------
-pub fn get_args() -> MyResult<Config> {
+pub fn get_args() -> Result<Config> {
     let matches = App::new("calr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -58,17 +56,17 @@ pub fn get_args() -> MyResult<Config> {
         Some(y) => {
             let year: i32 = parse_int(y)?;
             if year < 1 || year > 9999 {
-                return Err(From::from(format!(
+                return Err(anyhow!(
                     "year \"{}\" not in the range 1..9999",
                     y
-                )));
+                ));
             }
             Some(year)
         }
         _ => None,
     };
 
-    let today = Local::now();
+    let today = Utc::today();
     if month.is_none() && year.is_none() {
         month = Some(today.month());
         year = Some(today.year());
@@ -81,13 +79,13 @@ pub fn get_args() -> MyResult<Config> {
 }
 
 // --------------------------------------------------
-pub fn run(config: Config) -> MyResult<()> {
+pub fn run(config: Config) -> Result<()> {
     let month_nums: Vec<u32> = match config.month {
         Some(m) => vec![m],
         _ => (1..=12).collect(),
     };
     let show_year = month_nums.len() < 12;
-    let today = Local::now();
+    let today = Utc::today();
     let months: Vec<Vec<String>> = month_nums
         .iter()
         .map(|month| format_month(config.year, *month, show_year, today))
@@ -116,12 +114,12 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn parse_month(month: &str) -> MyResult<u32> {
+fn parse_month(month: &str) -> Result<u32> {
     if let Ok(num) = parse_int(&month) {
         if num > 0 && num < 13 {
             return Ok(num);
         } else {
-            return Err(From::from(format!("Invalid month \"{}\"", num)));
+            return Err(anyhow!("Invalid month \"{}\"", num));
         }
     }
 
@@ -141,7 +139,7 @@ fn parse_month(month: &str) -> MyResult<u32> {
     if matches.len() == 1 {
         Ok(matches[0] as u32)
     } else {
-        Err(From::from(format!("Unknown month \"{}\"", month)))
+        Err(anyhow!("Unknown month \"{}\"", month))
     }
 }
 
@@ -177,10 +175,10 @@ fn test_parse_month() {
 }
 
 // --------------------------------------------------
-fn parse_int<T: FromStr>(val: &str) -> MyResult<T> {
+fn parse_int<T: FromStr>(val: &str) -> Result<T> {
     val.trim()
         .parse::<T>()
-        .or(Err(From::from(format!("\"{}\" is not an integer", val))))
+        .or(Err(anyhow!("\"{}\" is not an integer", val)))
 }
 
 // --------------------------------------------------
@@ -221,7 +219,7 @@ fn format_month(
     year: i32,
     month: u32,
     print_year: bool,
-    today: DateTime<chrono::Local>,
+    today: Date<Utc>,
 ) -> Vec<String> {
     let first = NaiveDate::from_ymd(year, month, 1);
     let last = last_day_in_month(year, month);
@@ -231,14 +229,18 @@ fn format_month(
         .map(|_| "  ".to_string())
         .collect();
 
-    let is_today = |n: &u32| year == today.year() && *n == today.day();
+    let is_today = |n: &u32| {
+        year == today.year() && month == today.month() && *n == today.day()
+    };
+
+    let placeholder = "XX";
     let nums: Vec<String> = (first.day()..=last.day())
         .collect::<Vec<u32>>()
         .iter()
         .map(|num| {
             let day = format!("{:2}", num);
             if is_today(num) {
-                day.reverse()
+                placeholder.to_string()
             } else {
                 day
             }
@@ -246,7 +248,9 @@ fn format_month(
         .collect();
     days.extend(nums);
 
+    let width = 22;
     let mut lines: Vec<String> = vec![];
+
     if let Some(month_name) = MONTH_NAMES.iter().nth(month as usize - 1) {
         lines.push(format!(
             "{:^20}  ",
@@ -256,16 +260,28 @@ fn format_month(
                 month_name.to_string()
             }
         ));
-        lines.push(format!("Su Mo Tu We Th Fr Sa  "));
+        lines.push(format!(
+            "{:width$}",
+            "Su Mo Tu We Th Fr Sa",
+            width = width
+        ));
 
         for week in days.chunks(7) {
-            lines.push(format!("{}  ", week.join(" ")));
+            let mut disp =
+                format!("{:width$}", week.join(" "), width = width);
+
+            if disp.contains(&placeholder) {
+                disp = disp.replace(
+                    &placeholder,
+                    &format!("{:2}", today.day()).reverse(),
+                );
+            }
+            lines.push(disp);
         }
     }
 
-    let default = " ".repeat(22);
     while lines.len() < 8 {
-        lines.push(default.clone());
+        lines.push(" ".repeat(width));
     }
 
     lines
@@ -274,7 +290,7 @@ fn format_month(
 // --------------------------------------------------
 #[test]
 fn test_format_month() {
-    let today: DateTime<Local> = Local::now();
+    let today = Utc::today();
     let april = vec![
         "     April 2020       ",
         "Su Mo Tu We Th Fr Sa  ",
@@ -285,7 +301,6 @@ fn test_format_month() {
         "26 27 28 29 30        ",
         "                      ",
     ];
-
     assert_eq!(format_month(2020, 4, true, today), april);
 
     let may = vec![
@@ -299,4 +314,17 @@ fn test_format_month() {
         "31                    ",
     ];
     assert_eq!(format_month(2020, 5, true, today), may);
+
+    let april_hl = vec![
+        "     April 2021       ",
+        "Su Mo Tu We Th Fr Sa  ",
+        "             1  2  3  ",
+        " 4  5  6 \u{1b}[7m 7\u{1b}[0;39;49m  8  9 10  ",
+        "11 12 13 14 15 16 17  ",
+        "18 19 20 21 22 23 24  ",
+        "25 26 27 28 29 30     ",
+        "                      ",
+    ];
+    let today2 = Utc.ymd(2021, 4, 7);
+    assert_eq!(format_month(2021, 4, true, today2), april_hl);
 }

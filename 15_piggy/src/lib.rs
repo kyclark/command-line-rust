@@ -2,6 +2,8 @@ extern crate clap;
 extern crate inflector;
 extern crate regex;
 
+// Cf https://github.com/huggingface/tokenizers/tree/master/tokenizers
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -15,6 +17,15 @@ use std::io::BufReader;
 use unicode_segmentation::UnicodeSegmentation;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
+
+lazy_static! {
+    static ref QU_WORD: Regex = Regex::new(r"^([Qq]u)(.+)").unwrap();
+    static ref CONSONANT_WORD: Regex = Regex::new(
+        r"^([BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz]+)([AEIOUaeiou].*)",
+    )
+    .unwrap();
+    static ref IS_WORD: Regex = Regex::new(r"^\w+$").unwrap();
+}
 
 #[derive(Debug)]
 pub struct Config {
@@ -81,14 +92,14 @@ fn test_split() {
 
 // --------------------------------------------------
 fn pig<S: AsRef<str>>(word: S) -> String {
-    lazy_static! {
-        static ref QU_WORD: Regex = Regex::new(r"^([Qq]u)(.+)").unwrap();
-        static ref CONSONANT_WORD: Regex = Regex::new(
-            r"^([BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz]+)([AEIOUaeiou].*)"
-        )
-        .unwrap();
-        static ref IS_WORD: Regex = Regex::new(r"^\w+$").unwrap();
-    };
+    //lazy_static! {
+    //    static ref QU_WORD: Regex = Regex::new(r"^([Qq]u)(.+)").unwrap();
+    //    static ref CONSONANT_WORD: Regex = Regex::new(
+    //        r"^([BCDFGHJKLMNPQRSTVWXYZbcdfghjklmnpqrstvwxyz]+)([AEIOUaeiou].*)"
+    //    )
+    //    .unwrap();
+    //    static ref IS_WORD: Regex = Regex::new(r"^\w+$").unwrap();
+    //};
 
     if IS_WORD.is_match(word.as_ref()) {
         if let Some(caps) = QU_WORD.captures(&word.as_ref()) {
