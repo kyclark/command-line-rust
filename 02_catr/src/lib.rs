@@ -13,6 +13,7 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 pub struct Config {
     files: Vec<String>,
     number_lines: bool,
+    number_nonblank_lines: bool,
 }
 
 // --------------------------------------------------
@@ -30,10 +31,15 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("number")
-                .value_name("NUMBER")
                 .help("Number lines")
                 .short("n")
-                .long("num")
+                .takes_value(false)
+                .conflicts_with("number_nonblank"),
+        )
+        .arg(
+            Arg::with_name("number_nonblank")
+                .help("Number non-blank lines")
+                .short("b")
                 .takes_value(false),
         )
         .get_matches();
@@ -53,6 +59,7 @@ pub fn get_args() -> MyResult<Config> {
     Ok(Config {
         files: files,
         number_lines: matches.is_present("number"),
+        number_nonblank_lines: matches.is_present("number_nonblank"),
     })
 }
 
@@ -66,10 +73,18 @@ pub fn run(config: Config) -> MyResult<()> {
             _ => Box::new(BufReader::new(File::open(filename).unwrap())),
         };
 
+        let mut last_num = 0;
         for (i, line) in file.lines().enumerate() {
             let line = line?;
             if config.number_lines {
                 println!("{:6}\t{}", i + 1, &line);
+            } else if config.number_nonblank_lines {
+                if line.trim().len() > 0 {
+                    last_num += 1;
+                    println!("{:6}\t{}", last_num, &line);
+                } else {
+                    println!("");
+                }
             } else {
                 println!("{}", &line);
             }
