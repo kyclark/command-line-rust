@@ -1,8 +1,6 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
 use std::fs;
-//use std::io::{self, Write};
-//use std::process::{Command, Stdio};
 use std::process::Command;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;

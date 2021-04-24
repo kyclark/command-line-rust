@@ -1,5 +1,3 @@
-extern crate clap;
-
 use clap::{App, Arg};
 use std::error::Error;
 use std::fs::File;
@@ -18,10 +16,10 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("wc")
+    let matches = App::new("catr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust wc")
+        .about("Rust cat")
         .arg(
             Arg::with_name("file")
                 .value_name("FILE")
@@ -67,26 +65,26 @@ pub fn get_args() -> MyResult<Config> {
 pub fn run(config: Config) -> MyResult<()> {
     // Cf https://stackoverflow.com/questions/36088116/
     // how-to-do-polymorphic-io-from-either-a-file-or-stdin-in-rust/49964042
-    for filename in &config.files {
+    for filename in config.files {
         let file: Box<dyn BufRead> = match filename == "-" {
             true => Box::new(BufReader::new(io::stdin())),
             _ => Box::new(BufReader::new(File::open(filename).unwrap())),
         };
 
         let mut last_num = 0;
-        for (i, line) in file.lines().enumerate() {
+        for (line_num, line) in file.lines().enumerate() {
             let line = line?;
             if config.number_lines {
-                println!("{:6}\t{}", i + 1, &line);
+                println!("{:6}\t{}", line_num + 1, line);
             } else if config.number_nonblank_lines {
-                if line.trim().len() > 0 {
+                if line.len() > 0 {
                     last_num += 1;
-                    println!("{:6}\t{}", last_num, &line);
+                    println!("{:6}\t{}", last_num, line);
                 } else {
                     println!("");
                 }
             } else {
-                println!("{}", &line);
+                println!("{}", line);
             }
         }
     }

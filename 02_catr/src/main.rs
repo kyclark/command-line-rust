@@ -11,7 +11,7 @@ fn main() {
     };
 
     if let Err(e) = catr::run(config) {
-        println!("Error: {}", e);
+        eprintln!("Error: {}", e);
         process::exit(1);
     }
 }
