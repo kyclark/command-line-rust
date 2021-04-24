@@ -5,7 +5,6 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
-use std::str::FromStr;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -13,12 +12,12 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 pub struct Config {
     files: Vec<String>,
     lines: usize,
-    bytes: Option<u64>,
+    bytes: Option<usize>,
 }
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("head")
+    let matches = App::new("headr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust head")
@@ -33,6 +32,8 @@ pub fn get_args() -> MyResult<Config> {
             Arg::with_name("bytes")
                 .short("c")
                 .value_name("BYTES")
+                .takes_value(true)
+                .conflicts_with("lines")
                 .help("Number of bytes"),
         )
         .arg(
@@ -44,31 +45,37 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let lines: usize = parse_int(matches.value_of("lines").unwrap())?;
-    let bytes: Option<Result<u64, _>> =
-        matches.value_of("bytes").and_then(|b| Some(parse_int(b)));
-
-    if let Some(Err(e)) = bytes {
-        return Err(e);
-    }
-
-    let bytes = match bytes {
-        Some(Ok(b)) => Some(b),
-        _ => None,
-    };
+    let lines = parse_int(&matches, "lines")?;
+    let bytes = parse_int(&matches, "bytes")?;
 
     Ok(Config {
-        lines: lines,
+        lines: lines.unwrap(),
         bytes: bytes,
         files: matches.values_of_lossy("file").unwrap(),
     })
 }
 
 // --------------------------------------------------
-fn parse_int<T: FromStr>(val: &str) -> MyResult<T> {
-    val.trim()
-        .parse::<T>()
-        .or(Err(From::from(format!("\"{}\" is not an integer", val))))
+fn parse_int(
+    matches: &clap::ArgMatches,
+    arg_name: &str,
+) -> MyResult<Option<usize>> {
+    match matches.value_of(arg_name) {
+        Some(v) => match v.trim().parse::<core::num::NonZeroUsize>() {
+            Ok(n) => Ok(Some(usize::from(n))),
+            //Ok(n) => match n > 0 {
+            //    true => Ok(Some(n)),
+            //    _ => Err(From::from(format!(
+            //        "1. illegal {} count: {}",
+            //        arg_name, n
+            //    ))),
+            //},
+            Err(_) => {
+                Err(From::from(format!("illegal {} count: {}", arg_name, v)))
+            }
+        },
+        None => Ok(None),
+    }
 }
 
 // --------------------------------------------------
@@ -86,7 +93,7 @@ pub fn run(config: Config) -> MyResult<()> {
                 let mut file = BufReader::new(file);
 
                 if let Some(num_bytes) = config.bytes {
-                    let handle = &mut file.take(num_bytes);
+                    let handle = &mut file.take(num_bytes as u64);
                     let mut buffer = String::new();
                     handle.read_to_string(&mut buffer)?;
                     if buffer.len() > 0 {
