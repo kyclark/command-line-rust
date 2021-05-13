@@ -133,13 +133,16 @@ fn spiders() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn spiders_n() -> TestResult {
-    run(vec!["-n", SPIDERS], "tests/inputs/spiders.txt.n.out")
+    run(vec!["--number", SPIDERS], "tests/inputs/spiders.txt.n.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn spiders_b() -> TestResult {
-    run(vec!["-b", SPIDERS], "tests/inputs/spiders.txt.b.out")
+    run(
+        vec!["--number-nonblank", SPIDERS],
+        "tests/inputs/spiders.txt.b.out",
+    )
 }
 
 // --------------------------------------------------

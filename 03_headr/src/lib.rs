@@ -1,5 +1,3 @@
-extern crate clap;
-
 use clap::{App, Arg};
 use std::error::Error;
 use std::fs::File;
@@ -24,6 +22,7 @@ pub fn get_args() -> MyResult<Config> {
         .arg(
             Arg::with_name("lines")
                 .short("n")
+                .long("lines")
                 .value_name("LINES")
                 .help("Number of lines")
                 .default_value("10"),
@@ -31,13 +30,14 @@ pub fn get_args() -> MyResult<Config> {
         .arg(
             Arg::with_name("bytes")
                 .short("c")
+                .long("bytes")
                 .value_name("BYTES")
                 .takes_value(true)
                 .conflicts_with("lines")
                 .help("Number of bytes"),
         )
         .arg(
-            Arg::with_name("file")
+            Arg::with_name("files")
                 .value_name("FILE")
                 .help("Input file(s)")
                 .required(true)
@@ -45,36 +45,72 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let lines = parse_int(&matches, "lines")?;
-    let bytes = parse_int(&matches, "bytes")?;
+    let lines = parse_int(matches.value_of("lines"));
+    if let Err(bad_lines) = lines {
+        return Err(From::from(format!(
+            "illegal line count -- {}",
+            bad_lines
+        )));
+    }
+
+    let bytes = parse_int(matches.value_of("bytes"));
+    if let Err(bad_bytes) = bytes {
+        return Err(From::from(format!(
+            "illegal byte count -- {}",
+            bad_bytes
+        )));
+    }
 
     Ok(Config {
-        lines: lines.unwrap(),
-        bytes: bytes,
-        files: matches.values_of_lossy("file").unwrap(),
+        lines: lines?.unwrap(),
+        bytes: bytes?,
+        files: matches.values_of_lossy("files").unwrap(),
     })
 }
 
 // --------------------------------------------------
-fn parse_int(
-    matches: &clap::ArgMatches,
-    arg_name: &str,
-) -> MyResult<Option<usize>> {
-    match matches.value_of(arg_name) {
+fn parse_int(val: Option<&str>) -> MyResult<Option<usize>> {
+    match val {
         Some(v) => match v.trim().parse::<core::num::NonZeroUsize>() {
             Ok(n) => Ok(Some(usize::from(n))),
-            //Ok(n) => match n > 0 {
-            //    true => Ok(Some(n)),
-            //    _ => Err(From::from(format!(
-            //        "1. illegal {} count: {}",
-            //        arg_name, n
-            //    ))),
-            //},
-            Err(_) => {
-                Err(From::from(format!("illegal {} count: {}", arg_name, v)))
-            }
+            Err(_) => Err(From::from(v.to_string())),
         },
         None => Ok(None),
+    }
+}
+
+// --------------------------------------------------
+#[test]
+fn test_parse_int() {
+    // 3 is an OK integer
+    let t1 = parse_int(&Some("3"));
+    assert!(t1.is_ok());
+    assert_eq!(t1.unwrap(), Some(3usize));
+
+    // No value is OK
+    let t2 = parse_int(&None);
+    assert!(t2.is_ok());
+    assert!(t2.unwrap().is_none());
+
+    // Any string is an error
+    let t3 = parse_int(&Some("foo"));
+    assert!(t3.is_err());
+    if let Err(e3) = t3 {
+        assert_eq!(e3.to_string(), "foo".to_string());
+    }
+
+    // A zero is an error
+    let t4 = parse_int(&Some("0"));
+    assert!(t4.is_err());
+    if let Err(e4) = t4 {
+        assert_eq!(e4.to_string(), "0".to_string());
+    }
+
+    // A negative number is an error
+    let t5 = parse_int(&Some("-1"));
+    assert!(t5.is_err());
+    if let Err(e5) = t5 {
+        assert_eq!(e5.to_string(), "-1".to_string());
     }
 }
 
