@@ -82,64 +82,57 @@ fn parse_int(val: Option<&str>) -> MyResult<Option<usize>> {
 // --------------------------------------------------
 #[test]
 fn test_parse_int() {
-    // 3 is an OK integer
-    let t1 = parse_int(&Some("3"));
-    assert!(t1.is_ok());
-    assert_eq!(t1.unwrap(), Some(3usize));
-
     // No value is OK
-    let t2 = parse_int(&None);
-    assert!(t2.is_ok());
-    assert!(t2.unwrap().is_none());
+    let res1 = parse_int(None);
+    assert!(res1.is_ok());
+    assert!(res1.unwrap().is_none());
+
+    // 3 is an OK integer
+    let res2 = parse_int(Some("3"));
+    assert!(res2.is_ok());
+    assert_eq!(res2.unwrap(), Some(3usize));
 
     // Any string is an error
-    let t3 = parse_int(&Some("foo"));
-    assert!(t3.is_err());
-    if let Err(e3) = t3 {
-        assert_eq!(e3.to_string(), "foo".to_string());
+    let res3 = parse_int(Some("foo"));
+    assert!(res3.is_err());
+    if let Err(e) = res3 {
+        assert_eq!(e.to_string(), "foo".to_string());
     }
 
     // A zero is an error
-    let t4 = parse_int(&Some("0"));
-    assert!(t4.is_err());
-    if let Err(e4) = t4 {
-        assert_eq!(e4.to_string(), "0".to_string());
-    }
-
-    // A negative number is an error
-    let t5 = parse_int(&Some("-1"));
-    assert!(t5.is_err());
-    if let Err(e5) = t5 {
-        assert_eq!(e5.to_string(), "-1".to_string());
+    let res4 = parse_int(Some("0"));
+    assert!(res4.is_err());
+    if let Err(e) = res4 {
+        assert_eq!(e.to_string(), "0".to_string());
     }
 }
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
     let num_files = config.files.len();
-    let print_separators = num_files > 1;
 
     for (file_num, filename) in config.files.iter().enumerate() {
-        if print_separators {
-            println!("==> {} <==", &filename);
-        }
-
         match File::open(filename) {
             Ok(file) => {
-                let mut file = BufReader::new(file);
+                if num_files > 1 {
+                    println!(
+                        "{}==> {} <==",
+                        if file_num > 0 { "\n" } else { "" },
+                        &filename
+                    );
+                }
 
                 if let Some(num_bytes) = config.bytes {
-                    let handle = &mut file.take(num_bytes as u64);
+                    let mut handle = file.take(num_bytes as u64);
                     let mut buffer = String::new();
                     handle.read_to_string(&mut buffer)?;
-                    if buffer.len() > 0 {
-                        print!("{}", buffer);
-                    }
+                    print!("{}", buffer);
                 } else {
                     // Doesn't work, strips line ending.
                     //for line in file.lines().take(config.lines) {
                     //    println!("{}", line?.trim());
                     //}
+                    let mut file = BufReader::new(file);
                     let mut line = String::new();
                     let mut line_num = 0;
                     loop {
@@ -157,10 +150,6 @@ pub fn run(config: Config) -> MyResult<()> {
                 }
             }
             Err(err) => eprintln!("{}: {}", filename, err),
-        }
-
-        if print_separators && file_num + 1 != num_files {
-            println!("");
         }
     }
 

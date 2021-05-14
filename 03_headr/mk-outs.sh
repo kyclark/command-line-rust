@@ -15,3 +15,6 @@ head -n 2 $ALL > $ROOT/all.n2.out
 head -n 4 $ALL > $ROOT/all.n4.out
 head -c 2 $ALL > $ROOT/all.c2.out
 head -c 4 $ALL > $ROOT/all.c4.out
+
+MULTI_BAD="$ROOT/empty.txt $ROOT/one.txt blargh $ROOT/three.txt $ROOT/two.txt"
+head $MULTI_BAD 1>$ROOT/multi.bad.out 2>&1 
