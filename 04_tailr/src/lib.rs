@@ -116,7 +116,7 @@ pub fn run(config: Config) -> MyResult<()> {
                         let mut buffer = Vec::new();
                         file.read_to_end(&mut buffer)?;
                         if buffer.len() > 0 {
-                            print!("{}", str::from_utf8(&buffer)?);
+                            print!("{}", String::from_utf8_lossy(&buffer));
                         }
                     }
                 } else {
@@ -133,9 +133,8 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-//fn take_lines<T: BufRead>(
-fn take_lines(
-    mut file: BufRead,
+fn take_lines<T: BufRead>(
+    mut file: T,
     num_lines: usize,
 ) -> MyResult<VecDeque<String>> {
     let mut last: VecDeque<String> = VecDeque::with_capacity(num_lines);
