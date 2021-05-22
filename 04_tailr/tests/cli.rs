@@ -18,11 +18,50 @@ fn dies_no_args() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn bad_file() -> TestResult {
+fn dies_bad_file() -> TestResult {
     let mut cmd = Command::cargo_bin("tailr")?;
     cmd.arg("foo")
         .assert()
         .stderr(predicate::str::contains("foo: No such file or directory"));
+
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_bad_bytes() -> TestResult {
+    let mut cmd = Command::cargo_bin("tailr")?;
+    cmd.args(&["-c", "foo", "tests/inputs/empty.txt"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("illegal byte count -- foo"));
+
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_bad_lines() -> TestResult {
+    let mut cmd = Command::cargo_bin("tailr")?;
+    cmd.args(&["-n", "bar", "tests/inputs/empty.txt"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("illegal line count -- bar"));
+
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_bytes_and_lines() -> TestResult {
+    let mut cmd = Command::cargo_bin("tailr")?;
+    let msg = "The argument '--lines <LINES>' cannot be \
+               used with '--bytes <BYTES>'";
+
+    cmd.args(&["-n", "1", "-c", "2"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(msg));
 
     Ok(())
 }
@@ -65,19 +104,19 @@ fn empty_n4() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn empty_c2() -> TestResult {
+fn empty_c8() -> TestResult {
     run(
-        &vec!["tests/inputs/empty.txt", "-c", "2"],
-        "tests/inputs/empty.txt.c2.out",
+        &vec!["tests/inputs/empty.txt", "-c", "8"],
+        "tests/inputs/empty.txt.c8.out",
     )
 }
 
 // --------------------------------------------------
 #[test]
-fn empty_c4() -> TestResult {
+fn empty_c12() -> TestResult {
     run(
-        &vec!["tests/inputs/empty.txt", "-c", "4"],
-        "tests/inputs/empty.txt.c4.out",
+        &vec!["tests/inputs/empty.txt", "-c", "12"],
+        "tests/inputs/empty.txt.c12.out",
     )
 }
 
@@ -107,19 +146,19 @@ fn one_n4() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn one_c2() -> TestResult {
+fn one_c8() -> TestResult {
     run(
-        &vec!["tests/inputs/one.txt", "-c", "2"],
-        "tests/inputs/one.txt.c2.out",
+        &vec!["tests/inputs/one.txt", "-c", "8"],
+        "tests/inputs/one.txt.c8.out",
     )
 }
 
 // --------------------------------------------------
 #[test]
-fn one_c4() -> TestResult {
+fn one_c12() -> TestResult {
     run(
-        &vec!["tests/inputs/one.txt", "-c", "4"],
-        "tests/inputs/one.txt.c4.out",
+        &vec!["tests/inputs/one.txt", "-c", "12"],
+        "tests/inputs/one.txt.c12.out",
     )
 }
 
@@ -149,19 +188,19 @@ fn two_n4() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn two_c2() -> TestResult {
+fn two_c8() -> TestResult {
     run(
-        &vec!["tests/inputs/two.txt", "-c", "2"],
-        "tests/inputs/two.txt.c2.out",
+        &vec!["tests/inputs/two.txt", "-c", "8"],
+        "tests/inputs/two.txt.c8.out",
     )
 }
 
 // --------------------------------------------------
 #[test]
-fn two_c4() -> TestResult {
+fn two_c12() -> TestResult {
     run(
-        &vec!["tests/inputs/two.txt", "-c", "4"],
-        "tests/inputs/two.txt.c4.out",
+        &vec!["tests/inputs/two.txt", "-c", "12"],
+        "tests/inputs/two.txt.c12.out",
     )
 }
 
@@ -194,19 +233,19 @@ fn three_n4() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn three_c2() -> TestResult {
+fn three_c8() -> TestResult {
     run(
-        &vec!["tests/inputs/three.txt", "-c", "2"],
-        "tests/inputs/three.txt.c2.out",
+        &vec!["tests/inputs/three.txt", "-c", "8"],
+        "tests/inputs/three.txt.c8.out",
     )
 }
 
 // --------------------------------------------------
 #[test]
-fn three_c4() -> TestResult {
+fn three_c12() -> TestResult {
     run(
-        &vec!["tests/inputs/three.txt", "-c", "4"],
-        "tests/inputs/three.txt.c4.out",
+        &vec!["tests/inputs/three.txt", "-c", "12"],
+        "tests/inputs/three.txt.c12.out",
     )
 }
 
@@ -239,19 +278,19 @@ fn ten_n4() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn ten_c2() -> TestResult {
+fn ten_c8() -> TestResult {
     run(
-        &vec!["tests/inputs/10.txt", "-c", "2"],
-        "tests/inputs/10.txt.c2.out",
+        &vec!["tests/inputs/10.txt", "-c", "8"],
+        "tests/inputs/10.txt.c8.out",
     )
 }
 
 // --------------------------------------------------
 #[test]
-fn ten_c4() -> TestResult {
+fn ten_c12() -> TestResult {
     run(
-        &vec!["tests/inputs/10.txt", "-c", "4"],
-        "tests/inputs/10.txt.c4.out",
+        &vec!["tests/inputs/10.txt", "-c", "12"],
+        "tests/inputs/10.txt.c12.out",
     )
 }
 
@@ -306,7 +345,7 @@ fn multiple_files_n2() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn multiple_files_c1() -> TestResult {
+fn multiple_files_c8() -> TestResult {
     run(
         &vec![
             "tests/inputs/10.txt",
@@ -315,18 +354,36 @@ fn multiple_files_c1() -> TestResult {
             "tests/inputs/three.txt",
             "tests/inputs/two.txt",
             "-c",
-            "1",
+            "8",
         ],
-        "tests/inputs/all.c1.out",
+        "tests/inputs/all.c8.out",
     )
 }
 
 // --------------------------------------------------
 #[test]
-fn multiple_files_c2() -> TestResult {
+fn multiple_files_c12() -> TestResult {
     run(
         &vec![
             "-c",
+            "12",
+            "tests/inputs/10.txt",
+            "tests/inputs/empty.txt",
+            "tests/inputs/one.txt",
+            "tests/inputs/three.txt",
+            "tests/inputs/two.txt",
+        ],
+        "tests/inputs/all.c12.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn multiple_files_quiet() -> TestResult {
+    run(
+        &vec![
+            "-q",
+            "-n",
             "2",
             "tests/inputs/10.txt",
             "tests/inputs/empty.txt",
@@ -334,6 +391,6 @@ fn multiple_files_c2() -> TestResult {
             "tests/inputs/three.txt",
             "tests/inputs/two.txt",
         ],
-        "tests/inputs/all.c2.out",
+        "tests/inputs/all.n2.q.out",
     )
 }

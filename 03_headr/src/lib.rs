@@ -9,7 +9,7 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 #[derive(Debug)]
 pub struct Config {
     files: Vec<String>,
-    lines: usize,
+    lines: u64,
     bytes: Option<usize>,
 }
 
@@ -62,7 +62,7 @@ pub fn get_args() -> MyResult<Config> {
     }
 
     Ok(Config {
-        lines: lines?.unwrap(),
+        lines: lines?.unwrap() as u64,
         bytes: bytes?,
         files: matches.values_of_lossy("files").unwrap(),
     })
@@ -73,7 +73,7 @@ fn parse_int(val: Option<&str>) -> MyResult<Option<usize>> {
     match val {
         Some(v) => match v.trim().parse::<core::num::NonZeroUsize>() {
             Ok(n) => Ok(Some(usize::from(n))),
-            Err(_) => Err(From::from(v.to_string())),
+            Err(_) => Err(From::from(v)),
         },
         None => Ok(None),
     }
@@ -124,14 +124,10 @@ pub fn run(config: Config) -> MyResult<()> {
 
                 if let Some(num_bytes) = config.bytes {
                     let mut handle = file.take(num_bytes as u64);
-                    let mut buffer = String::new();
-                    handle.read_to_string(&mut buffer)?;
-                    print!("{}", buffer);
+                    let mut buffer = vec![0; num_bytes];
+                    let n = handle.read(&mut buffer)?;
+                    print!("{}", String::from_utf8_lossy(&buffer[..n]));
                 } else {
-                    // Doesn't work, strips line ending.
-                    //for line in file.lines().take(config.lines) {
-                    //    println!("{}", line?.trim());
-                    //}
                     let mut file = BufReader::new(file);
                     let mut line = String::new();
                     let mut line_num = 0;
@@ -152,6 +148,5 @@ pub fn run(config: Config) -> MyResult<()> {
             Err(err) => eprintln!("{}: {}", filename, err),
         }
     }
-
     Ok(())
 }

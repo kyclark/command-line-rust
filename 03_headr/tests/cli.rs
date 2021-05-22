@@ -1,6 +1,7 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::fs;
+use std::fs::File;
+use std::io::prelude::*;
 use std::process::Command;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -18,7 +19,7 @@ fn dies_no_args() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn bad_file() -> TestResult {
+fn dies_bad_file() -> TestResult {
     let mut cmd = Command::cargo_bin("headr")?;
     cmd.arg("foo")
         .assert()
@@ -28,10 +29,55 @@ fn bad_file() -> TestResult {
 }
 
 // --------------------------------------------------
-fn run(args: &Vec<&str>, expected_file: &str) -> TestResult {
-    let expected = fs::read_to_string(expected_file).ok().unwrap();
+#[test]
+fn dies_bad_bytes() -> TestResult {
     let mut cmd = Command::cargo_bin("headr")?;
-    cmd.args(args).unwrap().assert().stdout(expected);
+    cmd.args(&["-c", "foo", "tests/inputs/empty.txt"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("illegal byte count -- foo"));
+
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_bad_lines() -> TestResult {
+    let mut cmd = Command::cargo_bin("headr")?;
+    cmd.args(&["-n", "bar", "tests/inputs/empty.txt"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("illegal line count -- bar"));
+
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_bytes_and_lines() -> TestResult {
+    let mut cmd = Command::cargo_bin("headr")?;
+    let msg = "The argument '--lines <LINES>' cannot be \
+               used with '--bytes <BYTES>'";
+
+    cmd.args(&["-n", "1", "-c", "2"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(msg));
+
+    Ok(())
+}
+
+// --------------------------------------------------
+fn run(args: &Vec<&str>, expected_file: &str) -> TestResult {
+    let mut f = File::open(expected_file)?;
+    let mut buffer = Vec::new();
+    f.read_to_end(&mut buffer)?;
+    let expected = String::from_utf8_lossy(&buffer);
+    let mut cmd = Command::cargo_bin("headr")?;
+    cmd.args(args)
+        .unwrap()
+        .assert()
+        .stdout(predicate::str::contains(expected));
 
     Ok(())
 }
@@ -102,6 +148,15 @@ fn one_n4() -> TestResult {
     run(
         &vec!["tests/inputs/one.txt", "-n", "4"],
         "tests/inputs/one.txt.n4.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn one_c1() -> TestResult {
+    run(
+        &vec!["tests/inputs/one.txt", "-c", "1"],
+        "tests/inputs/one.txt.c1.out",
     )
 }
 
@@ -253,6 +308,22 @@ fn multiple_files_n4() -> TestResult {
             "tests/inputs/two.txt",
         ],
         "tests/inputs/all.n4.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn multiple_files_c1() -> TestResult {
+    run(
+        &vec![
+            "tests/inputs/empty.txt",
+            "tests/inputs/one.txt",
+            "tests/inputs/three.txt",
+            "tests/inputs/two.txt",
+            "-c",
+            "1",
+        ],
+        "tests/inputs/all.c1.out",
     )
 }
 
