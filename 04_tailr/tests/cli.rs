@@ -104,15 +104,6 @@ fn empty_n4() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn empty_c3() -> TestResult {
-    run(
-        &vec!["tests/inputs/empty.txt", "-c", "3"],
-        "tests/inputs/empty.txt.c3.out",
-    )
-}
-
-// --------------------------------------------------
-#[test]
 fn empty_c8() -> TestResult {
     run(
         &vec!["tests/inputs/empty.txt", "-c", "8"],
@@ -155,15 +146,6 @@ fn one_n4() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn one_c3() -> TestResult {
-    run(
-        &vec!["tests/inputs/one.txt", "-c", "3"],
-        "tests/inputs/one.txt.c3.out",
-    )
-}
-
-// --------------------------------------------------
-#[test]
 fn one_c8() -> TestResult {
     run(
         &vec!["tests/inputs/one.txt", "-c", "8"],
@@ -201,15 +183,6 @@ fn two_n4() -> TestResult {
     run(
         &vec!["tests/inputs/two.txt", "-n", "4"],
         "tests/inputs/two.txt.n4.out",
-    )
-}
-
-// --------------------------------------------------
-#[test]
-fn two_c3() -> TestResult {
-    run(
-        &vec!["tests/inputs/two.txt", "-c", "3"],
-        "tests/inputs/two.txt.c3.out",
     )
 }
 
@@ -260,15 +233,6 @@ fn three_n4() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn three_c3() -> TestResult {
-    run(
-        &vec!["tests/inputs/three.txt", "-c", "3"],
-        "tests/inputs/three.txt.c3.out",
-    )
-}
-
-// --------------------------------------------------
-#[test]
 fn three_c8() -> TestResult {
     run(
         &vec!["tests/inputs/three.txt", "-c", "8"],
@@ -309,15 +273,6 @@ fn ten_n4() -> TestResult {
     run(
         &vec!["tests/inputs/10.txt", "-n", "4"],
         "tests/inputs/10.txt.n4.out",
-    )
-}
-
-// --------------------------------------------------
-#[test]
-fn ten_c3() -> TestResult {
-    run(
-        &vec!["tests/inputs/10.txt", "-c", "3"],
-        "tests/inputs/10.txt.c3.out",
     )
 }
 
@@ -385,23 +340,6 @@ fn multiple_files_n3() -> TestResult {
             "tests/inputs/two.txt",
         ],
         "tests/inputs/all.n3.out",
-    )
-}
-
-// --------------------------------------------------
-#[test]
-fn multiple_files_c3() -> TestResult {
-    run(
-        &vec![
-            "tests/inputs/10.txt",
-            "tests/inputs/empty.txt",
-            "tests/inputs/one.txt",
-            "tests/inputs/three.txt",
-            "tests/inputs/two.txt",
-            "-c",
-            "3",
-        ],
-        "tests/inputs/all.c3.out",
     )
 }
 

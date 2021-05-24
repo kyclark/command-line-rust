@@ -98,7 +98,7 @@ pub fn run(config: Config) -> MyResult<()> {
     let num_files = config.files.len();
 
     for (file_num, filename) in config.files.iter().enumerate() {
-        if num_files > 1 && !config.quiet {
+        if !config.quiet && num_files > 1 {
             println!(
                 "{}==> {} <==",
                 if file_num > 0 { "\n" } else { "" },
