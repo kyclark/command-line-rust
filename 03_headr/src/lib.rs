@@ -130,8 +130,8 @@ pub fn run(config: Config) -> MyResult<()> {
                 } else {
                     let mut file = BufReader::new(file);
                     let mut line = String::new();
-                    let mut line_num = 0;
-                    loop {
+                    //let mut line_num = 0;
+                    for line_num in 0.. {
                         if line_num == config.lines {
                             break;
                         }
@@ -140,7 +140,7 @@ pub fn run(config: Config) -> MyResult<()> {
                             break;
                         }
                         print!("{}", line);
-                        line_num += 1;
+                        //line_num += 1;
                         line.clear();
                     }
                 }
