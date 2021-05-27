@@ -17,7 +17,7 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
-    files: Vec<String>,
+    entries: Vec<String>,
     long: bool,
     all: bool,
 }
@@ -31,14 +31,14 @@ pub struct FileInfo {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("ls")
+    let matches = App::new("lsr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust ls")
         .arg(
-            Arg::with_name("file")
-                .value_name("FILE")
-                .help("Input file(s)")
+            Arg::with_name("entries")
+                .value_name("ENTRY")
+                .help("Files and/or directories")
                 .required(true)
                 .default_value(".")
                 .min_values(1),
@@ -62,7 +62,7 @@ pub fn get_args() -> MyResult<Config> {
         .get_matches();
 
     Ok(Config {
-        files: matches.values_of_lossy("file").unwrap(),
+        entries: matches.values_of_lossy("entries").unwrap(),
         long: matches.is_present("long"),
         all: matches.is_present("all"),
     })
@@ -70,7 +70,7 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    let (entries, errors) = find_files(&config.files, &config);
+    let (entries, errors) = find_files(&config.entries, &config);
 
     for error in errors {
         eprintln!("{}", error);
