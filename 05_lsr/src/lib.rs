@@ -8,10 +8,9 @@ use chrono::{DateTime, Local};
 use clap::{App, Arg};
 use std::error::Error;
 use std::fs::{self, Metadata};
+use std::os::unix::fs::MetadataExt;
 use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
-
-//use std::fs::File;
+use users::{get_group_by_gid, get_user_by_uid};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -24,7 +23,6 @@ pub struct Config {
 
 #[derive(Debug)]
 pub struct FileInfo {
-    basename: String,
     path: String,
     metadata: Metadata,
 }
@@ -70,12 +68,13 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    let (entries, errors) = find_files(&config.entries, &config);
+    let (entries, errors) = find_files(&config)?;
 
     for error in errors {
         eprintln!("{}", error);
     }
 
+    //let mut cache = UsersCache::new();
     for entry in entries {
         println!("{}", format_output(&entry, &config)?);
     }
@@ -91,10 +90,23 @@ fn format_output(file: &FileInfo, config: &Config) -> MyResult<String> {
         true => {
             let modified: DateTime<Local> =
                 DateTime::from(file.metadata.modified()?);
+            let uid = file.metadata.uid();
+            let user = match get_user_by_uid(uid) {
+                Some(u) => u.name().to_string_lossy().into_owned(),
+                _ => format!("{}", uid),
+            };
+            let gid = file.metadata.gid();
+            let group = match get_group_by_gid(gid) {
+                Some(g) => g.name().to_string_lossy().into_owned(),
+                _ => format!("{}", gid),
+            };
+
             Ok(format!(
-                "{}{} {:8} {} {}",
+                "{}{} {:8} {:8} {:8} {} {}",
                 if file.metadata.is_dir() { "d" } else { "-" },
-                parse_permissions(file.metadata.permissions().mode() as u16),
+                format_mode(file.metadata.permissions().mode() as u16),
+                user,
+                group,
                 file.metadata.len(),
                 modified.format("%b %d %y %H:%M").to_string(),
                 file.path.to_string()
@@ -105,30 +117,20 @@ fn format_output(file: &FileInfo, config: &Config) -> MyResult<String> {
 }
 
 // --------------------------------------------------
-fn find_files(
-    paths: &Vec<String>,
-    config: &Config,
-) -> (Vec<FileInfo>, Vec<String>) {
+fn find_files(config: &Config) -> MyResult<(Vec<FileInfo>, Vec<String>)> {
     let mut results = vec![];
     let mut errors = vec![];
 
-    for path in paths {
+    for path in &config.entries {
         if let Ok(meta) = fs::metadata(path) {
             if meta.is_file() {
-                let path_info = Path::new(path);
-                if let Some(basename) = path_info
-                    .file_name()
-                    .and_then(|e| Some(e.to_string_lossy().to_string()))
-                {
-                    results.push(FileInfo {
-                        basename: basename,
-                        path: path.to_string(),
-                        metadata: meta,
-                    });
-                }
+                results.push(FileInfo {
+                    path: path.to_string(),
+                    metadata: meta,
+                });
             } else if let Ok(entries) = fs::read_dir(path) {
                 for entry in entries {
-                    let entry = entry.expect("entry");
+                    let entry = entry?;
                     if let Ok(meta) = entry.metadata() {
                         let basename =
                             entry.file_name().to_string_lossy().to_string();
@@ -136,7 +138,6 @@ fn find_files(
                         if !hidden || (hidden && config.all) {
                             results.push(FileInfo {
                                 path: entry.path().display().to_string(),
-                                basename: basename,
                                 metadata: meta,
                             });
                         }
@@ -148,49 +149,33 @@ fn find_files(
         }
     }
 
-    (results, errors)
+    Ok((results, errors))
 }
 
 // --------------------------------------------------
-fn parse_permissions(mode: u16) -> String {
-    let user = show_perm(mode, libc::S_IRUSR, libc::S_IWUSR, libc::S_IXUSR);
-    let group = show_perm(mode, libc::S_IRGRP, libc::S_IWGRP, libc::S_IXGRP);
-    let other = show_perm(mode, libc::S_IROTH, libc::S_IWOTH, libc::S_IXOTH);
-    [user, group, other].join("")
+fn format_mode(mode: u16) -> String {
+    format!(
+        "{}{}{}{}{}{}{}{}{}",
+        if mode & 0o400 > 0 { "r" } else { "-" },
+        if mode & 0o200 > 0 { "w" } else { "-" },
+        if mode & 0o100 > 0 { "x" } else { "-" },
+        if mode & 0o040 > 0 { "r" } else { "-" },
+        if mode & 0o020 > 0 { "w" } else { "-" },
+        if mode & 0o010 > 0 { "x" } else { "-" },
+        if mode & 0o004 > 0 { "r" } else { "-" },
+        if mode & 0o002 > 0 { "w" } else { "-" },
+        if mode & 0o001 > 0 { "x" } else { "-" },
+    )
 }
 
 // --------------------------------------------------
-fn show_perm(mode: u16, read: u16, write: u16, execute: u16) -> String {
-    match (mode & read, mode & write, mode & execute) {
-        (0, 0, 0) => "---",
-        (_, 0, 0) => "r--",
-        (0, _, 0) => "-w-",
-        (0, 0, _) => "--x",
-        (_, 0, _) => "r-x",
-        (_, _, 0) => "rw-",
-        (0, _, _) => "-wx",
-        (_, _, _) => "rwx",
+#[cfg(test)]
+mod test {
+    use super::format_mode;
+
+    #[test]
+    fn test_format_mode() {
+        assert_eq!(format_mode(0o755), "rwxr-xr-x");
+        assert_eq!(format_mode(0o421), "r---w---x");
     }
-    .to_string()
-}
-
-// --------------------------------------------------
-#[test]
-fn test_show_perm() {
-    assert_eq!(
-        show_perm(33188u16, libc::S_IRUSR, libc::S_IWUSR, libc::S_IXUSR),
-        "rw-"
-    );
-    assert_eq!(
-        show_perm(33188u16, libc::S_IRGRP, libc::S_IWGRP, libc::S_IXGRP),
-        "r--"
-    );
-    assert_eq!(
-        show_perm(32768u16, libc::S_IRGRP, libc::S_IWGRP, libc::S_IXGRP),
-        "---"
-    );
-    assert_eq!(
-        show_perm(33279u16, libc::S_IROTH, libc::S_IWOTH, libc::S_IXOTH),
-        "rwx"
-    );
 }

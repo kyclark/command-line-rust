@@ -1,4 +1,6 @@
 -rw-r--r--        0 Mar 19 21 10:12 tests/inputs/empty.txt
 -rw-r--r--       23 Mar 19 21 10:12 tests/inputs/two.txt
+drwxr-xr-x       96 May 28 21 13:55 tests/inputs/dir2
 -rw-r--r--       27 Mar 19 21 10:12 tests/inputs/three.txt
+drwxr-xr-x       96 May 28 21 13:54 tests/inputs/dir1
 -rw-r--r--       23 Mar 19 21 10:12 tests/inputs/one.txt
