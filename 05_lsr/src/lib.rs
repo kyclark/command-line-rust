@@ -16,15 +16,15 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
-    entries: Vec<String>,
-    long: bool,
-    all: bool,
+    pub entries: Vec<String>,
+    pub long: bool,
+    pub all: bool,
 }
 
 #[derive(Debug)]
 pub struct FileInfo {
-    path: String,
-    metadata: Metadata,
+    pub path: String,
+    pub metadata: Metadata,
 }
 
 // --------------------------------------------------
@@ -74,7 +74,6 @@ pub fn run(config: Config) -> MyResult<()> {
         eprintln!("{}", error);
     }
 
-    //let mut cache = UsersCache::new();
     for entry in entries {
         println!("{}", format_output(&entry, &config)?);
     }
@@ -84,8 +83,6 @@ pub fn run(config: Config) -> MyResult<()> {
 
 // --------------------------------------------------
 fn format_output(file: &FileInfo, config: &Config) -> MyResult<String> {
-    // Cf https://man7.org/linux/man-pages/man3/strftime.3.html
-
     match config.long {
         true => {
             let modified: DateTime<Local> =
@@ -93,7 +90,8 @@ fn format_output(file: &FileInfo, config: &Config) -> MyResult<String> {
             let uid = file.metadata.uid();
             let user = match get_user_by_uid(uid) {
                 Some(u) => u.name().to_string_lossy().into_owned(),
-                _ => format!("{}", uid),
+                //_ => format!("{}", uid),
+                _ => uid.to_string(),
             };
             let gid = file.metadata.gid();
             let group = match get_group_by_gid(gid) {
@@ -102,9 +100,10 @@ fn format_output(file: &FileInfo, config: &Config) -> MyResult<String> {
             };
 
             Ok(format!(
-                "{}{} {:8} {:8} {:8} {} {}",
+                "{}{} {:2} {:8} {:8} {:8} {} {}",
                 if file.metadata.is_dir() { "d" } else { "-" },
                 format_mode(file.metadata.permissions().mode() as u16),
+                file.metadata.nlink(),
                 user,
                 group,
                 file.metadata.len(),
@@ -152,26 +151,40 @@ fn find_files(config: &Config) -> MyResult<(Vec<FileInfo>, Vec<String>)> {
     Ok((results, errors))
 }
 
-// --------------------------------------------------
-fn format_mode(mode: u16) -> String {
+/// Given a file mode in octal format like 0o751,
+/// return a string like "rwxr-x--x"
+pub fn format_mode(mode: u16) -> String {
     format!(
-        "{}{}{}{}{}{}{}{}{}",
-        if mode & 0o400 > 0 { "r" } else { "-" },
-        if mode & 0o200 > 0 { "w" } else { "-" },
-        if mode & 0o100 > 0 { "x" } else { "-" },
-        if mode & 0o040 > 0 { "r" } else { "-" },
-        if mode & 0o020 > 0 { "w" } else { "-" },
-        if mode & 0o010 > 0 { "x" } else { "-" },
-        if mode & 0o004 > 0 { "r" } else { "-" },
-        if mode & 0o002 > 0 { "w" } else { "-" },
-        if mode & 0o001 > 0 { "x" } else { "-" },
+        "{}{}{}",
+        mk_triple(mode, 0o400, 0o200, 0o100),
+        mk_triple(mode, 0o040, 0o020, 0o010),
+        mk_triple(mode, 0o004, 0o002, 0o001),
+    )
+}
+
+/// Given an octal number like 0o500 and three mask values,
+/// return a string like "r-x"
+pub fn mk_triple(mode: u16, read: u16, write: u16, execute: u16) -> String {
+    format!(
+        "{}{}{}",
+        if mode & read == 0 { "-" } else { "r" },
+        if mode & write == 0 { "-" } else { "w" },
+        if mode & execute == 0 { "-" } else { "x" },
     )
 }
 
 // --------------------------------------------------
 #[cfg(test)]
 mod test {
-    use super::format_mode;
+    use super::{format_mode, mk_triple};
+
+    #[test]
+    fn test_mk_triple() {
+        assert_eq!(mk_triple(0o751, 0o400, 0o200, 0o100), "rwx");
+        assert_eq!(mk_triple(0o751, 0o040, 0o020, 0o010), "r-x");
+        assert_eq!(mk_triple(0o751, 0o004, 0o002, 0o001), "--x");
+        assert_eq!(mk_triple(0o600, 0o004, 0o002, 0o001), "---");
+    }
 
     #[test]
     fn test_format_mode() {

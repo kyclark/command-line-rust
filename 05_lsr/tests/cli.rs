@@ -1,9 +1,34 @@
 use assert_cmd::prelude::*;
 use predicates::prelude::*;
-use std::fs;
 use std::process::Command;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
+
+// --------------------------------------------------
+fn make_long_re(filename: &str, size: usize) -> String {
+    vec![
+        r"[d-][r-][w-][x-][r-][w-][x-][r-][w-][x-]".to_string(), // perms
+        r"[ ]".to_string(),                                      // space
+        r"[\d ]{2}".to_string(),                                 // user
+        r"[ ]".to_string(),                                      // space
+        r"[a-zA-Z0-9_ ]{8}".to_string(),                         // user
+        r"[ ]".to_string(),                                      // space
+        r"[a-zA-Z0-9_\w ]{8}".to_string(),                       // group
+        r"[ ]".to_string(),                                      // space
+        format!("{:8}", size),
+        r"[ ]".to_string(), // space
+        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)".to_string(),
+        r"[ ]".to_string(),                 // space
+        r"[ \d]{2}".to_string(),            // day
+        r"[ ]".to_string(),                 // space
+        r"[0-9]{2}".to_string(),            // year
+        r"[ ]".to_string(),                 // space
+        r"[0-9]{2}[:][0-9]{2}".to_string(), // time
+        r"[ ]".to_string(),                 // space
+        filename.to_string(),
+    ]
+    .join("")
+}
 
 // --------------------------------------------------
 #[test]
@@ -26,117 +51,167 @@ fn no_args() -> TestResult {
 }
 
 // --------------------------------------------------
-fn run(args: &Vec<&str>, expected_file: &str) -> TestResult {
-    let expected = fs::read_to_string(expected_file).ok().unwrap();
+#[test]
+fn empty() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    cmd.args(args).unwrap().assert().stdout(expected);
-
+    cmd.arg("tests/inputs/empty.txt")
+        .unwrap()
+        .assert()
+        .stdout("tests/inputs/empty.txt\n");
     Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn empty() -> TestResult {
-    run(
-        &vec!["tests/inputs/empty.txt"],
-        "tests/expected/empty.txt.out",
-    )
-}
-
-// --------------------------------------------------
-#[test]
 fn empty_long() -> TestResult {
-    run(
-        &vec!["tests/inputs/empty.txt", "-l"],
-        "tests/expected/empty.txt.l.out",
-    )
+    let mut cmd = Command::cargo_bin("lsr")?;
+    let expected = make_long_re("tests/inputs/empty.txt", 0);
+    cmd.args(vec!["--long", "tests/inputs/empty.txt"])
+        .unwrap()
+        .assert()
+        .stdout(predicate::str::is_match(expected).unwrap());
+    Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn one() -> TestResult {
-    run(&vec!["tests/inputs/one.txt"], "tests/expected/one.txt.out")
+fn fox() -> TestResult {
+    let mut cmd = Command::cargo_bin("lsr")?;
+    cmd.arg("tests/inputs/fox.txt")
+        .unwrap()
+        .assert()
+        .stdout("tests/inputs/fox.txt\n");
+    Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn one_long() -> TestResult {
-    run(
-        &vec!["tests/inputs/one.txt", "-l"],
-        "tests/expected/one.txt.l.out",
-    )
+fn fox_long() -> TestResult {
+    let mut cmd = Command::cargo_bin("lsr")?;
+    let expected = make_long_re("tests/inputs/fox.txt", 45);
+    cmd.args(vec!["--long", "tests/inputs/fox.txt"])
+        .unwrap()
+        .assert()
+        .stdout(predicate::str::is_match(expected).unwrap());
+    Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn two() -> TestResult {
-    run(&vec!["tests/inputs/two.txt"], "tests/expected/two.txt.out")
+fn bustle() -> TestResult {
+    let mut cmd = Command::cargo_bin("lsr")?;
+    cmd.arg("tests/inputs/bustle.txt")
+        .unwrap()
+        .assert()
+        .stdout("tests/inputs/bustle.txt\n");
+    Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn two_long() -> TestResult {
-    run(
-        &vec!["tests/inputs/two.txt", "-l"],
-        "tests/expected/two.txt.l.out",
-    )
+fn bustle_long() -> TestResult {
+    let mut cmd = Command::cargo_bin("lsr")?;
+    let expected = make_long_re("tests/inputs/bustle.txt", 193);
+    cmd.args(vec!["--long", "tests/inputs/bustle.txt"])
+        .unwrap()
+        .assert()
+        .stdout(predicate::str::is_match(expected).unwrap());
+    Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn three() -> TestResult {
-    run(
-        &vec!["tests/inputs/three.txt"],
-        "tests/expected/three.txt.out",
-    )
+fn spiders() -> TestResult {
+    let mut cmd = Command::cargo_bin("lsr")?;
+    cmd.arg("tests/inputs/dir/spiders.txt")
+        .unwrap()
+        .assert()
+        .stdout("tests/inputs/dir/spiders.txt\n");
+    Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn three_long() -> TestResult {
-    run(
-        &vec!["tests/inputs/three.txt", "-l"],
-        "tests/expected/three.txt.l.out",
-    )
+fn spiders_long() -> TestResult {
+    let mut cmd = Command::cargo_bin("lsr")?;
+    let expected = make_long_re("tests/inputs/dir/spiders.txt", 45);
+    cmd.args(vec!["--long", "tests/inputs/dir/spiders.txt"])
+        .unwrap()
+        .assert()
+        .stdout(predicate::str::is_match(expected).unwrap());
+    Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn dir() -> TestResult {
-    run(&vec!["tests/inputs"], "tests/expected/dir.out")
+fn dir_list() -> TestResult {
+    let mut cmd = Command::cargo_bin("lsr")?;
+    let expected = vec![
+        "tests/inputs/empty.txt",
+        "tests/inputs/bustle.txt",
+        "tests/inputs/fox.txt",
+        "tests/inputs/dir",
+        "",
+    ];
+    cmd.arg("tests/inputs")
+        .unwrap()
+        .assert()
+        .stdout(expected.join("\n"));
+    Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn dir_long() -> TestResult {
-    run(&vec!["tests/inputs", "-l"], "tests/expected/dir.l.out")
+fn dir_list_all() -> TestResult {
+    let mut cmd = Command::cargo_bin("lsr")?;
+    let expected = vec![
+        "tests/inputs/.hidden",
+        "tests/inputs/empty.txt",
+        "tests/inputs/bustle.txt",
+        "tests/inputs/fox.txt",
+        "tests/inputs/dir",
+        "",
+    ];
+    cmd.args(vec!["--all", "tests/inputs"])
+        .unwrap()
+        .assert()
+        .stdout(expected.join("\n"));
+    Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn all() -> TestResult {
-    run(
-        &vec![
-            "tests/inputs/empty.txt",
-            "tests/inputs/one.txt",
-            "tests/inputs/two.txt",
-            "tests/inputs/three.txt",
-        ],
-        "tests/expected/all.out",
-    )
+fn dir_list_long() -> TestResult {
+    let mut cmd = Command::cargo_bin("lsr")?;
+    let expected = vec![
+        make_long_re("tests/inputs/empty.txt", 0),
+        make_long_re("tests/inputs/bustle.txt", 193),
+        make_long_re("tests/inputs/fox.txt", 45),
+        make_long_re("tests/inputs/dir", 128),
+        "".to_string(),
+    ];
+    cmd.args(vec!["-l", "tests/inputs"])
+        .unwrap()
+        .assert()
+        .stdout(predicate::str::is_match(expected.join("\n")).unwrap());
+    Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn all_long() -> TestResult {
-    run(
-        &vec![
-            "tests/inputs/empty.txt",
-            "tests/inputs/one.txt",
-            "tests/inputs/two.txt",
-            "tests/inputs/three.txt",
-            "-l",
-        ],
-        "tests/expected/all.l.out",
-    )
+fn dir_list_long_all() -> TestResult {
+    let mut cmd = Command::cargo_bin("lsr")?;
+    let expected = vec![
+        make_long_re("tests/inputs/.hidden", 0),
+        make_long_re("tests/inputs/empty.txt", 0),
+        make_long_re("tests/inputs/bustle.txt", 193),
+        make_long_re("tests/inputs/fox.txt", 45),
+        make_long_re("tests/inputs/dir", 128),
+        "".to_string(),
+    ];
+    cmd.args(vec!["-la", "tests/inputs"])
+        .unwrap()
+        .assert()
+        .stdout(predicate::str::is_match(expected.join("\n")).unwrap());
+    Ok(())
 }
