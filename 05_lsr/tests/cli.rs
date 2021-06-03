@@ -152,17 +152,17 @@ fn spiders_long() -> TestResult {
 #[test]
 fn dir_list() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = vec![
+    for expected in vec![
         "tests/inputs/empty.txt",
         "tests/inputs/bustle.txt",
         "tests/inputs/fox.txt",
         "tests/inputs/dir",
-        "",
-    ];
-    cmd.arg("tests/inputs")
-        .unwrap()
-        .assert()
-        .stdout(expected.join("\n"));
+    ] {
+        cmd.arg("tests/inputs")
+            .unwrap()
+            .assert()
+            .stdout(predicate::str::contains(expected));
+    }
     Ok(())
 }
 
@@ -170,18 +170,18 @@ fn dir_list() -> TestResult {
 #[test]
 fn dir_list_all() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = vec![
+    for expected in vec![
         "tests/inputs/.hidden",
         "tests/inputs/empty.txt",
         "tests/inputs/bustle.txt",
         "tests/inputs/fox.txt",
         "tests/inputs/dir",
-        "",
-    ];
-    cmd.args(vec!["--all", "tests/inputs"])
-        .unwrap()
-        .assert()
-        .stdout(expected.join("\n"));
+    ] {
+        cmd.args(vec!["--all", "tests/inputs"])
+            .unwrap()
+            .assert()
+            .stdout(predicate::str::contains(expected));
+    }
     Ok(())
 }
 
@@ -189,17 +189,17 @@ fn dir_list_all() -> TestResult {
 #[test]
 fn dir_list_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = vec![
+    for expected in vec![
         make_long_re("tests/inputs/empty.txt", format_number(0)),
         make_long_re("tests/inputs/bustle.txt", format_number(193)),
         make_long_re("tests/inputs/fox.txt", format_number(45)),
         make_long_re("tests/inputs/dir", r"[\d ]{8}".to_string()),
-        "".to_string(),
-    ];
-    cmd.args(vec!["-l", "tests/inputs"])
-        .unwrap()
-        .assert()
-        .stdout(predicate::str::is_match(expected.join("\n")).unwrap());
+    ] {
+        cmd.args(vec!["-l", "tests/inputs"])
+            .unwrap()
+            .assert()
+            .stdout(predicate::str::contains(expected));
+    }
     Ok(())
 }
 
