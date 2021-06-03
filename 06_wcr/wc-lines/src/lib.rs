@@ -1,5 +1,3 @@
-extern crate clap;
-
 use clap::{App, Arg};
 use std::error::Error;
 use std::fs::File;
@@ -137,7 +135,9 @@ pub fn count(filename: &str) -> MyResult<FileInfo> {
     let mut line = String::new();
     loop {
         let line_bytes = file.read_line(&mut line)?;
-        if line_bytes == 0 { break; }
+        if line_bytes == 0 {
+            break;
+        }
         num_lines += 1;
         num_words += line
             .split_whitespace()

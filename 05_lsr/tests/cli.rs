@@ -11,15 +11,15 @@ fn make_long_re(filename: &str, size: usize) -> String {
         r"[ ]".to_string(),                                      // space
         r"[\d ]{2}".to_string(),                                 // user
         r"[ ]".to_string(),                                      // space
-        r"[a-zA-Z0-9_ ]{8}".to_string(),                         // user
+        r"[\w ]{8}".to_string(),                                 // user
         r"[ ]".to_string(),                                      // space
-        r"[a-zA-Z0-9_\w ]{8}".to_string(),                       // group
+        r"[\w ]{8}".to_string(),                                 // group
         r"[ ]".to_string(),                                      // space
         format!("{:8}", size),
         r"[ ]".to_string(), // space
         r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)".to_string(),
         r"[ ]".to_string(),                 // space
-        r"[ \d]{2}".to_string(),            // day
+        r"[\d ]{2}".to_string(),            // day
         r"[ ]".to_string(),                 // space
         r"[0-9]{2}".to_string(),            // year
         r"[ ]".to_string(),                 // space
