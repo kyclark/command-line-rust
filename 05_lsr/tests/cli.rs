@@ -9,22 +9,22 @@ fn make_long_re(filename: &str, size: String) -> String {
     vec![
         r"[d-][r-][w-][x-][r-][w-][x-][r-][w-][x-]".to_string(), // perms
         r"[ ]".to_string(),                                      // space
-        r"[\d ]{2}".to_string(),                                 // user
+        r"[\d ]{2}".to_string(),                                 // num links
         r"[ ]".to_string(),                                      // space
-        r"[\w ]{8}".to_string(),                                 // user
+        r"[\w ]{8}".to_string(),                                 // username
         r"[ ]".to_string(),                                      // space
-        r"[\w ]{8}".to_string(),                                 // group
+        r"[\w ]{8}".to_string(),                                 // groupname
         r"[ ]".to_string(),                                      // space
         size,
         r"[ ]".to_string(), // space
         r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)".to_string(),
-        r"[ ]".to_string(),                 // space
-        r"[\d ]{2}".to_string(),            // day
-        r"[ ]".to_string(),                 // space
-        r"[0-9]{2}".to_string(),            // year
-        r"[ ]".to_string(),                 // space
-        r"[0-9]{2}[:][0-9]{2}".to_string(), // time
-        r"[ ]".to_string(),                 // space
+        r"[ ]".to_string(),           // space
+        r"[\d ]{2}".to_string(),      // day
+        r"[ ]".to_string(),           // space
+        r"\d{2}".to_string(),         // year
+        r"[ ]".to_string(),           // space
+        r"\d{2}[:]\d{2}".to_string(), // time
+        r"[ ]".to_string(),           // space
         filename.to_string(),
     ]
     .join("")
@@ -51,6 +51,11 @@ fn no_args() -> TestResult {
 }
 
 // --------------------------------------------------
+fn fmt_num(num: &str) -> String {
+    format!("[ ]{{{}}}{}", 8 - num.len(), num)
+}
+
+// --------------------------------------------------
 #[test]
 fn empty() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
@@ -61,16 +66,24 @@ fn empty() -> TestResult {
     Ok(())
 }
 
-fn format_number(size: usize) -> String {
-    format!("{:8}", size)
-}
-
 // --------------------------------------------------
 #[test]
 fn empty_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = make_long_re("tests/inputs/empty.txt", format_number(0));
+    let expected = make_long_re("tests/inputs/empty.txt", fmt_num("0"));
     cmd.args(vec!["--long", "tests/inputs/empty.txt"])
+        .unwrap()
+        .assert()
+        .stdout(predicate::str::is_match(expected).unwrap());
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn dir_long() -> TestResult {
+    let mut cmd = Command::cargo_bin("lsr")?;
+    let expected = make_long_re("tests/inputs/dir", r"[\d ]{8}".to_string());
+    cmd.args(vec!["--long", "tests/inputs/dir"])
         .unwrap()
         .assert()
         .stdout(predicate::str::is_match(expected).unwrap());
@@ -92,7 +105,7 @@ fn fox() -> TestResult {
 #[test]
 fn fox_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = make_long_re("tests/inputs/fox.txt", format_number(45));
+    let expected = make_long_re("tests/inputs/fox.txt", fmt_num("45"));
     cmd.args(vec!["--long", "tests/inputs/fox.txt"])
         .unwrap()
         .assert()
@@ -115,8 +128,7 @@ fn bustle() -> TestResult {
 #[test]
 fn bustle_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected =
-        make_long_re("tests/inputs/bustle.txt", format_number(193));
+    let expected = make_long_re("tests/inputs/bustle.txt", fmt_num("193"));
     cmd.args(vec!["--long", "tests/inputs/bustle.txt"])
         .unwrap()
         .assert()
@@ -140,7 +152,7 @@ fn spiders() -> TestResult {
 fn spiders_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
     let expected =
-        make_long_re("tests/inputs/dir/spiders.txt", format_number(45));
+        make_long_re("tests/inputs/dir/spiders.txt", fmt_num("45"));
     cmd.args(vec!["--long", "tests/inputs/dir/spiders.txt"])
         .unwrap()
         .assert()
@@ -169,7 +181,6 @@ fn dir_list() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dir_list_all() -> TestResult {
-    let mut cmd = Command::cargo_bin("lsr")?;
     for expected in vec![
         "tests/inputs/.hidden",
         "tests/inputs/empty.txt",
@@ -177,6 +188,7 @@ fn dir_list_all() -> TestResult {
         "tests/inputs/fox.txt",
         "tests/inputs/dir",
     ] {
+        let mut cmd = Command::cargo_bin("lsr")?;
         cmd.args(vec!["--all", "tests/inputs"])
             .unwrap()
             .assert()
@@ -188,17 +200,17 @@ fn dir_list_all() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dir_list_long() -> TestResult {
-    let mut cmd = Command::cargo_bin("lsr")?;
     for expected in vec![
-        make_long_re("tests/inputs/empty.txt", format_number(0)),
-        make_long_re("tests/inputs/bustle.txt", format_number(193)),
-        make_long_re("tests/inputs/fox.txt", format_number(45)),
+        make_long_re("tests/inputs/empty.txt", fmt_num("0")),
+        make_long_re("tests/inputs/bustle.txt", fmt_num("193")),
+        make_long_re("tests/inputs/fox.txt", fmt_num("45")),
         make_long_re("tests/inputs/dir", r"[\d ]{8}".to_string()),
     ] {
+        let mut cmd = Command::cargo_bin("lsr")?;
         cmd.args(vec!["-l", "tests/inputs"])
             .unwrap()
             .assert()
-            .stdout(predicate::str::contains(expected));
+            .stdout(predicate::str::is_match(expected).unwrap());
     }
     Ok(())
 }
@@ -206,18 +218,18 @@ fn dir_list_long() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dir_list_long_all() -> TestResult {
-    let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = vec![
-        make_long_re("tests/inputs/.hidden", format_number(0)),
-        make_long_re("tests/inputs/empty.txt", format_number(0)),
-        make_long_re("tests/inputs/bustle.txt", format_number(193)),
-        make_long_re("tests/inputs/fox.txt", format_number(45)),
+    for expected in vec![
+        make_long_re("tests/inputs/.hidden", fmt_num("0")),
+        make_long_re("tests/inputs/empty.txt", fmt_num("0")),
+        make_long_re("tests/inputs/bustle.txt", fmt_num("193")),
+        make_long_re("tests/inputs/fox.txt", fmt_num("45")),
         make_long_re("tests/inputs/dir", r"[\d ]{8}".to_string()),
-        "".to_string(),
-    ];
-    cmd.args(vec!["-la", "tests/inputs"])
-        .unwrap()
-        .assert()
-        .stdout(predicate::str::is_match(expected.join("\n")).unwrap());
+    ] {
+        let mut cmd = Command::cargo_bin("lsr")?;
+        cmd.args(vec!["-la", "tests/inputs"])
+            .unwrap()
+            .assert()
+            .stdout(predicate::str::is_match(expected).unwrap());
+    }
     Ok(())
 }
