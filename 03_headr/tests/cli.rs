@@ -21,9 +21,9 @@ fn dies_no_args() -> TestResult {
 #[test]
 fn dies_bad_file() -> TestResult {
     let mut cmd = Command::cargo_bin("headr")?;
-    cmd.arg("foo")
-        .assert()
-        .stderr(predicate::str::contains("foo: .* [(]os error 2[)]"));
+    cmd.arg("foo").assert().stderr(
+        predicate::str::is_match("foo: .* [(]os error 2[)]").unwrap(),
+    );
 
     Ok(())
 }
