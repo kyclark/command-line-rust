@@ -23,7 +23,7 @@ fn dies_bad_file() -> TestResult {
     let mut cmd = Command::cargo_bin("headr")?;
     cmd.arg("foo")
         .assert()
-        .stderr(predicate::str::contains("foo: No such file or directory"));
+        .stderr(predicate::str::contains("foo: .* [(]os error 2[)]"));
 
     Ok(())
 }
