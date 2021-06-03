@@ -5,7 +5,7 @@ use std::process::Command;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 // --------------------------------------------------
-fn make_long_re(filename: &str, size: usize) -> String {
+fn make_long_re(filename: &str, size: String) -> String {
     vec![
         r"[d-][r-][w-][x-][r-][w-][x-][r-][w-][x-]".to_string(), // perms
         r"[ ]".to_string(),                                      // space
@@ -15,7 +15,7 @@ fn make_long_re(filename: &str, size: usize) -> String {
         r"[ ]".to_string(),                                      // space
         r"[\w ]{8}".to_string(),                                 // group
         r"[ ]".to_string(),                                      // space
-        format!("{:8}", size),
+        size,
         r"[ ]".to_string(), // space
         r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)".to_string(),
         r"[ ]".to_string(),                 // space
@@ -61,11 +61,15 @@ fn empty() -> TestResult {
     Ok(())
 }
 
+fn format_number(size: usize) -> String {
+    format!("{:8}", size)
+}
+
 // --------------------------------------------------
 #[test]
 fn empty_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = make_long_re("tests/inputs/empty.txt", 0);
+    let expected = make_long_re("tests/inputs/empty.txt", format_number(0));
     cmd.args(vec!["--long", "tests/inputs/empty.txt"])
         .unwrap()
         .assert()
@@ -88,7 +92,7 @@ fn fox() -> TestResult {
 #[test]
 fn fox_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = make_long_re("tests/inputs/fox.txt", 45);
+    let expected = make_long_re("tests/inputs/fox.txt", format_number(45));
     cmd.args(vec!["--long", "tests/inputs/fox.txt"])
         .unwrap()
         .assert()
@@ -111,7 +115,8 @@ fn bustle() -> TestResult {
 #[test]
 fn bustle_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = make_long_re("tests/inputs/bustle.txt", 193);
+    let expected =
+        make_long_re("tests/inputs/bustle.txt", format_number(193));
     cmd.args(vec!["--long", "tests/inputs/bustle.txt"])
         .unwrap()
         .assert()
@@ -134,7 +139,8 @@ fn spiders() -> TestResult {
 #[test]
 fn spiders_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = make_long_re("tests/inputs/dir/spiders.txt", 45);
+    let expected =
+        make_long_re("tests/inputs/dir/spiders.txt", format_number(45));
     cmd.args(vec!["--long", "tests/inputs/dir/spiders.txt"])
         .unwrap()
         .assert()
@@ -184,10 +190,10 @@ fn dir_list_all() -> TestResult {
 fn dir_list_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
     let expected = vec![
-        make_long_re("tests/inputs/empty.txt", 0),
-        make_long_re("tests/inputs/bustle.txt", 193),
-        make_long_re("tests/inputs/fox.txt", 45),
-        make_long_re("tests/inputs/dir", 128),
+        make_long_re("tests/inputs/empty.txt", format_number(0)),
+        make_long_re("tests/inputs/bustle.txt", format_number(193)),
+        make_long_re("tests/inputs/fox.txt", format_number(45)),
+        make_long_re("tests/inputs/dir", r"[\d ]{8}".to_string()),
         "".to_string(),
     ];
     cmd.args(vec!["-l", "tests/inputs"])
@@ -202,11 +208,11 @@ fn dir_list_long() -> TestResult {
 fn dir_list_long_all() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
     let expected = vec![
-        make_long_re("tests/inputs/.hidden", 0),
-        make_long_re("tests/inputs/empty.txt", 0),
-        make_long_re("tests/inputs/bustle.txt", 193),
-        make_long_re("tests/inputs/fox.txt", 45),
-        make_long_re("tests/inputs/dir", 128),
+        make_long_re("tests/inputs/.hidden", format_number(0)),
+        make_long_re("tests/inputs/empty.txt", format_number(0)),
+        make_long_re("tests/inputs/bustle.txt", format_number(193)),
+        make_long_re("tests/inputs/fox.txt", format_number(45)),
+        make_long_re("tests/inputs/dir", r"[\d ]{8}".to_string()),
         "".to_string(),
     ];
     cmd.args(vec!["-la", "tests/inputs"])
