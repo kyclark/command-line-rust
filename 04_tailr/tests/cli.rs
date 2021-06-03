@@ -20,9 +20,9 @@ fn dies_no_args() -> TestResult {
 #[test]
 fn dies_bad_file() -> TestResult {
     let mut cmd = Command::cargo_bin("tailr")?;
-    cmd.arg("foo")
-        .assert()
-        .stderr(predicate::str::contains("foo: No such file or directory"));
+    cmd.arg("foo").assert().stderr(
+        predicate::str::is_match("foo: .* [(]os error 2[)]").unwrap(),
+    );
 
     Ok(())
 }
