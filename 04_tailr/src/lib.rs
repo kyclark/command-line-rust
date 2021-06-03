@@ -1,5 +1,3 @@
-extern crate logwatcher;
-
 use clap::{App, Arg};
 use std::collections::VecDeque;
 use std::error::Error;
