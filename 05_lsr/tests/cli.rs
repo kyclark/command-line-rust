@@ -5,27 +5,27 @@ use std::process::Command;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 // --------------------------------------------------
-fn make_long_re(filename: &str, size: String) -> String {
+fn make_long_re(filename: &str, size: &str) -> String {
     vec![
-        r"[d-][r-][w-][x-][r-][w-][x-][r-][w-][x-]".to_string(), // perms
-        r"[ ]".to_string(),                                      // space
-        r"[\d ]{2}".to_string(),                                 // num links
-        r"[ ]".to_string(),                                      // space
-        r"[\w ]{8}".to_string(),                                 // username
-        r"[ ]".to_string(),                                      // space
-        r"[\w ]{8}".to_string(),                                 // groupname
-        r"[ ]".to_string(),                                      // space
+        r"[d-][r-][w-][x-][r-][w-][x-][r-][w-][x-]", // perms
+        r"[ ]",                                      // space
+        r"[\d ]{2}",                                 // num links
+        r"[ ]",                                      // space
+        r"[\w ]{8}",                                 // username
+        r"[ ]",                                      // space
+        r"[\w ]{8}",                                 // groupname
+        r"[ ]",                                      // space
         size,
-        r"[ ]".to_string(), // space
-        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)".to_string(),
-        r"[ ]".to_string(),           // space
-        r"[\d ]{2}".to_string(),      // day
-        r"[ ]".to_string(),           // space
-        r"\d{2}".to_string(),         // year
-        r"[ ]".to_string(),           // space
-        r"\d{2}[:]\d{2}".to_string(), // time
-        r"[ ]".to_string(),           // space
-        filename.to_string(),
+        r"[ ]", // space
+        r"(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)",
+        r"[ ]",           // space
+        r"[\d ]{2}",      // day
+        r"[ ]",           // space
+        r"\d{2}",         // year
+        r"[ ]",           // space
+        r"\d{2}[:]\d{2}", // time
+        r"[ ]",           // space
+        filename,
     ]
     .join("")
 }
@@ -51,11 +51,6 @@ fn no_args() -> TestResult {
 }
 
 // --------------------------------------------------
-fn fmt_num(num: &str) -> String {
-    format!("[ ]{{{}}}{}", 8 - num.len(), num)
-}
-
-// --------------------------------------------------
 #[test]
 fn empty() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
@@ -70,7 +65,7 @@ fn empty() -> TestResult {
 #[test]
 fn empty_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = make_long_re("tests/inputs/empty.txt", fmt_num("0"));
+    let expected = make_long_re("tests/inputs/empty.txt", "[ ]{7}0");
     cmd.args(vec!["--long", "tests/inputs/empty.txt"])
         .unwrap()
         .assert()
@@ -82,7 +77,7 @@ fn empty_long() -> TestResult {
 #[test]
 fn dir_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = make_long_re("tests/inputs/dir", r"[\d ]{8}".to_string());
+    let expected = make_long_re("tests/inputs/dir", r"[\d ]{8}");
     cmd.args(vec!["--long", "tests/inputs/dir"])
         .unwrap()
         .assert()
@@ -105,7 +100,7 @@ fn fox() -> TestResult {
 #[test]
 fn fox_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = make_long_re("tests/inputs/fox.txt", fmt_num("45"));
+    let expected = make_long_re("tests/inputs/fox.txt", "[ ]{6}45");
     cmd.args(vec!["--long", "tests/inputs/fox.txt"])
         .unwrap()
         .assert()
@@ -128,7 +123,7 @@ fn bustle() -> TestResult {
 #[test]
 fn bustle_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected = make_long_re("tests/inputs/bustle.txt", fmt_num("193"));
+    let expected = make_long_re("tests/inputs/bustle.txt", "[ ]{5}193");
     cmd.args(vec!["--long", "tests/inputs/bustle.txt"])
         .unwrap()
         .assert()
@@ -151,8 +146,7 @@ fn spiders() -> TestResult {
 #[test]
 fn spiders_long() -> TestResult {
     let mut cmd = Command::cargo_bin("lsr")?;
-    let expected =
-        make_long_re("tests/inputs/dir/spiders.txt", fmt_num("45"));
+    let expected = make_long_re("tests/inputs/dir/spiders.txt", "[ ]{6}45");
     cmd.args(vec!["--long", "tests/inputs/dir/spiders.txt"])
         .unwrap()
         .assert()
@@ -201,10 +195,10 @@ fn dir_list_all() -> TestResult {
 #[test]
 fn dir_list_long() -> TestResult {
     for expected in vec![
-        make_long_re("tests/inputs/empty.txt", fmt_num("0")),
-        make_long_re("tests/inputs/bustle.txt", fmt_num("193")),
-        make_long_re("tests/inputs/fox.txt", fmt_num("45")),
-        make_long_re("tests/inputs/dir", r"[\d ]{8}".to_string()),
+        make_long_re("tests/inputs/empty.txt", "[ ]{7}0"),
+        make_long_re("tests/inputs/bustle.txt", "[ ]{5}193"),
+        make_long_re("tests/inputs/fox.txt", "[ ]{6}45"),
+        make_long_re("tests/inputs/dir", r"[\d ]{8}"),
     ] {
         let mut cmd = Command::cargo_bin("lsr")?;
         cmd.args(vec!["-l", "tests/inputs"])
@@ -219,11 +213,11 @@ fn dir_list_long() -> TestResult {
 #[test]
 fn dir_list_long_all() -> TestResult {
     for expected in vec![
-        make_long_re("tests/inputs/.hidden", fmt_num("0")),
-        make_long_re("tests/inputs/empty.txt", fmt_num("0")),
-        make_long_re("tests/inputs/bustle.txt", fmt_num("193")),
-        make_long_re("tests/inputs/fox.txt", fmt_num("45")),
-        make_long_re("tests/inputs/dir", r"[\d ]{8}".to_string()),
+        make_long_re("tests/inputs/.hidden", "[ ]{7}0"),
+        make_long_re("tests/inputs/empty.txt", "[ ]{7}0"),
+        make_long_re("tests/inputs/bustle.txt", "[ ]{5}193"),
+        make_long_re("tests/inputs/fox.txt", "[ ]{6}45"),
+        make_long_re("tests/inputs/dir", r"[\d ]{8}"),
     ] {
         let mut cmd = Command::cargo_bin("lsr")?;
         cmd.args(vec!["-la", "tests/inputs"])
