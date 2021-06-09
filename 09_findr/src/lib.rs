@@ -1,16 +1,23 @@
-extern crate clap;
-
 use clap::{App, Arg};
+use regex::Regex;
 use std::error::Error;
 use std::fs;
-use walkdir::WalkDir;
+use walkdir::{DirEntry, WalkDir};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
+
+#[derive(Debug, PartialEq)]
+enum EntryType {
+    Any,
+    Dir,
+    File,
+}
 
 #[derive(Debug)]
 pub struct Config {
     dir: String,
-    entry_type: String,
+    entry_type: EntryType,
+    name: Option<Regex>,
 }
 
 // --------------------------------------------------
@@ -23,14 +30,23 @@ pub fn get_args() -> MyResult<Config> {
             Arg::with_name("dir")
                 .value_name("DIR")
                 .help("Search directory")
-                .required(true),
+                .default_value("."),
         )
         .arg(
             Arg::with_name("type")
                 .value_name("TYPE")
                 .help("Entry type")
                 .short("t")
-                .long("type"),
+                .long("type")
+                .takes_value(true),
+        )
+        .arg(
+            Arg::with_name("name")
+                .value_name("NAME")
+                .help("Name")
+                .short("n")
+                .long("name")
+                .takes_value(true),
         )
         .get_matches();
 
@@ -47,49 +63,63 @@ pub fn get_args() -> MyResult<Config> {
         Err(e) => return Err(From::from(format!("\"{}\": {}", &dir, e))),
     }
 
+    let entry_type: EntryType = match matches.value_of("type") {
+        Some(val) => match val {
+            "f" => EntryType::File,
+            "d" => EntryType::Dir,
+            _ => {
+                return Err(From::from(format!("Unknown --type \"{}\"", val)))
+            }
+        },
+        _ => EntryType::Any,
+    };
+
+    let name = match matches.value_of("name") {
+        Some(pattern) => match Regex::new(pattern) {
+            Ok(re) => Some(re),
+            _ => {
+                return Err(From::from(format!(
+                    "Invalid --name regex \"{}\"",
+                    pattern
+                )))
+            }
+        },
+        _ => None,
+    };
+
     Ok(Config {
-        dir: dir,
-        entry_type: matches.value_of("type").unwrap().to_string(),
+        dir,
+        entry_type,
+        name,
     })
 }
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    println!("{:?}", &config);
+    //println!("{:?}", &config);
 
-    if let Ok(files) = find_files(&config.dir) {
-        for file in files {
-            println!("{}", file);
-        }
-    }
+    let name_filter = |entry: &DirEntry| match &config.name {
+        Some(re) => re.is_match(&entry.path().display().to_string()),
+        _ => true,
+    };
+
+    let type_filter = |entry: &DirEntry| {
+        config.entry_type == EntryType::Any
+            || (entry.file_type().is_dir()
+                && config.entry_type == EntryType::Dir)
+            || (entry.file_type().is_file()
+                && config.entry_type == EntryType::File)
+    };
+
+    let entries: Vec<String> = WalkDir::new(&config.dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(type_filter)
+        .filter(name_filter)
+        .map(|entry| entry.path().display().to_string())
+        .collect();
+
+    println!("{}", entries.join("\n"));
 
     Ok(())
-}
-
-// --------------------------------------------------
-fn find_files(path: &String) -> MyResult<Vec<String>> {
-    let mut files: Vec<String> = vec![];
-    let metadata = fs::metadata(&path)?;
-    if metadata.is_dir() {
-        let walker = WalkDir::new(path).into_iter();
-        for entry in walker.filter_map(|e| e.ok()) {
-            if &entry.path().display().to_string() != path {
-                if let Ok(mut more) =
-                    find_files(&entry.path().display().to_string())
-                {
-                    files.append(&mut more);
-                }
-            }
-            //let meta = fs::metadata(&entry)?;
-            //if meta.is_file() {
-            //    files.push(entry.path().display().to_string());
-            //}
-            //else if meta.is_dir() {
-            //}
-        }
-    } else if metadata.is_file() {
-        files.push(path.to_string());
-    }
-
-    Ok(files)
 }

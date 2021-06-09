@@ -9,5 +9,5 @@ edition = "2018"
 [dependencies]
 clap = "~2.33"
 itertools = "~0.10"
-assert_cmd = "0.10"
+assert_cmd = "1"
 predicates = "1"

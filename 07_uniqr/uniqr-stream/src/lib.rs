@@ -13,7 +13,8 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
-    file: Option<String>,
+    in_file: String,
+    out_file: Option<String>,
     count: bool,
 }
 
@@ -24,9 +25,17 @@ pub fn get_args() -> MyResult<Config> {
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust uniq")
         .arg(
-            Arg::with_name("file")
+            Arg::with_name("in_file")
                 .value_name("FILE")
-                .help("Input file(s)"),
+                .help("Input file")
+                .default_value("-"),
+        )
+        .arg(
+            Arg::with_name("out_file")
+                .value_name("FILE")
+                .short("o")
+                .long("out")
+                .help("Output file"),
         )
         .arg(
             Arg::with_name("count")
@@ -38,53 +47,96 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let file = matches.value_of("file").and_then(|v| Some(v.to_string()));
-
-    if let Some(filename) = &file {
-        if let Some(error) = File::open(filename).err() {
-            return Err(From::from(format!("{}: {}", filename, error)));
-        }
-    }
-
     Ok(Config {
-        file: file,
+        in_file: matches
+            .value_of("in_file")
+            .and_then(|v| Some(v.to_string()))
+            .unwrap(),
+        out_file: matches
+            .value_of("out_file")
+            .and_then(|v| Some(v.to_string())),
         count: matches.is_present("count"),
     })
 }
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    let file: Box<dyn BufRead> = match &config.file {
-        None => Box::new(BufReader::new(io::stdin())),
-        Some(filename) => {
-            Box::new(BufReader::new(File::open(filename).unwrap()))
-        }
+    let mut file: Box<dyn BufRead> = match config.in_file.as_str() {
+        "-" => Box::new(BufReader::new(io::stdin())),
+        _ => Box::new(BufReader::new(File::open(&config.in_file)?)),
     };
 
-    let print = |line: &String, count: &u64| {
+    let mut out_file: Box<dyn Write> = match &config.out_file {
+        Some(out_name) => Box::new(File::create(&out_name)?),
+        _ => Box::new(io::stdout()),
+    };
+
+    let mut print = |line: &String, count: &u64| -> MyResult<()> {
         if count > &0 {
             if config.count {
-                println!("{:4} {}", &count, &line);
+                write!(out_file, "{:4} {}", &count, &line)?;
             } else {
-                println!("{}", &line);
+                write!(out_file, "{}", &line)?;
             }
-        }
+        };
+        Ok(())
     };
 
-    let mut last: String = "".to_string();
+    let mut last = String::new();
+    let mut line = String::new();
     let mut count: u64 = 0;
-    let lines = io::BufReader::new(file).lines();
-    for line in lines {
-        let line = line?;
+    loop {
+        let bytes = file.read_line(&mut line)?;
+        if bytes == 0 {
+            break;
+        }
+
         if &line != &last {
-            print(&last, &count);
+            print(&last, &count)?;
             count = 0;
         }
+
         count += 1;
-        last = line;
+        last = line.clone();
+        line.clear();
     }
 
-    print(&last, &count);
+    print(&last, &count)?;
+
+    //let mut last: String = "".to_string();
+    //let mut count: u64 = 0;
+    //for line in file.lines() {
+    //    let line = line?;
+    //    if &line != &last {
+    //        print(&last, &count)?;
+    //        count = 0;
+    //    }
+    //    count += 1;
+    //    last = line;
+    //}
+
+    //print(&last, &count)?;
 
     Ok(())
 }
+
+//fn uniq(fh: T) -> MyResult<Vec<(String, usize)>>
+//where
+//    T: BufRead,
+//{
+//    let mut last: String = "".to_string();
+//    let mut count: u64 = 0;
+//    let mut ret = vec![];
+//    for line in file.lines() {
+//        let line = line?;
+//        if &line != &last {
+//            ret.append((last, count));
+//            count = 0;
+//        }
+//        count += 1;
+//        last = line;
+//    }
+
+//    ret.append((last, count));
+//    Ok(ret)
+//}

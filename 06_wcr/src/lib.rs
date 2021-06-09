@@ -10,10 +10,10 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 #[derive(Debug)]
 pub struct Config {
     files: Vec<String>,
+    lines: bool,
     words: bool,
     bytes: bool,
     chars: bool,
-    lines: bool,
 }
 
 #[derive(Debug)]
@@ -72,25 +72,24 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
+    let mut lines = matches.is_present("lines");
     let mut words = matches.is_present("words");
     let mut bytes = matches.is_present("bytes");
     let mut chars = matches.is_present("chars");
-    let mut lines = matches.is_present("lines");
-    let opts = vec![words, bytes, chars, lines];
 
-    if opts.iter().all(|v| v == &false) {
+    if vec![words, bytes, chars, lines].iter().all(|v| v == &false) {
+        lines = true;
         words = true;
         bytes = true;
         chars = false;
-        lines = true;
     }
 
     Ok(Config {
         files: matches.values_of_lossy("file").unwrap(),
+        lines,
         words,
         bytes,
         chars,
-        lines,
     })
 }
 
@@ -106,10 +105,10 @@ pub fn run(config: Config) -> MyResult<()> {
             Ok(info) => {
                 println!(
                     "{}{}{}{}{}",
-                    format_field(&info.num_lines, &config.lines),
-                    format_field(&info.num_words, &config.words),
-                    format_field(&info.num_bytes, &config.bytes),
-                    format_field(&info.num_chars, &config.chars),
+                    format_field(info.num_lines, config.lines),
+                    format_field(info.num_words, config.words),
+                    format_field(info.num_bytes, config.bytes),
+                    format_field(info.num_chars, config.chars),
                     if filename == &"-".to_string() {
                         "".to_string()
                     } else {
@@ -121,17 +120,17 @@ pub fn run(config: Config) -> MyResult<()> {
                 total_bytes += info.num_bytes;
                 total_chars += info.num_chars;
             }
-            Err(err) => println!("{}: {}", &filename, err),
+            Err(err) => eprintln!("{}: {}", &filename, err),
         }
     }
 
     if config.files.len() > 1 {
         println!(
             "{}{}{}{} total",
-            format_field(&total_lines, &config.lines),
-            format_field(&total_words, &config.words),
-            format_field(&total_bytes, &config.bytes),
-            format_field(&total_chars, &config.chars)
+            format_field(total_lines, config.lines),
+            format_field(total_words, config.words),
+            format_field(total_bytes, config.bytes),
+            format_field(total_chars, config.chars)
         );
     }
 
@@ -139,8 +138,8 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn format_field(value: &usize, show: &bool) -> String {
-    if *show {
+fn format_field(value: usize, show: bool) -> String {
+    if show {
         format!("{:8}", value)
     } else {
         "".to_string()
@@ -164,21 +163,21 @@ pub fn count(filename: &str) -> MyResult<FileInfo> {
         if line_bytes == 0 {
             break;
         }
+        num_bytes += line_bytes;
         num_lines += 1;
         num_words += line
             .split_whitespace()
             .into_iter()
             .collect::<Vec<&str>>()
             .len();
-        num_bytes += line_bytes;
         num_chars += line.chars().collect::<Vec<char>>().len();
         line.clear();
     }
 
     Ok(FileInfo {
-        num_lines: num_lines,
-        num_words: num_words,
-        num_bytes: num_bytes,
-        num_chars: num_chars,
+        num_lines,
+        num_words,
+        num_bytes,
+        num_chars,
     })
 }

@@ -1,12 +1,37 @@
 use assert_cmd::prelude::*;
+use predicates::prelude::*;
 use std::fs;
 use std::process::Command;
-//use predicates::prelude::*;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 static EMPTY: &str = "tests/inputs/empty.txt";
 static FOX: &str = "tests/inputs/fox.txt";
 static ATLAMAL: &str = "tests/inputs/atlamal.txt";
+
+// Add dies on bad file
+// Add dies on -cm
+
+// --------------------------------------------------
+#[test]
+fn dies_bad_file() -> TestResult {
+    let mut cmd = Command::cargo_bin("wcr")?;
+    cmd.arg("blargh").assert().stderr(predicate::str::contains(
+        "blargh: No such file or directory",
+    ));
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_chars_and_bytes() -> TestResult {
+    let mut cmd = Command::cargo_bin("wcr")?;
+    cmd.args(&["-m", "-c"])
+        .assert()
+        .stderr(predicate::str::contains(
+            "The argument '--bytes' cannot be used with '--chars'",
+        ));
+    Ok(())
+}
 
 // --------------------------------------------------
 #[test]
@@ -14,7 +39,6 @@ fn empty() -> TestResult {
     let expected = fs::read_to_string("tests/inputs/empty.txt.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.arg(EMPTY).unwrap().assert().stdout(expected);
-
     Ok(())
 }
 
@@ -24,7 +48,6 @@ fn fox() -> TestResult {
     let expected = fs::read_to_string("tests/inputs/fox.txt.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.arg(FOX).unwrap().assert().stdout(expected);
-
     Ok(())
 }
 
@@ -37,7 +60,6 @@ fn fox_bytes() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -50,7 +72,6 @@ fn fox_chars() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -63,7 +84,6 @@ fn fox_words() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -76,7 +96,6 @@ fn fox_lines() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -89,7 +108,6 @@ fn fox_words_bytes() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -102,7 +120,6 @@ fn fox_words_lines() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -115,7 +132,6 @@ fn fox_bytes_lines() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -125,7 +141,6 @@ fn atlamal() -> TestResult {
     let expected = fs::read_to_string("tests/inputs/atlamal.txt.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.arg(ATLAMAL).unwrap().assert().stdout(expected);
-
     Ok(())
 }
 
@@ -138,7 +153,6 @@ fn atlamal_bytes() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -151,7 +165,6 @@ fn atlamal_words() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -177,7 +190,6 @@ fn atlamal_words_bytes() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -190,7 +202,6 @@ fn atlamal_words_lines() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -203,7 +214,6 @@ fn atlamal_bytes_lines() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -214,7 +224,6 @@ fn atlamal_stdin() -> TestResult {
     let input = fs::read_to_string(ATLAMAL)?;
     let expected = fs::read_to_string("tests/inputs/atlamal.txt.stdin.out")?;
     cmd.with_stdin().buffer(input).assert().stdout(expected);
-
     Ok(())
 }
 
@@ -227,7 +236,6 @@ fn test_all() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -240,7 +248,6 @@ fn test_all_lines() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -253,7 +260,6 @@ fn test_all_words() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -266,7 +272,6 @@ fn test_all_bytes() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -280,7 +285,6 @@ fn test_all_words_bytes() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -294,7 +298,6 @@ fn test_all_words_lines() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -308,6 +311,5 @@ fn test_all_bytes_lines() -> TestResult {
         .unwrap()
         .assert()
         .stdout(expected);
-
     Ok(())
 }

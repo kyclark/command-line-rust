@@ -246,15 +246,9 @@ mod tests {
         let rec = StringRecord::from(vec!["Ken", "Captain", "12345"]);
         assert_eq!(extract_fields(&rec, &vec![0 as usize]), vec!["Ken"]);
         assert_eq!(extract_fields(&rec, &vec![1 as usize]), vec!["Captain"]);
-
-        let wanted: Vec<usize> = vec![0, 2];
-        assert_eq!(extract_fields(&rec, &wanted), vec!["Ken", "12345"]);
-
-        let wanted: Vec<usize> = vec![0, 3];
-        assert_eq!(extract_fields(&rec, &wanted), vec!["Ken"]);
-
-        let wanted: Vec<usize> = vec![1, 0];
-        assert_eq!(extract_fields(&rec, &wanted), vec!["Captain", "Ken"]);
+        assert_eq!(extract_fields(&rec, &vec![0, 2]), vec!["Ken", "12345"]);
+        assert_eq!(extract_fields(&rec, &vec![0, 3]), vec!["Ken"]);
+        assert_eq!(extract_fields(&rec, &vec![1, 0]), vec!["Captain", "Ken"]);
     }
 
     #[test]

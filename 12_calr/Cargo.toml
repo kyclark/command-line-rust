@@ -14,5 +14,5 @@ itertools = "0.10"
 colorize = "0.1"
 
 [dev-dependencies]
-assert_cmd = "0.10"
+assert_cmd = "1"
 predicates = "1"

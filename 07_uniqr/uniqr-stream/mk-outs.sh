@@ -4,7 +4,7 @@ ROOT="tests/inputs"
 
 # Cf https://github.com/coreutils/coreutils/blob/master/tests/misc/uniq.pl
 echo -ne "a\na\n"    > $ROOT/t1.txt
-echo -ne "a\na"      > $ROOT/t2.txt
+echo -ne "a\r\na"    > $ROOT/t2.txt
 echo -ne "a\nb"      > $ROOT/t3.txt
 echo -ne "a\na\nb"   > $ROOT/t4.txt
 echo -ne "b\na\na\n" > $ROOT/t5.txt
