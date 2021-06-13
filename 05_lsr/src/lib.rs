@@ -1,9 +1,3 @@
-// Cf https://endler.dev/2018/ls/
-
-extern crate chrono;
-extern crate clap;
-extern crate libc;
-
 use chrono::{DateTime, Local};
 use clap::{App, Arg};
 use std::error::Error;
@@ -46,16 +40,16 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("LONG")
                 .takes_value(false)
                 .help("Long listing")
-                .short("-l")
-                .long("--long"),
+                .short("l")
+                .long("long"),
         )
         .arg(
             Arg::with_name("all")
                 .value_name("ALL")
                 .takes_value(false)
                 .help("Show all files")
-                .short("-a")
-                .long("--all"),
+                .short("a")
+                .long("all"),
         )
         .get_matches();
 
@@ -90,13 +84,12 @@ fn format_output(file: &FileInfo, config: &Config) -> MyResult<String> {
             let uid = file.metadata.uid();
             let user = match get_user_by_uid(uid) {
                 Some(u) => u.name().to_string_lossy().into_owned(),
-                //_ => format!("{}", uid),
                 _ => uid.to_string(),
             };
             let gid = file.metadata.gid();
             let group = match get_group_by_gid(gid) {
                 Some(g) => g.name().to_string_lossy().into_owned(),
-                _ => format!("{}", gid),
+                _ => gid.to_string(),
             };
 
             Ok(format!(

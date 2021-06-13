@@ -1,8 +1,6 @@
 extern crate clap;
 
 use clap::{App, Arg};
-//use itertools::Itertools;
-//use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
 use std::io;
@@ -33,8 +31,6 @@ pub fn get_args() -> MyResult<Config> {
         .arg(
             Arg::with_name("out_file")
                 .value_name("FILE")
-                .short("o")
-                .long("out")
                 .help("Output file"),
         )
         .arg(
@@ -42,7 +38,7 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("COUNT")
                 .help("Show counts")
                 .short("c")
-                .long("counts")
+                .long("count")
                 .takes_value(false),
         )
         .get_matches();
@@ -71,7 +67,7 @@ pub fn run(config: Config) -> MyResult<()> {
         _ => Box::new(io::stdout()),
     };
 
-    let mut print = |line: &String, count: &u64| -> MyResult<()> {
+    let mut print = |count: &u64, line: &String| -> MyResult<()> {
         if count > &0 {
             if config.count {
                 write!(out_file, "{:4} {}", &count, &line)?;
@@ -82,8 +78,8 @@ pub fn run(config: Config) -> MyResult<()> {
         Ok(())
     };
 
-    let mut last = String::new();
     let mut line = String::new();
+    let mut last = String::new();
     let mut count: u64 = 0;
     loop {
         let bytes = file.read_line(&mut line)?;
@@ -91,52 +87,16 @@ pub fn run(config: Config) -> MyResult<()> {
             break;
         }
 
-        if &line != &last {
-            print(&last, &count)?;
+        if &line.trim_end() != &last.trim_end() {
+            print(&count, &last)?;
+            last = line.clone();
             count = 0;
         }
 
         count += 1;
-        last = line.clone();
         line.clear();
     }
-
-    print(&last, &count)?;
-
-    //let mut last: String = "".to_string();
-    //let mut count: u64 = 0;
-    //for line in file.lines() {
-    //    let line = line?;
-    //    if &line != &last {
-    //        print(&last, &count)?;
-    //        count = 0;
-    //    }
-    //    count += 1;
-    //    last = line;
-    //}
-
-    //print(&last, &count)?;
+    print(&count, &last)?;
 
     Ok(())
 }
-
-//fn uniq(fh: T) -> MyResult<Vec<(String, usize)>>
-//where
-//    T: BufRead,
-//{
-//    let mut last: String = "".to_string();
-//    let mut count: u64 = 0;
-//    let mut ret = vec![];
-//    for line in file.lines() {
-//        let line = line?;
-//        if &line != &last {
-//            ret.append((last, count));
-//            count = 0;
-//        }
-//        count += 1;
-//        last = line;
-//    }
-
-//    ret.append((last, count));
-//    Ok(ret)
-//}
