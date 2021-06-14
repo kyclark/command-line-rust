@@ -8,7 +8,6 @@ edition = "2018"
 
 [dependencies]
 clap = "~2.33"
-utf8-chars = "1" # needed for "chars"
 
 [dev-dependencies]
 assert_cmd = "1"

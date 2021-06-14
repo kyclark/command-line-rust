@@ -1,9 +1,8 @@
 use clap::{App, Arg};
 use std::error::Error;
 use std::fs::File;
-use std::io::prelude::*; // needed for read_line
+use std::io::prelude::*;
 use std::io::{self, BufReader};
-//use utf8_chars::BufReadCharsExt; // needed for "chars"
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 

@@ -1,15 +1,12 @@
 use assert_cmd::prelude::*;
+use assert_cmd::Command;
 use predicates::prelude::*;
 use std::fs;
-use std::process::Command;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 static EMPTY: &str = "tests/inputs/empty.txt";
 static FOX: &str = "tests/inputs/fox.txt";
 static ATLAMAL: &str = "tests/inputs/atlamal.txt";
-
-// Add dies on bad file
-// Add dies on -cm
 
 // --------------------------------------------------
 #[test]
@@ -223,7 +220,7 @@ fn atlamal_stdin() -> TestResult {
     let mut cmd = Command::cargo_bin("wcr")?;
     let input = fs::read_to_string(ATLAMAL)?;
     let expected = fs::read_to_string("tests/inputs/atlamal.txt.stdin.out")?;
-    cmd.with_stdin().buffer(input).assert().stdout(expected);
+    cmd.write_stdin(input).assert().stdout(expected);
     Ok(())
 }
 
