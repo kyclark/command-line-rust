@@ -12,9 +12,9 @@ static ATLAMAL: &str = "tests/inputs/atlamal.txt";
 #[test]
 fn dies_bad_file() -> TestResult {
     let mut cmd = Command::cargo_bin("wcr")?;
-    cmd.arg("blargh").assert().stderr(predicate::str::contains(
-        "blargh: No such file or directory",
-    ));
+    cmd.arg("blargh").assert().stderr(
+        predicate::str::is_match("blargh: .* [(]os error 2[)]").unwrap(),
+    );
     Ok(())
 }
 
