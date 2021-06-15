@@ -73,9 +73,8 @@ fn run(args: &Vec<&str>, expected_file: &str) -> TestResult {
     let mut buffer = Vec::new();
     f.read_to_end(&mut buffer)?;
     let expected = String::from_utf8_lossy(&buffer);
-    let mut cmd = Command::cargo_bin("headr")?;
-    cmd.args(args)
-        .unwrap()
+    Command::cargo_bin("headr")?
+        .args(args)
         .assert()
         .stdout(predicate::str::contains(expected));
 

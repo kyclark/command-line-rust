@@ -122,7 +122,7 @@ fn run_stdin_count(test: &Test) -> TestResult {
     let expected = fs::read_to_string(test.out_count)?;
 
     Command::cargo_bin(PRG)?
-        .arg("-c")
+        .arg("--count")
         .write_stdin(input)
         .assert()
         .stdout(expected);
