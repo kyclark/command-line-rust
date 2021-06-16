@@ -2,8 +2,6 @@ use assert_cmd::Command;
 use predicates::prelude::*;
 use std::fs;
 
-// add conflicts for flags
-
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 static PRG: &str = "cutr";
@@ -52,6 +50,36 @@ fn dies_bad_digit_chars() -> TestResult {
     cmd.args(&[CSV, "-c", "blargh"])
         .assert()
         .stderr(predicate::str::contains("illegal list value: \"blargh\""));
+    Ok(())
+}
+
+#[test]
+fn dies_chars_bytes_fields() -> TestResult {
+    let mut cmd = Command::cargo_bin(PRG)?;
+    cmd.args(&[CSV, "-c", "1", "-f", "1", "-b", "1"])
+        .assert()
+        .failure();
+    Ok(())
+}
+
+#[test]
+fn dies_bytes_fields() -> TestResult {
+    let mut cmd = Command::cargo_bin(PRG)?;
+    cmd.args(&[CSV, "-f", "1", "-b", "1"]).assert().failure();
+    Ok(())
+}
+
+#[test]
+fn dies_chars_fields() -> TestResult {
+    let mut cmd = Command::cargo_bin(PRG)?;
+    cmd.args(&[CSV, "-c", "1", "-f", "1"]).assert().failure();
+    Ok(())
+}
+
+#[test]
+fn dies_chars_bytes() -> TestResult {
+    let mut cmd = Command::cargo_bin(PRG)?;
+    cmd.args(&[CSV, "-c", "1", "-b", "1"]).assert().failure();
     Ok(())
 }
 

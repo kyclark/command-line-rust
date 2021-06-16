@@ -74,9 +74,9 @@ pub fn get_args() -> MyResult<Config> {
         )));
     }
 
-    let fields = get_positions(matches.value_of("fields"))?;
-    let bytes = get_positions(matches.value_of("bytes"))?;
-    let chars = get_positions(matches.value_of("chars"))?;
+    let fields = parse_positions(matches.value_of("fields"))?;
+    let bytes = parse_positions(matches.value_of("bytes"))?;
+    let chars = parse_positions(matches.value_of("chars"))?;
     if vec![&fields, &bytes, &chars]
         .into_iter()
         .all(|v| v.is_none())
@@ -151,11 +151,11 @@ pub fn cut(filename: &str, config: &Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn get_positions(range: Option<&str>) -> MyResult<Option<PositionList>> {
+fn parse_positions(range: Option<&str>) -> MyResult<Option<PositionList>> {
     match range {
         Some(range_val) => {
             let mut fields: Vec<usize> = vec![];
-            let comma_re = Regex::new(r"(\d+)-(\d+)").unwrap();
+            let comma_re = Regex::new(r"(\d+)?-(\d+)?").unwrap();
             for val in range_val.split(",") {
                 if let Some(cap) = comma_re.captures(val) {
                     let n1 = &cap[1].parse::<usize>()?;
@@ -236,42 +236,42 @@ fn extract_chars(line: &str, char_pos: &PositionList) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        extract_bytes, extract_chars, extract_fields, get_positions,
+        extract_bytes, extract_chars, extract_fields, parse_positions,
     };
     use csv::StringRecord;
 
     #[test]
-    fn test_get_positions() {
-        let res1 = get_positions(None);
+    fn test_parse_positions() {
+        let res1 = parse_positions(None);
         assert!(res1.is_ok());
         if let Ok(val1) = res1 {
             assert!(val1.is_none());
         }
 
-        assert!(get_positions(Some("")).is_err());
-        assert!(get_positions(Some("a")).is_err());
-        assert!(get_positions(Some("1,a")).is_err());
-        assert!(get_positions(Some("2-1")).is_err());
+        assert!(parse_positions(Some("")).is_err());
+        assert!(parse_positions(Some("a")).is_err());
+        assert!(parse_positions(Some("1,a")).is_err());
+        assert!(parse_positions(Some("2-1")).is_err());
 
-        let res2 = get_positions(Some("1"));
+        let res2 = parse_positions(Some("1"));
         assert!(res2.is_ok());
         if let Some(val2) = res2.unwrap() {
             assert_eq!(val2, vec![0]);
         }
 
-        let res3 = get_positions(Some("1,3"));
+        let res3 = parse_positions(Some("1,3"));
         assert!(res3.is_ok());
         if let Some(val3) = res3.unwrap() {
             assert_eq!(val3, vec![0, 2]);
         }
 
-        let res4 = get_positions(Some("1-3"));
+        let res4 = parse_positions(Some("1-3"));
         assert!(res4.is_ok());
         if let Some(val4) = res4.unwrap() {
             assert_eq!(val4, vec![0, 1, 2]);
         }
 
-        let res5 = get_positions(Some("1,7,3-5"));
+        let res5 = parse_positions(Some("1,7,3-5"));
         assert!(res5.is_ok());
         if let Some(val5) = res5.unwrap() {
             assert_eq!(val5, vec![0, 6, 2, 3, 4]);
