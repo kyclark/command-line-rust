@@ -1,5 +1,5 @@
 use clap::{App, Arg};
-use csv::StringRecord;
+use csv::{ReaderBuilder, StringRecord, WriterBuilder};
 use regex::Regex;
 use std::error::Error;
 use std::fs::File;
@@ -112,39 +112,27 @@ pub fn cut(filename: &str, config: &Config) -> MyResult<()> {
         _ => Box::new(BufReader::new(File::open(filename)?)),
     };
 
-    if let Some(get_fields) = &config.fields {
-        let mut reader = csv::ReaderBuilder::new()
+    if let Some(field_pos) = &config.fields {
+        let mut reader = ReaderBuilder::new()
             .delimiter(config.delimiter)
+            .has_headers(false)
             .from_reader(file);
 
-        let out_delim = std::str::from_utf8(&[config.delimiter; 1])
-            .unwrap()
-            .to_string();
+        let mut wtr = WriterBuilder::new()
+            .delimiter(config.delimiter)
+            .from_writer(io::stdout());
 
-        let headers = reader.headers()?;
-        let out_headers: Vec<String> = get_fields
-            .iter()
-            .filter_map(|i| headers.get(*i).and_then(|v| Some(v.to_string())))
-            .collect();
-
-        println!("{}", out_headers.join(&out_delim));
-
-        for result in reader.records() {
-            let record = result?;
-            let vals = extract_fields(&record, &get_fields);
-            println!("{}", vals.join(&out_delim));
+        for record in reader.records() {
+            let record = record?;
+            wtr.write_record(extract_fields(&record, &field_pos))?;
         }
-    } else if let Some(bytes) = &config.bytes {
-        let buf = BufReader::new(file);
-        for line in buf.lines() {
-            let line = line?;
-            println!("{}", extract_bytes(&line, bytes));
+    } else if let Some(byte_pos) = &config.bytes {
+        for line in file.lines() {
+            println!("{}", extract_bytes(&line?, byte_pos));
         }
     } else if let Some(char_pos) = &config.chars {
-        let buf = BufReader::new(file);
-        for line in buf.lines() {
-            let line = line?;
-            println!("{}", extract_chars(&line, char_pos));
+        for line in file.lines() {
+            println!("{}", extract_chars(&line?, char_pos));
         }
     }
     Ok(())
@@ -155,9 +143,9 @@ fn parse_positions(range: Option<&str>) -> MyResult<Option<PositionList>> {
     match range {
         Some(range_val) => {
             let mut fields: Vec<usize> = vec![];
-            let comma_re = Regex::new(r"(\d+)?-(\d+)?").unwrap();
+            let range_re = Regex::new(r"(\d+)?-(\d+)?").unwrap();
             for val in range_val.split(",") {
-                if let Some(cap) = comma_re.captures(val) {
+                if let Some(cap) = range_re.captures(val) {
                     let n1 = &cap[1].parse::<usize>()?;
                     let n2 = &cap[2].parse::<usize>()?;
 
@@ -195,40 +183,42 @@ fn parse_positions(range: Option<&str>) -> MyResult<Option<PositionList>> {
 }
 
 // --------------------------------------------------
-fn extract_fields(
-    record: &StringRecord,
-    field_pos: &PositionList,
-) -> Vec<String> {
-    field_pos
-        .iter()
-        .filter_map(|i| record.get(*i).and_then(|v| Some(v.to_string())))
-        .collect()
+fn extract_fields<'a>(
+    record: &'a StringRecord,
+    field_pos: &'a PositionList,
+) -> Vec<&'a str> {
+    field_pos.iter().filter_map(|i| record.get(*i)).collect()
 }
 
 // --------------------------------------------------
-fn extract_bytes(line: &str, byte_pos: &PositionList) -> String {
+//fn extract_fields(
+//    record: &StringRecord,
+//    field_pos: &PositionList,
+//) -> Vec<String> {
+//    field_pos
+//        .iter()
+//        .filter_map(|i| record.get(*i))
+//        .map(|v| v.to_string())
+//        .collect()
+//}
+
+// --------------------------------------------------
+fn extract_bytes(line: &str, byte_pos: &[usize]) -> String {
     let bytes: Vec<u8> = line.bytes().collect();
-    let valid = 0..line.len();
-    String::from_utf8_lossy(
-        &byte_pos
-            .into_iter()
-            .filter(|i| valid.contains(i))
-            .cloned()
-            .map(|i| bytes[i])
-            .collect::<Vec<u8>>(),
-    )
-    .into_owned()
+    let selected: Vec<u8> = byte_pos
+        .iter()
+        .filter_map(|i| bytes.get(*i))
+        .cloned()
+        .collect();
+    String::from_utf8_lossy(&selected).into_owned()
 }
 
 // --------------------------------------------------
 fn extract_chars(line: &str, char_pos: &PositionList) -> String {
     let chars: Vec<char> = line.chars().collect();
-    let valid = 0..line.len();
     char_pos
-        .into_iter()
-        .filter(|i| valid.contains(i))
-        .cloned()
-        .map(|i| chars[i])
+        .iter()
+        .filter_map(|i| chars.get(*i))
         .collect::<String>()
 }
 
@@ -280,12 +270,18 @@ mod tests {
 
     #[test]
     fn test_extract_fields() {
-        let rec = StringRecord::from(vec!["Ken", "Captain", "12345"]);
-        assert_eq!(extract_fields(&rec, &vec![0 as usize]), vec!["Ken"]);
-        assert_eq!(extract_fields(&rec, &vec![1 as usize]), vec!["Captain"]);
-        assert_eq!(extract_fields(&rec, &vec![0, 2]), vec!["Ken", "12345"]);
-        assert_eq!(extract_fields(&rec, &vec![0, 3]), vec!["Ken"]);
-        assert_eq!(extract_fields(&rec, &vec![1, 0]), vec!["Captain", "Ken"]);
+        let rec = StringRecord::from(vec!["Captain", "Sham", "12345"]);
+        assert_eq!(extract_fields(&rec, &vec![0]), vec!["Captain"]);
+        assert_eq!(extract_fields(&rec, &vec![1]), vec!["Sham"]);
+        assert_eq!(
+            extract_fields(&rec, &vec![0, 2]),
+            vec!["Captain", "12345"]
+        );
+        assert_eq!(extract_fields(&rec, &vec![0, 3]), vec!["Captain"]);
+        assert_eq!(
+            extract_fields(&rec, &vec![1, 0]),
+            vec!["Sham", "Captain"]
+        );
     }
 
     #[test]
