@@ -1,6 +1,6 @@
 # Hands-On Systems Programming with Rust
 
-This is the code repository for the O'Reilly book _Hands-On Systems Programming with Rust_ (ISBN 9781098109417) by Ken Youens-Clark.
+This is the code repository for the O'Reilly book [https://learning.oreilly.com/library/view/hands-on-systems-programming/9781098109424/](_Hands-On Systems Programming with Rust_) (ISBN 9781098109417) by Ken Youens-Clark.
 
 For several consecutive years, Rust has been voted "most loved programming language" in Stack Overflow's annual developer survey. This open source systems programming language is now used for everything from game engines and operating systems to browser components and virtual reality simulation engines. But Rust is also an incredibly complex language with a notoriously difficult learning curve.
 

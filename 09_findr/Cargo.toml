@@ -10,3 +10,7 @@ edition = "2018"
 clap = "~2.33"
 walkdir = "2"
 regex = "1"
+
+[dev-dependencies]
+assert_cmd = "1"
+predicates = "1"
