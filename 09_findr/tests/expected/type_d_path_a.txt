@@ -1,0 +1,3 @@
+tests/inputs/a
+tests/inputs/a/b
+tests/inputs/a/b/c
