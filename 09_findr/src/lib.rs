@@ -8,15 +8,15 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 enum EntryType {
-    Any,
     Dir,
     File,
+    Link,
 }
 
 #[derive(Debug)]
 pub struct Config {
     dirs: Vec<String>,
-    entry_type: EntryType,
+    entry_types: Option<Vec<EntryType>>,
     names: Option<Vec<Regex>>,
 }
 
@@ -39,7 +39,8 @@ pub fn get_args() -> MyResult<Config> {
                 .help("Entry type")
                 .short("t")
                 .long("type")
-                .possible_values(&["f", "d"])
+                .possible_values(&["f", "d", "l"])
+                .multiple(true)
                 .takes_value(true),
         )
         .arg(
@@ -74,15 +75,21 @@ pub fn get_args() -> MyResult<Config> {
         }
     }
 
-    let entry_type: EntryType = match matches.value_of("type") {
-        Some(val) => match val {
-            "f" => EntryType::File,
-            "d" => EntryType::Dir,
-            _ => {
-                return Err(From::from(format!("Unknown --type \"{}\"", val)))
+    let mut entry_types = vec![];
+    if let Some(vals) = matches.values_of_lossy("type") {
+        for val in vals {
+            match val.as_str() {
+                "d" => entry_types.push(EntryType::Dir),
+                "f" => entry_types.push(EntryType::File),
+                "l" => entry_types.push(EntryType::Link),
+                _ => {
+                    return Err(From::from(format!(
+                        "Unknown --type \"{}\"",
+                        val
+                    )))
+                }
             }
-        },
-        _ => EntryType::Any,
+        }
     };
 
     let mut names = vec![];
@@ -102,7 +109,11 @@ pub fn get_args() -> MyResult<Config> {
 
     Ok(Config {
         dirs,
-        entry_type,
+        entry_types: if entry_types.is_empty() {
+            None
+        } else {
+            Some(entry_types)
+        },
         names: if names.is_empty() { None } else { Some(names) },
     })
 }
@@ -118,10 +129,13 @@ pub fn run(config: Config) -> MyResult<()> {
         _ => true,
     };
 
-    let type_filter = |entry: &DirEntry| match &config.entry_type {
-        &EntryType::Any => true,
-        &EntryType::Dir => entry.file_type().is_dir(),
-        &EntryType::File => entry.file_type().is_file(),
+    let type_filter = |entry: &DirEntry| match &config.entry_types {
+        Some(types) => types.iter().any(|t| match t {
+            &EntryType::Link => entry.path_is_symlink(),
+            &EntryType::Dir => entry.file_type().is_dir(),
+            &EntryType::File => entry.file_type().is_file(),
+        }),
+        _ => true,
     };
 
     for dir in &config.dirs {

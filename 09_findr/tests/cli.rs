@@ -35,12 +35,10 @@ fn dies_bad_name() -> TestResult {
 #[test]
 fn dies_bad_type() -> TestResult {
     let mut cmd = Command::cargo_bin(PRG)?;
-    cmd.args(&["--type", "x"]).assert().stderr(
-        predicate::str::is_match(
-            "error: 'x' isn't a valid value for '--type <TYPE>'",
-        )
-        .unwrap(),
-    );
+    let expected = "error: 'x' isn't a valid value for '--type <TYPE>...'";
+    cmd.args(&["--type", "x"])
+        .assert()
+        .stderr(predicate::str::is_match(expected).unwrap());
     Ok(())
 }
 
@@ -195,7 +193,7 @@ fn type_d_path_a_b_d() -> TestResult {
 #[test]
 fn name_csv() -> TestResult {
     run(&Test {
-        args: &vec!["tests/inputs", "-n", ".*.csv"],
+        args: &vec!["tests/inputs", "-n", ".*\\.csv"],
         out: "tests/expected/name_csv.txt",
     })
 }
