@@ -34,7 +34,7 @@ pub fn get_args() -> MyResult<Config> {
                 .min_values(1),
         )
         .arg(
-            Arg::with_name("type")
+            Arg::with_name("types")
                 .value_name("TYPE")
                 .help("Entry type")
                 .short("t")
@@ -44,7 +44,7 @@ pub fn get_args() -> MyResult<Config> {
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("name")
+            Arg::with_name("names")
                 .value_name("NAME")
                 .help("Name")
                 .short("n")

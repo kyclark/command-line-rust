@@ -191,6 +191,24 @@ fn type_d_path_a_b_d() -> TestResult {
 
 // --------------------------------------------------
 #[test]
+fn type_l() -> TestResult {
+    run(&Test {
+        args: &vec!["tests/inputs", "-t", "l"],
+        out: "tests/expected/type_l.txt",
+    })
+}
+
+// --------------------------------------------------
+#[test]
+fn type_f_l() -> TestResult {
+    run(&Test {
+        args: &vec!["tests/inputs", "-t", "l", "f"],
+        out: "tests/expected/type_f_l.txt",
+    })
+}
+
+// --------------------------------------------------
+#[test]
 fn name_csv() -> TestResult {
     run(&Test {
         args: &vec!["tests/inputs", "-n", ".*\\.csv"],
