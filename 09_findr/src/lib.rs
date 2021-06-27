@@ -76,7 +76,7 @@ pub fn get_args() -> MyResult<Config> {
     }
 
     let mut entry_types = vec![];
-    if let Some(vals) = matches.values_of_lossy("type") {
+    if let Some(vals) = matches.values_of_lossy("types") {
         for val in vals {
             match val.as_str() {
                 "d" => entry_types.push(EntryType::Dir),
@@ -93,7 +93,7 @@ pub fn get_args() -> MyResult<Config> {
     };
 
     let mut names = vec![];
-    if let Some(vals) = matches.values_of_lossy("name") {
+    if let Some(vals) = matches.values_of_lossy("names") {
         for name in vals {
             match Regex::new(&name) {
                 Ok(re) => names.push(re),
@@ -120,8 +120,6 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    //println!("{:#?}", &config);
-
     let name_filter = |entry: &DirEntry| match &config.names {
         Some(names) => names
             .iter()
