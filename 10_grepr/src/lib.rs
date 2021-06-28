@@ -2,7 +2,7 @@ extern crate clap;
 extern crate regex;
 
 use clap::{App, Arg};
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 use std::error::Error;
 use std::fs;
 use std::fs::File;
@@ -14,7 +14,7 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
-    pattern: String,
+    pattern: Regex,
     files: Vec<String>,
     recursive: bool,
 }
@@ -32,11 +32,19 @@ pub fn get_args() -> MyResult<Config> {
                 .required(true),
         )
         .arg(
-            Arg::with_name("file")
+            Arg::with_name("files")
                 .value_name("FILE")
                 .help("Input file(s)")
                 .required(true)
                 .min_values(1),
+        )
+        .arg(
+            Arg::with_name("insensitive")
+                .value_name("INSENSITIVE")
+                .help("Case-insensitive")
+                .short("i")
+                .long("--insensitive")
+                .takes_value(false),
         )
         .arg(
             Arg::with_name("recursive")
@@ -48,17 +56,24 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
+    let pattern = matches.value_of("pattern").unwrap().to_string();
+    let re = RegexBuilder::new(&pattern)
+        .case_insensitive(matches.is_present("insensitive"))
+        .build();
+
+    if re.is_err() {
+        return Err(From::from(format!("Invalid pattern \"{}\"", pattern)));
+    }
+
     Ok(Config {
-        pattern: matches.value_of("pattern").unwrap().to_string(),
-        files: matches.values_of_lossy("file").unwrap(),
+        pattern: re?,
+        files: matches.values_of_lossy("files").unwrap(),
         recursive: matches.is_present("recursive"),
     })
 }
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    let re = Regex::new(&config.pattern).unwrap();
-
     let mut files: Vec<String> = vec![];
     if config.recursive {
         for file in &config.files {
@@ -76,8 +91,8 @@ pub fn run(config: Config) -> MyResult<()> {
 
         for line in file.lines() {
             if let Ok(line) = line {
-                if re.is_match(&line) {
-                    println!("{}: {}", &filename, &line);
+                if config.pattern.is_match(&line) {
+                    println!("{}:{}", &filename, &line);
                 }
             }
         }
