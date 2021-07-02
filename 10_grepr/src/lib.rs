@@ -1,13 +1,9 @@
-extern crate clap;
-extern crate regex;
-
 use clap::{App, Arg};
 use regex::{Regex, RegexBuilder};
 use std::error::Error;
-use std::fs;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::prelude::*;
-use std::io::BufReader;
+use std::io::{self, BufReader};
 use walkdir::WalkDir;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
@@ -21,7 +17,7 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("grep")
+    let matches = App::new("grepr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust grep")
@@ -36,6 +32,7 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("FILE")
                 .help("Input file(s)")
                 .required(true)
+                .default_value("-")
                 .min_values(1),
         )
         .arg(
@@ -43,7 +40,7 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("INSENSITIVE")
                 .help("Case-insensitive")
                 .short("i")
-                .long("--insensitive")
+                .long("insensitive")
                 .takes_value(false),
         )
         .arg(
@@ -51,12 +48,12 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("RECURSIVE")
                 .help("Recursive search")
                 .short("r")
-                .long("--recursive")
+                .long("recursive")
                 .takes_value(false),
         )
         .get_matches();
 
-    let pattern = matches.value_of("pattern").unwrap().to_string();
+    let pattern = matches.value_of("pattern").unwrap();
     let re = RegexBuilder::new(&pattern)
         .case_insensitive(matches.is_present("insensitive"))
         .build();
@@ -66,7 +63,7 @@ pub fn get_args() -> MyResult<Config> {
     }
 
     Ok(Config {
-        pattern: re?,
+        pattern: re.unwrap(),
         files: matches.values_of_lossy("files").unwrap(),
         recursive: matches.is_present("recursive"),
     })
@@ -74,25 +71,28 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    let mut files: Vec<String> = vec![];
-    if config.recursive {
-        for file in &config.files {
-            if let Ok(mut f) = find_files(file) {
-                files.append(&mut f);
-            }
-        }
-    } else {
-        files = config.files;
-    }
+    let files = find_files(&config)?;
+    let num_files = &files.len();
 
     for filename in &files {
-        let file = File::open(filename)?;
-        let file = BufReader::new(file);
+        let file: Box<dyn BufRead> = match filename.as_str() {
+            "-" => Box::new(BufReader::new(io::stdin())),
+            _ => match fs::metadata(&filename)?.is_dir() {
+                true => Err(format!("{} is a directory", filename)),
+                _ => Box::new(BufReader::new(
+                    File::open(filename)
+                        .map_err(|e| format!("{}: {}", filename, e))?,
+                )),
+            },
+        };
 
         for line in file.lines() {
-            if let Ok(line) = line {
-                if config.pattern.is_match(&line) {
+            let line = line?;
+            if config.pattern.is_match(&line) {
+                if num_files > &1 {
                     println!("{}:{}", &filename, &line);
+                } else {
+                    println!("{}", &line);
                 }
             }
         }
@@ -102,28 +102,24 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn find_files(path: &String) -> MyResult<Vec<String>> {
+fn find_files(config: &Config) -> MyResult<Vec<String>> {
     let mut files: Vec<String> = vec![];
-    let metadata = fs::metadata(&path)?;
-    if metadata.is_dir() {
-        let walker = WalkDir::new(path).into_iter();
-        for entry in walker.filter_map(|e| e.ok()) {
-            if &entry.path().display().to_string() != path {
-                if let Ok(mut more) =
-                    find_files(&entry.path().display().to_string())
-                {
-                    files.append(&mut more);
+    if config.recursive {
+        for path in &config.files {
+            let metadata = fs::metadata(&path)?;
+            if metadata.is_dir() {
+                for entry in WalkDir::new(path) {
+                    let entry = entry?;
+                    if entry.file_type().is_file() {
+                        files.push(entry.path().display().to_string());
+                    }
                 }
+            } else if metadata.is_file() {
+                files.push(path.to_string());
             }
-            //let meta = fs::metadata(&entry)?;
-            //if meta.is_file() {
-            //    files.push(entry.path().display().to_string());
-            //}
-            //else if meta.is_dir() {
-            //}
         }
-    } else if metadata.is_file() {
-        files.push(path.to_string());
+    } else {
+        files = config.files.iter().map(|v| v.clone()).collect();
     }
 
     Ok(files)

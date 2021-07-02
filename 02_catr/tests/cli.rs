@@ -1,11 +1,10 @@
-use assert_cmd::prelude::*;
+use assert_cmd::Command;
 use predicates::prelude::*;
 use std::fs;
-use std::process::Command;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
-static PROGRAM: &str = "catr";
+static PRG: &str = "catr";
 static EMPTY: &str = "tests/inputs/empty.txt";
 static FOX: &str = "tests/inputs/fox.txt";
 static SPIDERS: &str = "tests/inputs/spiders.txt";
@@ -14,7 +13,7 @@ static BUSTLE: &str = "tests/inputs/the-bustle.txt";
 // --------------------------------------------------
 #[test]
 fn usage() -> TestResult {
-    let mut cmd = Command::cargo_bin(PROGRAM)?;
+    let mut cmd = Command::cargo_bin(PRG)?;
     for flag in vec!["-h", "--help"] {
         cmd.arg(flag)
             .assert()
@@ -26,7 +25,7 @@ fn usage() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn bad_file() -> TestResult {
-    let mut cmd = Command::cargo_bin(PROGRAM)?;
+    let mut cmd = Command::cargo_bin(PRG)?;
     cmd.arg("foo")
         .assert()
         .failure()
@@ -38,8 +37,8 @@ fn bad_file() -> TestResult {
 // --------------------------------------------------
 fn run(args: Vec<&str>, expected_file: &str) -> TestResult {
     let expected = fs::read_to_string(expected_file)?;
-    let mut cmd = Command::cargo_bin(PROGRAM)?;
-    cmd.args(args).unwrap().assert().stdout(expected);
+    let mut cmd = Command::cargo_bin(PRG)?;
+    cmd.args(args).assert().stdout(expected);
 
     Ok(())
 }
@@ -52,12 +51,8 @@ fn run_stdin(
 ) -> TestResult {
     let input = fs::read_to_string(stdin_file)?;
     let expected = fs::read_to_string(expected_file)?;
-    let mut cmd = Command::cargo_bin(PROGRAM)?;
-    cmd.args(args)
-        .with_stdin()
-        .buffer(input)
-        .assert()
-        .stdout(expected);
+    let mut cmd = Command::cargo_bin(PRG)?;
+    cmd.args(args).write_stdin(input).assert().stdout(expected);
 
     Ok(())
 }

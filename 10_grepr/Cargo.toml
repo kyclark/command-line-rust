@@ -8,5 +8,9 @@ edition = "2018"
 
 [dependencies]
 clap = "~2.33"
-regex = "~1.4"
+regex = "1"
 walkdir = "2"
+
+[dev-dependencies]
+assert_cmd = "1"
+predicates = "1"

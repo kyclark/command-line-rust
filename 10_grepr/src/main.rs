@@ -1,4 +1,3 @@
-extern crate grepr;
 use std::process;
 
 fn main() {
