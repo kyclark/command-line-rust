@@ -75,15 +75,17 @@ pub fn run(config: Config) -> MyResult<()> {
     let num_files = &files.len();
 
     for filename in &files {
+        if fs::metadata(&filename).ok().map_or(false, |v| v.is_dir()) {
+            eprintln!("{} is a directory", filename);
+            continue;
+        };
+
         let file: Box<dyn BufRead> = match filename.as_str() {
             "-" => Box::new(BufReader::new(io::stdin())),
-            _ => match fs::metadata(&filename)?.is_dir() {
-                true => Err(format!("{} is a directory", filename)),
-                _ => Box::new(BufReader::new(
-                    File::open(filename)
-                        .map_err(|e| format!("{}: {}", filename, e))?,
-                )),
-            },
+            _ => Box::new(BufReader::new(
+                File::open(filename)
+                    .map_err(|e| format!("{}: {}", filename, e))?,
+            )),
         };
 
         for line in file.lines() {
@@ -104,6 +106,7 @@ pub fn run(config: Config) -> MyResult<()> {
 // --------------------------------------------------
 fn find_files(config: &Config) -> MyResult<Vec<String>> {
     let mut files: Vec<String> = vec![];
+
     if config.recursive {
         for path in &config.files {
             let metadata = fs::metadata(&path)?;

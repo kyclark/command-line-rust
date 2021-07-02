@@ -163,9 +163,12 @@ fn recursive_insensitive() -> TestResult {
 #[test]
 fn warns_dir_not_recursive() -> TestResult {
     let mut cmd = Command::cargo_bin(PRG)?;
+    let stdout = "tests/inputs/fox.txt:\
+        The quick brown fox jumps over the lazy dog.";
     cmd.args(&["fox", "tests/inputs", "tests/inputs/fox.txt"])
         .assert()
-        .stderr(predicate::str::contains("tests/inputs is a directory"));
+        .stderr(predicate::str::contains("tests/inputs is a directory"))
+        .stdout(predicate::str::contains(stdout));
     Ok(())
 }
 
