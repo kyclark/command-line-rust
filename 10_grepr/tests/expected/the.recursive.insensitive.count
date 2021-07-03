@@ -1,0 +1,4 @@
+tests/inputs/empty.txt:0
+tests/inputs/nobody.txt:3
+tests/inputs/bustle.txt:3
+tests/inputs/fox.txt:1
