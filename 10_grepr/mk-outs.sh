@@ -39,3 +39,9 @@ grep -ci nobody tests/inputs/nobody.txt > "$OUT_DIR/nobody.txt.insensitive.count
 # Case-sensitive, count, multiple files
 grep -c The $DIR/*.txt > "$OUT_DIR/all.the.capitalized.count"
 grep -ci the $DIR/*.txt > "$OUT_DIR/all.the.lowercase.insensitive.count"
+
+# Recursive, insensitive, count
+grep -cri the tests/inputs > "$OUT_DIR/the.recursive.insensitive.count"
+
+# STDIN, insensitive, count
+cat tests/inputs/*.txt | grep -ci the - > "$OUT_DIR/the.recursive.insensitive.count.stdin"

@@ -161,6 +161,83 @@ fn recursive_insensitive() -> TestResult {
 
 // --------------------------------------------------
 #[test]
+fn sensitive_count_capital() -> TestResult {
+    run(&Test {
+        args: &vec!["--count", "The", "tests/inputs/bustle.txt"],
+        out: "tests/expected/bustle.txt.the.capitalized.count",
+    })
+}
+
+// --------------------------------------------------
+#[test]
+fn sensitive_count_lower() -> TestResult {
+    run(&Test {
+        args: &vec!["--count", "the", "tests/inputs/bustle.txt"],
+        out: "tests/expected/bustle.txt.the.lowercase.count",
+    })
+}
+
+// --------------------------------------------------
+#[test]
+fn insensitive_count() -> TestResult {
+    run(&Test {
+        args: &vec!["-ci", "the", "tests/inputs/bustle.txt"],
+        out: "tests/expected/bustle.txt.the.lowercase.insensitive.count",
+    })
+}
+
+// --------------------------------------------------
+#[test]
+fn nobody_count() -> TestResult {
+    run(&Test {
+        args: &vec!["-c", "nobody", "tests/inputs/nobody.txt"],
+        out: "tests/expected/nobody.txt.count",
+    })
+}
+
+// --------------------------------------------------
+#[test]
+fn nobody_count_insensitive() -> TestResult {
+    run(&Test {
+        args: &vec!["-ci", "nobody", "tests/inputs/nobody.txt"],
+        out: "tests/expected/nobody.txt.insensitive.count",
+    })
+}
+
+// --------------------------------------------------
+#[test]
+fn sensitive_count_multiple() -> TestResult {
+    run(&Test {
+        args: &vec![
+            "-c",
+            "The",
+            "tests/inputs/bustle.txt",
+            "tests/inputs/empty.txt",
+            "tests/inputs/fox.txt",
+            "tests/inputs/nobody.txt",
+        ],
+        out: "tests/expected/all.the.capitalized.count",
+    })
+}
+
+// --------------------------------------------------
+#[test]
+fn insensitive_count_multiple() -> TestResult {
+    run(&Test {
+        args: &vec![
+            "-ic",
+            "the",
+            "tests/inputs/bustle.txt",
+            "tests/inputs/empty.txt",
+            "tests/inputs/fox.txt",
+            "tests/inputs/nobody.txt",
+        ],
+        out: "tests/expected/all.the.lowercase.insensitive.count",
+    })
+}
+
+// --------------------------------------------------
+#[test]
 fn warns_dir_not_recursive() -> TestResult {
     let mut cmd = Command::cargo_bin(PRG)?;
     let stdout = "tests/inputs/fox.txt:\
@@ -181,5 +258,32 @@ fn stdin() -> TestResult {
         fs::read_to_string("tests/expected/bustle.txt.the.capitalized")?;
 
     cmd.arg("The").write_stdin(input).assert().stdout(expected);
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn stdin_insensitive_count() -> TestResult {
+    let mut cmd = Command::cargo_bin(PRG)?;
+    let files = vec![
+        "tests/inputs/bustle.txt",
+        "tests/inputs/empty.txt",
+        "tests/inputs/fox.txt",
+        "tests/inputs/nobody.txt",
+    ];
+
+    let mut input = String::new();
+    for file in files {
+        input += &fs::read_to_string(file)?;
+    }
+
+    let expected_file =
+        "tests/expected/the.recursive.insensitive.count.stdin";
+    let expected = fs::read_to_string(expected_file)?;
+
+    cmd.args(&["-ci", "the", "-"])
+        .write_stdin(input)
+        .assert()
+        .stdout(expected);
     Ok(())
 }
