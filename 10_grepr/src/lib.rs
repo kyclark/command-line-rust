@@ -1,5 +1,5 @@
 use clap::{App, Arg};
-use regex::{Regex, RegexBuilder};
+use regex::RegexBuilder;
 use std::error::Error;
 use std::fs::{self, File};
 use std::io::prelude::*;
@@ -10,9 +10,12 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
-    pattern: Regex,
+    pattern: String,
     files: Vec<String>,
     recursive: bool,
+    insensitive: bool,
+    count: bool,
+    invert_match: bool,
 }
 
 // --------------------------------------------------
@@ -51,28 +54,52 @@ pub fn get_args() -> MyResult<Config> {
                 .long("recursive")
                 .takes_value(false),
         )
+        .arg(
+            Arg::with_name("count")
+                .value_name("COUNT")
+                .help("Count occurrences")
+                .short("c")
+                .long("count")
+                .takes_value(false),
+        )
+        .arg(
+            Arg::with_name("invert")
+                .value_name("INVERT")
+                .help("Invert match")
+                .short("v")
+                .long("invert_match")
+                .takes_value(false),
+        )
         .get_matches();
 
-    let pattern = matches.value_of("pattern").unwrap();
-    let re = RegexBuilder::new(&pattern)
-        .case_insensitive(matches.is_present("insensitive"))
-        .build();
-
-    if re.is_err() {
-        return Err(From::from(format!("Invalid pattern \"{}\"", pattern)));
-    }
-
     Ok(Config {
-        pattern: re.unwrap(),
+        pattern: matches.value_of("pattern").unwrap().to_string(),
         files: matches.values_of_lossy("files").unwrap(),
         recursive: matches.is_present("recursive"),
+        insensitive: matches.is_present("insensitive"),
+        count: matches.is_present("count"),
+        invert_match: matches.is_present("invert"),
     })
 }
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
+    // println!("{:#?}", config);
+
+    let pattern = RegexBuilder::new(&config.pattern)
+        .case_insensitive(config.insensitive)
+        .build()
+        .map_err(|_| format!("Invalid pattern \"{}\"", &config.pattern))?;
+
     let files = find_files(&config)?;
     let num_files = &files.len();
+    let print = |file: &str, val: &str| {
+        if num_files > &1 {
+            println!("{}:{}", file, val);
+        } else {
+            println!("{}", val);
+        }
+    };
 
     for filename in &files {
         if fs::metadata(&filename).ok().map_or(false, |v| v.is_dir()) {
@@ -88,14 +115,20 @@ pub fn run(config: Config) -> MyResult<()> {
             )),
         };
 
-        for line in file.lines() {
-            let line = line?;
-            if config.pattern.is_match(&line) {
-                if num_files > &1 {
-                    println!("{}:{}", &filename, &line);
-                } else {
-                    println!("{}", &line);
-                }
+        let matches: Vec<String> = file
+            .lines()
+            .map(|line| line.ok().unwrap())
+            .filter(|line| {
+                (pattern.is_match(&line) && !config.invert_match)
+                    || (!pattern.is_match(&line) && config.invert_match)
+            })
+            .collect();
+
+        if config.count {
+            print(&filename, &matches.len().to_string());
+        } else {
+            for line in matches {
+                print(&filename, &line);
             }
         }
     }
