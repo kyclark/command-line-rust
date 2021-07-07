@@ -14,8 +14,8 @@ const PRG: &str = "grepr";
 // --------------------------------------------------
 #[test]
 fn dies_no_args() -> TestResult {
-    let mut cmd = Command::cargo_bin(PRG)?;
-    cmd.assert()
+    Command::cargo_bin(PRG)?
+        .assert()
         .failure()
         .stderr(predicate::str::contains("USAGE"));
     Ok(())
@@ -24,8 +24,8 @@ fn dies_no_args() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dies_bad_pattern() -> TestResult {
-    let mut cmd = Command::cargo_bin(PRG)?;
-    cmd.args(&["*foo", "tests/inputs/fox.txt"])
+    Command::cargo_bin(PRG)?
+        .args(&["*foo", "tests/inputs/fox.txt"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("Invalid pattern \"*foo\""));
@@ -35,12 +35,12 @@ fn dies_bad_pattern() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn warns_bad_file() -> TestResult {
-    let mut cmd = Command::cargo_bin(PRG)?;
-    cmd.args(&["foo", "tests/inputs/foxx.txt"]).assert().stderr(
-        predicate::str::contains(
+    Command::cargo_bin(PRG)?
+        .args(&["foo", "tests/inputs/foxx.txt"])
+        .assert()
+        .stderr(predicate::str::contains(
             "tests/inputs/foxx.txt: No such file or directory",
-        ),
-    );
+        ));
     Ok(())
 }
 
@@ -239,10 +239,10 @@ fn insensitive_count_multiple() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn warns_dir_not_recursive() -> TestResult {
-    let mut cmd = Command::cargo_bin(PRG)?;
     let stdout = "tests/inputs/fox.txt:\
         The quick brown fox jumps over the lazy dog.";
-    cmd.args(&["fox", "tests/inputs", "tests/inputs/fox.txt"])
+    Command::cargo_bin(PRG)?
+        .args(&["fox", "tests/inputs", "tests/inputs/fox.txt"])
         .assert()
         .stderr(predicate::str::contains("tests/inputs is a directory"))
         .stdout(predicate::str::contains(stdout));
@@ -252,19 +252,21 @@ fn warns_dir_not_recursive() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn stdin() -> TestResult {
-    let mut cmd = Command::cargo_bin(PRG)?;
     let input = fs::read_to_string("tests/inputs/bustle.txt")?;
     let expected =
         fs::read_to_string("tests/expected/bustle.txt.the.capitalized")?;
 
-    cmd.arg("The").write_stdin(input).assert().stdout(expected);
+    Command::cargo_bin(PRG)?
+        .arg("The")
+        .write_stdin(input)
+        .assert()
+        .stdout(expected);
     Ok(())
 }
 
 // --------------------------------------------------
 #[test]
 fn stdin_insensitive_count() -> TestResult {
-    let mut cmd = Command::cargo_bin(PRG)?;
     let files = vec![
         "tests/inputs/bustle.txt",
         "tests/inputs/empty.txt",
@@ -281,7 +283,8 @@ fn stdin_insensitive_count() -> TestResult {
         "tests/expected/the.recursive.insensitive.count.stdin";
     let expected = fs::read_to_string(expected_file)?;
 
-    cmd.args(&["-ci", "the", "-"])
+    Command::cargo_bin(PRG)?
+        .args(&["-ci", "the", "-"])
         .write_stdin(input)
         .assert()
         .stdout(expected);
