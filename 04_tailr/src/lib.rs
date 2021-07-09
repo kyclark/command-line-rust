@@ -199,7 +199,7 @@ mod test {
             assert_eq!(vec, vec!["dolor"]);
         }
 
-        let res2 = take_lines(Curson::new(lines), 2);
+        let res2 = take_lines(Cursor::new(lines), 2);
         assert!(res2.is_ok());
         if let Ok(vec) = res2 {
             assert_eq!(vec, vec!["ipsum\r\n", "dolor"]);

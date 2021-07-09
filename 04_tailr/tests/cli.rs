@@ -1,15 +1,14 @@
-use assert_cmd::prelude::*;
+use assert_cmd::Command;
 use predicates::prelude::*;
 use std::fs;
-use std::process::Command;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 // --------------------------------------------------
 #[test]
 fn dies_no_args() -> TestResult {
-    let mut cmd = Command::cargo_bin("tailr")?;
-    cmd.assert()
+    Command::cargo_bin("tailr")?
+        .assert()
         .failure()
         .stderr(predicate::str::contains("USAGE"));
 
@@ -19,8 +18,7 @@ fn dies_no_args() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dies_bad_file() -> TestResult {
-    let mut cmd = Command::cargo_bin("tailr")?;
-    cmd.arg("foo").assert().stderr(
+    Command::cargo_bin("tailr")?.arg("foo").assert().stderr(
         predicate::str::is_match("foo: .* [(]os error 2[)]").unwrap(),
     );
 
@@ -30,8 +28,8 @@ fn dies_bad_file() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dies_bad_bytes() -> TestResult {
-    let mut cmd = Command::cargo_bin("tailr")?;
-    cmd.args(&["-c", "foo", "tests/inputs/empty.txt"])
+    Command::cargo_bin("tailr")?
+        .args(&["-c", "foo", "tests/inputs/empty.txt"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("illegal byte count -- foo"));
@@ -42,8 +40,8 @@ fn dies_bad_bytes() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dies_bad_lines() -> TestResult {
-    let mut cmd = Command::cargo_bin("tailr")?;
-    cmd.args(&["-n", "bar", "tests/inputs/empty.txt"])
+    Command::cargo_bin("tailr")?
+        .args(&["-n", "bar", "tests/inputs/empty.txt"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("illegal line count -- bar"));
@@ -54,11 +52,11 @@ fn dies_bad_lines() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dies_bytes_and_lines() -> TestResult {
-    let mut cmd = Command::cargo_bin("tailr")?;
     let msg = "The argument '--lines <LINES>' cannot be \
                used with '--bytes <BYTES>'";
 
-    cmd.args(&["-n", "1", "-c", "2"])
+    Command::cargo_bin("tailr")?
+        .args(&["-n", "1", "-c", "2"])
         .assert()
         .failure()
         .stderr(predicate::str::contains(msg));
@@ -69,8 +67,10 @@ fn dies_bytes_and_lines() -> TestResult {
 // --------------------------------------------------
 fn run(args: &Vec<&str>, expected_file: &str) -> TestResult {
     let expected = fs::read_to_string(expected_file).ok().unwrap();
-    let mut cmd = Command::cargo_bin("tailr")?;
-    cmd.args(args).unwrap().assert().stdout(expected);
+    Command::cargo_bin("tailr")?
+        .args(args)
+        .assert()
+        .stdout(expected);
 
     Ok(())
 }
