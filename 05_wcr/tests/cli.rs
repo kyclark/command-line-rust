@@ -33,7 +33,7 @@ fn dies_chars_and_bytes() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn empty() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/empty.txt.out")?;
+    let expected = fs::read_to_string("tests/expected/empty.txt.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.arg(EMPTY).unwrap().assert().stdout(expected);
     Ok(())
@@ -42,7 +42,7 @@ fn empty() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn fox() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/fox.txt.out")?;
+    let expected = fs::read_to_string("tests/expected/fox.txt.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.arg(FOX).unwrap().assert().stdout(expected);
     Ok(())
@@ -51,7 +51,7 @@ fn fox() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn fox_bytes() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/fox.txt.c.out")?;
+    let expected = fs::read_to_string("tests/expected/fox.txt.c.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["--bytes", FOX])
         .unwrap()
@@ -63,7 +63,7 @@ fn fox_bytes() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn fox_chars() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/fox.txt.m.out")?;
+    let expected = fs::read_to_string("tests/expected/fox.txt.m.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["--chars", FOX])
         .unwrap()
@@ -76,7 +76,7 @@ fn fox_chars() -> TestResult {
 #[test]
 fn fox_words() -> TestResult {
     let mut cmd = Command::cargo_bin("wcr")?;
-    let expected = fs::read_to_string("tests/inputs/fox.txt.w.out")?;
+    let expected = fs::read_to_string("tests/expected/fox.txt.w.out")?;
     cmd.args(&["--words", FOX])
         .unwrap()
         .assert()
@@ -87,7 +87,7 @@ fn fox_words() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn fox_lines() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/fox.txt.l.out")?;
+    let expected = fs::read_to_string("tests/expected/fox.txt.l.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["--lines", FOX])
         .unwrap()
@@ -99,7 +99,7 @@ fn fox_lines() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn fox_words_bytes() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/fox.txt.wc.out")?;
+    let expected = fs::read_to_string("tests/expected/fox.txt.wc.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-w", "-c", FOX])
         .unwrap()
@@ -111,7 +111,7 @@ fn fox_words_bytes() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn fox_words_lines() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/fox.txt.wl.out")?;
+    let expected = fs::read_to_string("tests/expected/fox.txt.wl.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-w", "-l", FOX])
         .unwrap()
@@ -123,7 +123,7 @@ fn fox_words_lines() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn fox_bytes_lines() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/fox.txt.cl.out")?;
+    let expected = fs::read_to_string("tests/expected/fox.txt.cl.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-l", "-c", FOX])
         .unwrap()
@@ -135,7 +135,7 @@ fn fox_bytes_lines() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn atlamal() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/atlamal.txt.out")?;
+    let expected = fs::read_to_string("tests/expected/atlamal.txt.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.arg(ATLAMAL).unwrap().assert().stdout(expected);
     Ok(())
@@ -144,7 +144,7 @@ fn atlamal() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn atlamal_bytes() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/atlamal.txt.c.out")?;
+    let expected = fs::read_to_string("tests/expected/atlamal.txt.c.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-c", ATLAMAL])
         .unwrap()
@@ -157,7 +157,7 @@ fn atlamal_bytes() -> TestResult {
 #[test]
 fn atlamal_words() -> TestResult {
     let mut cmd = Command::cargo_bin("wcr")?;
-    let expected = fs::read_to_string("tests/inputs/atlamal.txt.w.out")?;
+    let expected = fs::read_to_string("tests/expected/atlamal.txt.w.out")?;
     cmd.args(&["-w", ATLAMAL])
         .unwrap()
         .assert()
@@ -168,7 +168,7 @@ fn atlamal_words() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn atlamal_lines() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/atlamal.txt.l.out")?;
+    let expected = fs::read_to_string("tests/expected/atlamal.txt.l.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-l", ATLAMAL])
         .unwrap()
@@ -181,7 +181,7 @@ fn atlamal_lines() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn atlamal_words_bytes() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/atlamal.txt.wc.out")?;
+    let expected = fs::read_to_string("tests/expected/atlamal.txt.wc.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-w", "-c", ATLAMAL])
         .unwrap()
@@ -193,7 +193,7 @@ fn atlamal_words_bytes() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn atlamal_words_lines() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/atlamal.txt.wl.out")?;
+    let expected = fs::read_to_string("tests/expected/atlamal.txt.wl.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-w", "-l", ATLAMAL])
         .unwrap()
@@ -205,7 +205,7 @@ fn atlamal_words_lines() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn atlamal_bytes_lines() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/atlamal.txt.cl.out")?;
+    let expected = fs::read_to_string("tests/expected/atlamal.txt.cl.out")?;
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-l", "-c", ATLAMAL])
         .unwrap()
@@ -219,7 +219,8 @@ fn atlamal_bytes_lines() -> TestResult {
 fn atlamal_stdin() -> TestResult {
     let mut cmd = Command::cargo_bin("wcr")?;
     let input = fs::read_to_string(ATLAMAL)?;
-    let expected = fs::read_to_string("tests/inputs/atlamal.txt.stdin.out")?;
+    let expected =
+        fs::read_to_string("tests/expected/atlamal.txt.stdin.out")?;
     cmd.write_stdin(input).assert().stdout(expected);
     Ok(())
 }
@@ -227,7 +228,7 @@ fn atlamal_stdin() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn test_all() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/all.out").ok().unwrap();
+    let expected = fs::read_to_string("tests/expected/all.out").ok().unwrap();
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&[EMPTY, FOX, ATLAMAL])
         .unwrap()
@@ -239,7 +240,8 @@ fn test_all() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn test_all_lines() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/all.l.out").ok().unwrap();
+    let expected =
+        fs::read_to_string("tests/expected/all.l.out").ok().unwrap();
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-l", EMPTY, FOX, ATLAMAL])
         .unwrap()
@@ -251,7 +253,8 @@ fn test_all_lines() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn test_all_words() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/all.w.out").ok().unwrap();
+    let expected =
+        fs::read_to_string("tests/expected/all.w.out").ok().unwrap();
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-w", EMPTY, FOX, ATLAMAL])
         .unwrap()
@@ -263,7 +266,8 @@ fn test_all_words() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn test_all_bytes() -> TestResult {
-    let expected = fs::read_to_string("tests/inputs/all.c.out").ok().unwrap();
+    let expected =
+        fs::read_to_string("tests/expected/all.c.out").ok().unwrap();
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-c", EMPTY, FOX, ATLAMAL])
         .unwrap()
@@ -275,8 +279,9 @@ fn test_all_bytes() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn test_all_words_bytes() -> TestResult {
-    let expected =
-        fs::read_to_string("tests/inputs/all.wc.out").ok().unwrap();
+    let expected = fs::read_to_string("tests/expected/all.wc.out")
+        .ok()
+        .unwrap();
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-cw", EMPTY, FOX, ATLAMAL])
         .unwrap()
@@ -288,8 +293,9 @@ fn test_all_words_bytes() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn test_all_words_lines() -> TestResult {
-    let expected =
-        fs::read_to_string("tests/inputs/all.wl.out").ok().unwrap();
+    let expected = fs::read_to_string("tests/expected/all.wl.out")
+        .ok()
+        .unwrap();
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-wl", EMPTY, FOX, ATLAMAL])
         .unwrap()
@@ -301,8 +307,9 @@ fn test_all_words_lines() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn test_all_bytes_lines() -> TestResult {
-    let expected =
-        fs::read_to_string("tests/inputs/all.cl.out").ok().unwrap();
+    let expected = fs::read_to_string("tests/expected/all.cl.out")
+        .ok()
+        .unwrap();
     let mut cmd = Command::cargo_bin("wcr")?;
     cmd.args(&["-cl", EMPTY, FOX, ATLAMAL])
         .unwrap()

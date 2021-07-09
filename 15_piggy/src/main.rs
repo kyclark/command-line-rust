@@ -1,4 +1,3 @@
-extern crate piggy;
 use std::process;
 
 fn main() {

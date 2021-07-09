@@ -1,4 +1,3 @@
-extern crate tailr;
 use std::process;
 
 fn main() {

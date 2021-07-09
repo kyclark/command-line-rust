@@ -14,68 +14,68 @@ static PRG: &str = "uniqr";
 
 static EMPTY: Test = Test {
     input: "tests/inputs/empty.txt",
-    out: "tests/inputs/empty.txt.out",
-    out_count: "tests/inputs/empty.txt.c.out",
+    out: "tests/expected/empty.txt.out",
+    out_count: "tests/expected/empty.txt.c.out",
 };
 
 static ONE: Test = Test {
     input: "tests/inputs/one.txt",
-    out: "tests/inputs/one.txt.out",
-    out_count: "tests/inputs/one.txt.c.out",
+    out: "tests/expected/one.txt.out",
+    out_count: "tests/expected/one.txt.c.out",
 };
 
 static TWO: Test = Test {
     input: "tests/inputs/two.txt",
-    out: "tests/inputs/two.txt.out",
-    out_count: "tests/inputs/two.txt.c.out",
+    out: "tests/expected/two.txt.out",
+    out_count: "tests/expected/two.txt.c.out",
 };
 
 static THREE: Test = Test {
     input: "tests/inputs/three.txt",
-    out: "tests/inputs/three.txt.out",
-    out_count: "tests/inputs/three.txt.c.out",
+    out: "tests/expected/three.txt.out",
+    out_count: "tests/expected/three.txt.c.out",
 };
 
 static SKIP: Test = Test {
     input: "tests/inputs/skip.txt",
-    out: "tests/inputs/skip.txt.out",
-    out_count: "tests/inputs/skip.txt.c.out",
+    out: "tests/expected/skip.txt.out",
+    out_count: "tests/expected/skip.txt.c.out",
 };
 
 static T1: Test = Test {
     input: "tests/inputs/t1.txt",
-    out: "tests/inputs/t1.txt.out",
-    out_count: "tests/inputs/t1.txt.c.out",
+    out: "tests/expected/t1.txt.out",
+    out_count: "tests/expected/t1.txt.c.out",
 };
 
 static T2: Test = Test {
     input: "tests/inputs/t2.txt",
-    out: "tests/inputs/t2.txt.out",
-    out_count: "tests/inputs/t2.txt.c.out",
+    out: "tests/expected/t2.txt.out",
+    out_count: "tests/expected/t2.txt.c.out",
 };
 
 static T3: Test = Test {
     input: "tests/inputs/t3.txt",
-    out: "tests/inputs/t3.txt.out",
-    out_count: "tests/inputs/t3.txt.c.out",
+    out: "tests/expected/t3.txt.out",
+    out_count: "tests/expected/t3.txt.c.out",
 };
 
 static T4: Test = Test {
     input: "tests/inputs/t4.txt",
-    out: "tests/inputs/t4.txt.out",
-    out_count: "tests/inputs/t4.txt.c.out",
+    out: "tests/expected/t4.txt.out",
+    out_count: "tests/expected/t4.txt.c.out",
 };
 
 static T5: Test = Test {
     input: "tests/inputs/t5.txt",
-    out: "tests/inputs/t5.txt.out",
-    out_count: "tests/inputs/t5.txt.c.out",
+    out: "tests/expected/t5.txt.out",
+    out_count: "tests/expected/t5.txt.c.out",
 };
 
 static T6: Test = Test {
     input: "tests/inputs/t6.txt",
-    out: "tests/inputs/t6.txt.out",
-    out_count: "tests/inputs/t6.txt.c.out",
+    out: "tests/expected/t6.txt.out",
+    out_count: "tests/expected/t6.txt.c.out",
 };
 
 // --------------------------------------------------

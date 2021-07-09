@@ -14,3 +14,4 @@ walkdir = "2"
 [dev-dependencies]
 assert_cmd = "1"
 predicates = "1"
+rand = "0.8"

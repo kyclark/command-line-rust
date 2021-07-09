@@ -58,10 +58,19 @@ fn run(test: &Test) -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn empty() -> TestResult {
+fn empty_file() -> TestResult {
     run(&Test {
-        args: &vec!["foo", "tests/inputs/empty.txt"],
+        args: &vec!["foo", "tests/inputs/foo.empty.txt"],
         out: "tests/expected/empty.foo",
+    })
+}
+
+// --------------------------------------------------
+#[test]
+fn empty_regex() -> TestResult {
+    run(&Test {
+        args: &vec!["", "tests/inputs/fox.txt"],
+        out: "tests/expected/empty_regex.fox.txt",
     })
 }
 

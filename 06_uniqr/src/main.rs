@@ -1,4 +1,3 @@
-extern crate uniqr;
 use std::process;
 
 fn main() {

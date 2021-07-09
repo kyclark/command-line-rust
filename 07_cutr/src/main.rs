@@ -1,4 +1,3 @@
-extern crate cutr;
 use std::process;
 
 fn main() {

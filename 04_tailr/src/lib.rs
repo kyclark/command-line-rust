@@ -192,15 +192,14 @@ mod test {
 
     #[test]
     fn test_take_lines() {
-        let lines1 = Cursor::new(b"lorem\nipsum\r\ndolor");
-        let res1 = take_lines(lines1, 1);
+        let lines = b"lorem\nipsum\r\ndolor";
+        let res1 = take_lines(Cursor::new(lines), 1);
         assert!(res1.is_ok());
         if let Ok(vec) = res1 {
             assert_eq!(vec, vec!["dolor"]);
         }
 
-        let lines2 = Cursor::new(b"lorem\nipsum\r\ndolor");
-        let res2 = take_lines(lines2, 2);
+        let res2 = take_lines(Curson::new(lines), 2);
         assert!(res2.is_ok());
         if let Ok(vec) = res2 {
             assert_eq!(vec, vec!["ipsum\r\n", "dolor"]);

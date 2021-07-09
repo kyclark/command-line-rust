@@ -1,4 +1,3 @@
-extern crate commr;
 use std::process;
 
 fn main() {

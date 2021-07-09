@@ -80,7 +80,7 @@ fn run(args: &Vec<&str>, expected_file: &str) -> TestResult {
 fn empty() -> TestResult {
     run(
         &vec!["tests/inputs/empty.txt"],
-        "tests/inputs/empty.txt.out",
+        "tests/expected/empty.txt.out",
     )
 }
 
@@ -89,7 +89,7 @@ fn empty() -> TestResult {
 fn empty_n3() -> TestResult {
     run(
         &vec!["tests/inputs/empty.txt", "-n", "3"],
-        "tests/inputs/empty.txt.n3.out",
+        "tests/expected/empty.txt.n3.out",
     )
 }
 
@@ -98,7 +98,7 @@ fn empty_n3() -> TestResult {
 fn empty_n4() -> TestResult {
     run(
         &vec!["tests/inputs/empty.txt", "-n", "4"],
-        "tests/inputs/empty.txt.n4.out",
+        "tests/expected/empty.txt.n4.out",
     )
 }
 
@@ -107,7 +107,7 @@ fn empty_n4() -> TestResult {
 fn empty_c8() -> TestResult {
     run(
         &vec!["tests/inputs/empty.txt", "-c", "8"],
-        "tests/inputs/empty.txt.c8.out",
+        "tests/expected/empty.txt.c8.out",
     )
 }
 
@@ -116,14 +116,14 @@ fn empty_c8() -> TestResult {
 fn empty_c12() -> TestResult {
     run(
         &vec!["tests/inputs/empty.txt", "-c", "12"],
-        "tests/inputs/empty.txt.c12.out",
+        "tests/expected/empty.txt.c12.out",
     )
 }
 
 // --------------------------------------------------
 #[test]
 fn one() -> TestResult {
-    run(&vec!["tests/inputs/one.txt"], "tests/inputs/one.txt.out")
+    run(&vec!["tests/inputs/one.txt"], "tests/expected/one.txt.out")
 }
 
 // --------------------------------------------------
@@ -131,7 +131,7 @@ fn one() -> TestResult {
 fn one_n3() -> TestResult {
     run(
         &vec!["tests/inputs/one.txt", "-n", "3"],
-        "tests/inputs/one.txt.n3.out",
+        "tests/expected/one.txt.n3.out",
     )
 }
 
@@ -140,7 +140,7 @@ fn one_n3() -> TestResult {
 fn one_n4() -> TestResult {
     run(
         &vec!["tests/inputs/one.txt", "-n", "4"],
-        "tests/inputs/one.txt.n4.out",
+        "tests/expected/one.txt.n4.out",
     )
 }
 
@@ -149,7 +149,7 @@ fn one_n4() -> TestResult {
 fn one_c8() -> TestResult {
     run(
         &vec!["tests/inputs/one.txt", "-c", "8"],
-        "tests/inputs/one.txt.c8.out",
+        "tests/expected/one.txt.c8.out",
     )
 }
 
@@ -158,14 +158,14 @@ fn one_c8() -> TestResult {
 fn one_c12() -> TestResult {
     run(
         &vec!["tests/inputs/one.txt", "-c", "12"],
-        "tests/inputs/one.txt.c12.out",
+        "tests/expected/one.txt.c12.out",
     )
 }
 
 // --------------------------------------------------
 #[test]
 fn two() -> TestResult {
-    run(&vec!["tests/inputs/two.txt"], "tests/inputs/two.txt.out")
+    run(&vec!["tests/inputs/two.txt"], "tests/expected/two.txt.out")
 }
 
 // --------------------------------------------------
@@ -173,7 +173,7 @@ fn two() -> TestResult {
 fn two_n3() -> TestResult {
     run(
         &vec!["tests/inputs/two.txt", "-n", "3"],
-        "tests/inputs/two.txt.n3.out",
+        "tests/expected/two.txt.n3.out",
     )
 }
 
@@ -182,7 +182,7 @@ fn two_n3() -> TestResult {
 fn two_n4() -> TestResult {
     run(
         &vec!["tests/inputs/two.txt", "-n", "4"],
-        "tests/inputs/two.txt.n4.out",
+        "tests/expected/two.txt.n4.out",
     )
 }
 
@@ -191,7 +191,7 @@ fn two_n4() -> TestResult {
 fn two_c8() -> TestResult {
     run(
         &vec!["tests/inputs/two.txt", "-c", "8"],
-        "tests/inputs/two.txt.c8.out",
+        "tests/expected/two.txt.c8.out",
     )
 }
 
@@ -200,7 +200,7 @@ fn two_c8() -> TestResult {
 fn two_c12() -> TestResult {
     run(
         &vec!["tests/inputs/two.txt", "-c", "12"],
-        "tests/inputs/two.txt.c12.out",
+        "tests/expected/two.txt.c12.out",
     )
 }
 
@@ -209,7 +209,7 @@ fn two_c12() -> TestResult {
 fn three() -> TestResult {
     run(
         &vec!["tests/inputs/three.txt"],
-        "tests/inputs/three.txt.out",
+        "tests/expected/three.txt.out",
     )
 }
 
@@ -218,7 +218,7 @@ fn three() -> TestResult {
 fn three_n3() -> TestResult {
     run(
         &vec!["tests/inputs/three.txt", "-n", "3"],
-        "tests/inputs/three.txt.n3.out",
+        "tests/expected/three.txt.n3.out",
     )
 }
 
@@ -227,7 +227,7 @@ fn three_n3() -> TestResult {
 fn three_n4() -> TestResult {
     run(
         &vec!["tests/inputs/three.txt", "-n", "4"],
-        "tests/inputs/three.txt.n4.out",
+        "tests/expected/three.txt.n4.out",
     )
 }
 
@@ -236,7 +236,7 @@ fn three_n4() -> TestResult {
 fn three_c8() -> TestResult {
     run(
         &vec!["tests/inputs/three.txt", "-c", "8"],
-        "tests/inputs/three.txt.c8.out",
+        "tests/expected/three.txt.c8.out",
     )
 }
 
@@ -245,7 +245,7 @@ fn three_c8() -> TestResult {
 fn three_c12() -> TestResult {
     run(
         &vec!["tests/inputs/three.txt", "-c", "12"],
-        "tests/inputs/three.txt.c12.out",
+        "tests/expected/three.txt.c12.out",
     )
 }
 
@@ -254,7 +254,7 @@ fn three_c12() -> TestResult {
 fn ten() -> TestResult {
     run(
         &vec!["tests/inputs/10.txt", "-n", "4"],
-        "tests/inputs/10.txt.n4.out",
+        "tests/expected/10.txt.n4.out",
     )
 }
 
@@ -263,7 +263,7 @@ fn ten() -> TestResult {
 fn ten_n3() -> TestResult {
     run(
         &vec!["tests/inputs/10.txt", "-n", "3"],
-        "tests/inputs/10.txt.n3.out",
+        "tests/expected/10.txt.n3.out",
     )
 }
 
@@ -272,7 +272,7 @@ fn ten_n3() -> TestResult {
 fn ten_n4() -> TestResult {
     run(
         &vec!["tests/inputs/10.txt", "-n", "4"],
-        "tests/inputs/10.txt.n4.out",
+        "tests/expected/10.txt.n4.out",
     )
 }
 
@@ -281,7 +281,7 @@ fn ten_n4() -> TestResult {
 fn ten_c8() -> TestResult {
     run(
         &vec!["tests/inputs/10.txt", "-c", "8"],
-        "tests/inputs/10.txt.c8.out",
+        "tests/expected/10.txt.c8.out",
     )
 }
 
@@ -290,7 +290,7 @@ fn ten_c8() -> TestResult {
 fn ten_c12() -> TestResult {
     run(
         &vec!["tests/inputs/10.txt", "-c", "12"],
-        "tests/inputs/10.txt.c12.out",
+        "tests/expected/10.txt.c12.out",
     )
 }
 
@@ -305,7 +305,7 @@ fn multiple_files() -> TestResult {
             "tests/inputs/three.txt",
             "tests/inputs/two.txt",
         ],
-        "tests/inputs/all.out",
+        "tests/expected/all.out",
     )
 }
 
@@ -322,7 +322,7 @@ fn multiple_files_n1() -> TestResult {
             "-n",
             "1",
         ],
-        "tests/inputs/all.n1.out",
+        "tests/expected/all.n1.out",
     )
 }
 
@@ -339,7 +339,7 @@ fn multiple_files_n3() -> TestResult {
             "tests/inputs/three.txt",
             "tests/inputs/two.txt",
         ],
-        "tests/inputs/all.n3.out",
+        "tests/expected/all.n3.out",
     )
 }
 
@@ -356,7 +356,7 @@ fn multiple_files_c8() -> TestResult {
             "-c",
             "8",
         ],
-        "tests/inputs/all.c8.out",
+        "tests/expected/all.c8.out",
     )
 }
 
@@ -373,7 +373,7 @@ fn multiple_files_c12() -> TestResult {
             "tests/inputs/three.txt",
             "tests/inputs/two.txt",
         ],
-        "tests/inputs/all.c12.out",
+        "tests/expected/all.c12.out",
     )
 }
 
@@ -391,6 +391,6 @@ fn multiple_files_quiet() -> TestResult {
             "tests/inputs/three.txt",
             "tests/inputs/two.txt",
         ],
-        "tests/inputs/all.n3.q.out",
+        "tests/expected/all.n3.q.out",
     )
 }

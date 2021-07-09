@@ -1,4 +1,3 @@
-extern crate change;
 use std::process;
 
 fn main() {

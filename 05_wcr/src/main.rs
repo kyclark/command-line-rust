@@ -1,4 +1,3 @@
-extern crate wcr;
 use std::process;
 
 fn main() {

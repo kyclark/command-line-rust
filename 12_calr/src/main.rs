@@ -1,4 +1,3 @@
-extern crate calr;
 use std::process;
 
 fn main() {

@@ -1,4 +1,3 @@
-extern crate findr;
 use std::process;
 
 fn main() {

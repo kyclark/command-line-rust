@@ -1,4 +1,3 @@
-extern crate hangman;
 use std::process;
 
 fn main() {

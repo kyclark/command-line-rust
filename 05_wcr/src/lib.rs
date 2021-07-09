@@ -30,7 +30,7 @@ pub fn get_args() -> MyResult<Config> {
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust wc")
         .arg(
-            Arg::with_name("file")
+            Arg::with_name("files")
                 .value_name("FILE")
                 .help("Input file(s)")
                 .default_value("-")
@@ -84,7 +84,7 @@ pub fn get_args() -> MyResult<Config> {
     }
 
     Ok(Config {
-        files: matches.values_of_lossy("file").unwrap(),
+        files: matches.values_of_lossy("files").unwrap(),
         lines,
         words,
         bytes,

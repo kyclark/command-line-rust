@@ -1,4 +1,3 @@
-extern crate catr;
 use std::process;
 
 fn main() {

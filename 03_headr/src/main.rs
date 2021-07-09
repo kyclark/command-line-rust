@@ -1,4 +1,3 @@
-extern crate headr;
 use std::process;
 
 fn main() {

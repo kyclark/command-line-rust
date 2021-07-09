@@ -1,4 +1,3 @@
-extern crate lsr;
 use std::process;
 
 fn main() {

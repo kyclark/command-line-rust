@@ -1,4 +1,3 @@
-extern crate markov;
 use std::process;
 
 fn main() {

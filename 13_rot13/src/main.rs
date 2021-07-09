@@ -1,4 +1,3 @@
-extern crate rot13;
 use std::process;
 
 fn main() {

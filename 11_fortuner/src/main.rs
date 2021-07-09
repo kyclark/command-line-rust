@@ -1,4 +1,3 @@
-extern crate fortuner;
 use std::process;
 
 fn main() {

@@ -10,7 +10,10 @@ OUT_DIR="tests/expected"
 rm -f "$OUT_DIR/*"
 
 # Empty file
-grep foo $DIR/empty.txt > "$OUT_DIR/empty.foo"
+grep foo $DIR/empty.txt > "$OUT_DIR/foo.empty.txt"
+
+# Empty regex
+grep "" $DIR/fox.txt > "$OUT_DIR/empty_regex.fox.txt"
 
 # Case-sensitive
 grep The tests/inputs/bustle.txt > "$OUT_DIR/bustle.txt.the.capitalized"

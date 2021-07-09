@@ -1,4 +1,3 @@
-extern crate excel2txt;
 use std::process;
 
 fn main() {
