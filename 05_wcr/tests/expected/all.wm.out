@@ -1,0 +1,4 @@
+       0       0 tests/inputs/empty.txt
+       9      48 tests/inputs/fox.txt
+      29     159 tests/inputs/atlamal.txt
+      38     207 total
