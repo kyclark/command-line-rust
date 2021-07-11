@@ -42,13 +42,8 @@ pub fn get_args() -> MyResult<Config> {
         .get_matches();
 
     Ok(Config {
-        in_file: matches
-            .value_of("in_file")
-            .and_then(|v| Some(v.to_string()))
-            .unwrap(),
-        out_file: matches
-            .value_of("out_file")
-            .and_then(|v| Some(v.to_string())),
+        in_file: matches.value_of("in_file").map(|v| v.to_string()).unwrap(),
+        out_file: matches.value_of("out_file").map(|v| v.to_string()),
         count: matches.is_present("count"),
     })
 }
@@ -57,7 +52,10 @@ pub fn get_args() -> MyResult<Config> {
 pub fn run(config: Config) -> MyResult<()> {
     let mut file: Box<dyn BufRead> = match config.in_file.as_str() {
         "-" => Box::new(BufReader::new(io::stdin())),
-        _ => Box::new(BufReader::new(File::open(&config.in_file)?)),
+        _ => Box::new(BufReader::new(
+            File::open(&config.in_file)
+                .map_err(|e| format!("{}: {}", config.in_file, e))?,
+        )),
     };
 
     let mut out_file: Box<dyn Write> = match &config.out_file {
@@ -85,7 +83,7 @@ pub fn run(config: Config) -> MyResult<()> {
             break;
         }
 
-        if &line.trim_end() != &last.trim_end() {
+        if line.trim_end() != last.trim_end() {
             print(&count, &last)?;
             last = line.clone();
             count = 0;

@@ -1,5 +1,3 @@
-extern crate clap;
-
 use anyhow::{anyhow, Result};
 use chrono::prelude::*;
 use chrono::{Datelike, NaiveDate};
@@ -85,7 +83,7 @@ pub fn run(config: Config) -> Result<()> {
         _ => (1..=12).collect(),
     };
     let show_year = month_nums.len() < 12;
-    let today = Utc::today();
+    let today = Utc::today().naive_local();
     let months: Vec<Vec<String>> = month_nums
         .iter()
         .map(|month| format_month(config.year, *month, show_year, today))
@@ -144,55 +142,10 @@ fn parse_month(month: &str) -> Result<u32> {
 }
 
 // --------------------------------------------------
-#[test]
-fn test_parse_month() {
-    let one = parse_month("1");
-    assert!(one.is_ok());
-    if let Ok(val) = one {
-        assert_eq!(val, 1);
-    }
-
-    let twelve = parse_month("12");
-    assert!(twelve.is_ok());
-    if let Ok(val) = twelve {
-        assert_eq!(val, 12);
-    }
-
-    let zero = parse_month("0");
-    assert!(zero.is_err());
-
-    let thirteen = parse_month("13");
-    assert!(thirteen.is_err());
-
-    let jan = parse_month("jan");
-    assert!(jan.is_ok());
-    if let Ok(val) = jan {
-        assert_eq!(val, 1);
-    }
-
-    let bad = parse_month("foo");
-    assert!(bad.is_err());
-}
-
-// --------------------------------------------------
 fn parse_int<T: FromStr>(val: &str) -> Result<T> {
     val.trim()
         .parse::<T>()
         .or(Err(anyhow!("\"{}\" is not an integer", val)))
-}
-
-// --------------------------------------------------
-#[test]
-fn test_parse_int() {
-    let one = parse_int::<usize>("1");
-    assert!(one.is_ok());
-
-    if let Ok(val) = one {
-        assert_eq!(val, 1);
-    }
-
-    let bad = parse_int::<usize>("foo");
-    assert!(bad.is_err());
 }
 
 // --------------------------------------------------
@@ -207,19 +160,11 @@ fn last_day_in_month(year: i32, month: u32) -> NaiveDate {
 }
 
 // --------------------------------------------------
-#[test]
-fn test_last_day_in_month() {
-    assert_eq!(last_day_in_month(2020, 1), NaiveDate::from_ymd(2020, 1, 31));
-    assert_eq!(last_day_in_month(2020, 2), NaiveDate::from_ymd(2020, 2, 29));
-    assert_eq!(last_day_in_month(2020, 4), NaiveDate::from_ymd(2020, 4, 30));
-}
-
-// --------------------------------------------------
 fn format_month(
     year: i32,
     month: u32,
     print_year: bool,
-    today: Date<Utc>,
+    today: NaiveDate, // Date<Utc>,
 ) -> Vec<String> {
     let first = NaiveDate::from_ymd(year, month, 1);
     let last = last_day_in_month(year, month);
@@ -288,43 +233,108 @@ fn format_month(
 }
 
 // --------------------------------------------------
-#[test]
-fn test_format_month() {
-    let today = Utc::today();
-    let april = vec![
-        "     April 2020       ",
-        "Su Mo Tu We Th Fr Sa  ",
-        "          1  2  3  4  ",
-        " 5  6  7  8  9 10 11  ",
-        "12 13 14 15 16 17 18  ",
-        "19 20 21 22 23 24 25  ",
-        "26 27 28 29 30        ",
-        "                      ",
-    ];
-    assert_eq!(format_month(2020, 4, true, today), april);
+#[cfg(test)]
+mod tests {
+    use super::{format_month, last_day_in_month, parse_int, parse_month};
+    use chrono::{NaiveDate, Utc};
 
-    let may = vec![
-        "      May 2020        ",
-        "Su Mo Tu We Th Fr Sa  ",
-        "                1  2  ",
-        " 3  4  5  6  7  8  9  ",
-        "10 11 12 13 14 15 16  ",
-        "17 18 19 20 21 22 23  ",
-        "24 25 26 27 28 29 30  ",
-        "31                    ",
-    ];
-    assert_eq!(format_month(2020, 5, true, today), may);
+    #[test]
+    fn test_format_month() {
+        let today = Utc::today().naive_local();
+        let april = vec![
+            "     April 2020       ",
+            "Su Mo Tu We Th Fr Sa  ",
+            "          1  2  3  4  ",
+            " 5  6  7  8  9 10 11  ",
+            "12 13 14 15 16 17 18  ",
+            "19 20 21 22 23 24 25  ",
+            "26 27 28 29 30        ",
+            "                      ",
+        ];
+        assert_eq!(format_month(2020, 4, true, today), april);
 
-    let april_hl = vec![
-        "     April 2021       ",
-        "Su Mo Tu We Th Fr Sa  ",
-        "             1  2  3  ",
-        " 4  5  6 \u{1b}[7m 7\u{1b}[0;39;49m  8  9 10  ",
-        "11 12 13 14 15 16 17  ",
-        "18 19 20 21 22 23 24  ",
-        "25 26 27 28 29 30     ",
-        "                      ",
-    ];
-    let today2 = Utc.ymd(2021, 4, 7);
-    assert_eq!(format_month(2021, 4, true, today2), april_hl);
+        let may = vec![
+            "      May 2020        ",
+            "Su Mo Tu We Th Fr Sa  ",
+            "                1  2  ",
+            " 3  4  5  6  7  8  9  ",
+            "10 11 12 13 14 15 16  ",
+            "17 18 19 20 21 22 23  ",
+            "24 25 26 27 28 29 30  ",
+            "31                    ",
+        ];
+        assert_eq!(format_month(2020, 5, true, today), may);
+
+        let april_hl = vec![
+            "     April 2021       ",
+            "Su Mo Tu We Th Fr Sa  ",
+            "             1  2  3  ",
+            " 4  5  6 \u{1b}[7m 7\u{1b}[0;39;49m  8  9 10  ",
+            "11 12 13 14 15 16 17  ",
+            "18 19 20 21 22 23 24  ",
+            "25 26 27 28 29 30     ",
+            "                      ",
+        ];
+        let today2 = NaiveDate::from_ymd(2021, 4, 7);
+        assert_eq!(format_month(2021, 4, true, today2), april_hl);
+    }
+
+    #[test]
+    fn test_parse_month() {
+        let one = parse_month("1");
+        assert!(one.is_ok());
+        if let Ok(val) = one {
+            assert_eq!(val, 1);
+        }
+
+        let twelve = parse_month("12");
+        assert!(twelve.is_ok());
+        if let Ok(val) = twelve {
+            assert_eq!(val, 12);
+        }
+
+        let zero = parse_month("0");
+        assert!(zero.is_err());
+
+        let thirteen = parse_month("13");
+        assert!(thirteen.is_err());
+
+        let jan = parse_month("jan");
+        assert!(jan.is_ok());
+        if let Ok(val) = jan {
+            assert_eq!(val, 1);
+        }
+
+        let bad = parse_month("foo");
+        assert!(bad.is_err());
+    }
+
+    #[test]
+    fn test_parse_int() {
+        let one = parse_int::<usize>("1");
+        assert!(one.is_ok());
+
+        if let Ok(val) = one {
+            assert_eq!(val, 1);
+        }
+
+        let bad = parse_int::<usize>("foo");
+        assert!(bad.is_err());
+    }
+
+    #[test]
+    fn test_last_day_in_month() {
+        assert_eq!(
+            last_day_in_month(2020, 1),
+            NaiveDate::from_ymd(2020, 1, 31)
+        );
+        assert_eq!(
+            last_day_in_month(2020, 2),
+            NaiveDate::from_ymd(2020, 2, 29)
+        );
+        assert_eq!(
+            last_day_in_month(2020, 4),
+            NaiveDate::from_ymd(2020, 4, 30)
+        );
+    }
 }

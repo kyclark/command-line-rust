@@ -1,32 +1,34 @@
-use assert_cmd::prelude::*;
+use assert_cmd::Command;
 use std::fs;
-use std::process::Command;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
-// --------------------------------------------------
-fn run(args: &Vec<&str>, expected_file: &str) -> TestResult {
-    let expected = fs::read_to_string(expected_file).ok().unwrap();
-    let mut cmd = Command::cargo_bin("calr")?;
-    cmd.args(args).unwrap().assert().stdout(expected);
+const PRG: &str = "calr";
 
+// --------------------------------------------------
+fn run(args: &[&str], expected_file: &str) -> TestResult {
+    let expected = fs::read_to_string(expected_file)?;
+    Command::cargo_bin(PRG)?
+        .args(args)
+        .assert()
+        .stdout(expected);
     Ok(())
 }
 
 // --------------------------------------------------
 #[test]
 fn test_4_2020() -> TestResult {
-    run(&vec!["-m", "4", "2020"], "tests/expected/4-2020.txt")
+    run(&["-m", "4", "2020"], "tests/expected/4-2020.txt")
 }
 
 // --------------------------------------------------
 #[test]
 fn test_april_2020() -> TestResult {
-    run(&vec!["2020", "-m", "april"], "tests/expected/4-2020.txt")
+    run(&["2020", "-m", "april"], "tests/expected/4-2020.txt")
 }
 
 // --------------------------------------------------
 #[test]
 fn test_2020() -> TestResult {
-    run(&vec!["2020"], "tests/expected/2020.txt")
+    run(&["2020"], "tests/expected/2020.txt")
 }

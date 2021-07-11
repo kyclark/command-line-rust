@@ -1,8 +1,8 @@
-==> tests/inputs/empty.txt <==
+==> ./tests/inputs/empty.txt <==
 
-==> tests/inputs/one.txt <==
+==> ./tests/inputs/one.txt <==
 Ã
-==> tests/inputs/three.txt <==
+==> ./tests/inputs/two.txt <==
 T
-==> tests/inputs/two.txt <==
+==> ./tests/inputs/three.txt <==
 T

@@ -144,14 +144,14 @@ fn parse_positions(range: Option<&str>) -> MyResult<Option<PositionList>> {
         Some(range_val) => {
             let mut fields: Vec<usize> = vec![];
             let range_re = Regex::new(r"(\d+)?-(\d+)?").unwrap();
-            for val in range_val.split(",") {
+            for val in range_val.split(',') {
                 if let Some(cap) = range_re.captures(val) {
                     let n1 = &cap[1].parse::<usize>()?;
                     let n2 = &cap[2].parse::<usize>()?;
 
                     if n1 < n2 {
                         for n in *n1..=*n2 {
-                            fields.push(n.clone());
+                            fields.push(n);
                         }
                     } else {
                         return Err(From::from(format!(
@@ -164,7 +164,7 @@ fn parse_positions(range: Option<&str>) -> MyResult<Option<PositionList>> {
                     }
                 } else {
                     match val.parse::<usize>() {
-                        Ok(n) => fields.push(n.clone()),
+                        Ok(n) => fields.push(n),
                         Err(_) => {
                             return Err(From::from(format!(
                                 "illegal list value: \"{}\"",

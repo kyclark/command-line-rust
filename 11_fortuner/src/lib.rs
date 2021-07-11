@@ -1,12 +1,10 @@
-extern crate clap;
-extern crate rand;
-
 use clap::{App, Arg};
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
+use std::str::FromStr;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 type Fortune = String;
@@ -20,7 +18,7 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("fortune")
+    let matches = App::new("fortuner")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust fortune")
@@ -39,13 +37,9 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let seed = matches
-        .value_of("seed")
-        .and_then(|v| v.trim().parse::<u64>().ok());
-
     Ok(Config {
         file: matches.value_of("file").unwrap().to_string(),
-        seed: seed,
+        seed: parse_int(matches.value_of("seed"))?,
     })
 }
 
@@ -57,18 +51,32 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
+fn parse_int<T: FromStr>(val: Option<&str>) -> MyResult<Option<T>> {
+    match val {
+        Some(v) => match v.trim().parse::<T>() {
+            Ok(n) => Ok(Some(n)),
+            Err(_) => Err(From::from(format!("Invalid integer \"{}\"", v))),
+        },
+        None => Ok(None),
+    }
+}
+
+// --------------------------------------------------
 fn read_fortunes(filename: &String) -> MyResult<Fortunes> {
-    let file = File::open(filename)?;
-    let file = BufReader::new(file);
+    let file = BufReader::new(
+        File::open(filename).map_err(|e| format!("{}: {}", filename, e))?,
+    );
     let mut fortunes: Vec<String> = vec![];
     let mut buffer: Vec<String> = vec![];
 
     for line in file.lines() {
         let line = &line?.trim().to_string();
 
-        if line == &"%".to_string() {
-            fortunes.push(buffer.join("\n"));
-            buffer = vec![];
+        if line == "%" {
+            if !buffer.is_empty() {
+                fortunes.push(buffer.join("\n"));
+                buffer = vec![];
+            }
         } else {
             buffer.push(line.to_string());
         }
@@ -120,7 +128,8 @@ mod tests {
                 "-- Randall Munroe, \"What If?\"");
             assert_eq!(fortunes.last().unwrap(), last);
 
-            let expected = concat!("If you put garbage in a computer nothing ",
+            let expected =
+                concat!("If you put garbage in a computer nothing ",
             "comes out but garbage. But this garbage, having passed through ",
             "a very expensive machine, is somehow ennobled and none dare ",
             "criticize it.");

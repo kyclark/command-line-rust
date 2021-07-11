@@ -164,12 +164,8 @@ pub fn count(filename: &str) -> MyResult<FileInfo> {
         }
         num_bytes += line_bytes;
         num_lines += 1;
-        num_words += line
-            .split_whitespace()
-            .into_iter()
-            .collect::<Vec<&str>>()
-            .len();
-        num_chars += line.chars().collect::<Vec<char>>().len();
+        num_words += line.split_whitespace().count();
+        num_chars += line.chars().count();
         line.clear();
     }
 

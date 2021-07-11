@@ -1,4 +1,6 @@
 use assert_cmd::Command;
+use predicates::prelude::*;
+use rand::{distributions::Alphanumeric, Rng};
 use std::fs;
 use tempfile::NamedTempFile;
 
@@ -10,96 +12,119 @@ struct Test<'a> {
     out_count: &'a str,
 }
 
-static PRG: &str = "uniqr";
+const PRG: &str = "uniqr";
 
-static EMPTY: Test = Test {
+const EMPTY: Test = Test {
     input: "tests/inputs/empty.txt",
     out: "tests/expected/empty.txt.out",
     out_count: "tests/expected/empty.txt.c.out",
 };
 
-static ONE: Test = Test {
+const ONE: Test = Test {
     input: "tests/inputs/one.txt",
     out: "tests/expected/one.txt.out",
     out_count: "tests/expected/one.txt.c.out",
 };
 
-static TWO: Test = Test {
+const TWO: Test = Test {
     input: "tests/inputs/two.txt",
     out: "tests/expected/two.txt.out",
     out_count: "tests/expected/two.txt.c.out",
 };
 
-static THREE: Test = Test {
+const THREE: Test = Test {
     input: "tests/inputs/three.txt",
     out: "tests/expected/three.txt.out",
     out_count: "tests/expected/three.txt.c.out",
 };
 
-static SKIP: Test = Test {
+const SKIP: Test = Test {
     input: "tests/inputs/skip.txt",
     out: "tests/expected/skip.txt.out",
     out_count: "tests/expected/skip.txt.c.out",
 };
 
-static T1: Test = Test {
+const T1: Test = Test {
     input: "tests/inputs/t1.txt",
     out: "tests/expected/t1.txt.out",
     out_count: "tests/expected/t1.txt.c.out",
 };
 
-static T2: Test = Test {
+const T2: Test = Test {
     input: "tests/inputs/t2.txt",
     out: "tests/expected/t2.txt.out",
     out_count: "tests/expected/t2.txt.c.out",
 };
 
-static T3: Test = Test {
+const T3: Test = Test {
     input: "tests/inputs/t3.txt",
     out: "tests/expected/t3.txt.out",
     out_count: "tests/expected/t3.txt.c.out",
 };
 
-static T4: Test = Test {
+const T4: Test = Test {
     input: "tests/inputs/t4.txt",
     out: "tests/expected/t4.txt.out",
     out_count: "tests/expected/t4.txt.c.out",
 };
 
-static T5: Test = Test {
+const T5: Test = Test {
     input: "tests/inputs/t5.txt",
     out: "tests/expected/t5.txt.out",
     out_count: "tests/expected/t5.txt.c.out",
 };
 
-static T6: Test = Test {
+const T6: Test = Test {
     input: "tests/inputs/t6.txt",
     out: "tests/expected/t6.txt.out",
     out_count: "tests/expected/t6.txt.c.out",
 };
 
 // --------------------------------------------------
+fn gen_bad_file() -> String {
+    loop {
+        let filename: String = rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(7)
+            .map(char::from)
+            .collect();
+
+        if fs::metadata(&filename).is_err() {
+            return filename;
+        }
+    }
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_bad_file() -> TestResult {
+    let bad = gen_bad_file();
+    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    Command::cargo_bin(PRG)?
+        .arg(bad)
+        .assert()
+        .stderr(predicate::str::is_match(expected)?);
+    Ok(())
+}
+
+// --------------------------------------------------
 // HELPER FUNCTIONS
 fn run(test: &Test) -> TestResult {
     let expected = fs::read_to_string(test.out)?;
-
     Command::cargo_bin(PRG)?
         .arg(test.input)
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
 // --------------------------------------------------
 fn run_count(test: &Test) -> TestResult {
     let expected = fs::read_to_string(test.out_count)?;
-
     Command::cargo_bin(PRG)?
         .args(&[test.input, "-c"])
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -107,12 +132,10 @@ fn run_count(test: &Test) -> TestResult {
 fn run_stdin(test: &Test) -> TestResult {
     let input = fs::read_to_string(test.input)?;
     let expected = fs::read_to_string(test.out)?;
-
     Command::cargo_bin(PRG)?
         .write_stdin(input)
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -120,13 +143,11 @@ fn run_stdin(test: &Test) -> TestResult {
 fn run_stdin_count(test: &Test) -> TestResult {
     let input = fs::read_to_string(test.input)?;
     let expected = fs::read_to_string(test.out_count)?;
-
     Command::cargo_bin(PRG)?
         .arg("--count")
         .write_stdin(input)
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -135,7 +156,6 @@ fn run_outfile(test: &Test) -> TestResult {
     let expected = fs::read_to_string(test.out)?;
     let outfile = NamedTempFile::new()?;
     let outpath = &outfile.path().to_str().unwrap();
-
     Command::cargo_bin(PRG)?
         .args(&[test.input, outpath])
         .assert()

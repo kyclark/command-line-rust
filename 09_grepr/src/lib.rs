@@ -167,7 +167,7 @@ fn find_lines<T: BufRead>(
 }
 
 // --------------------------------------------------
-fn find_files(files: &Vec<String>, recursive: bool) -> Vec<MyResult<String>> {
+fn find_files(files: &[String], recursive: bool) -> Vec<MyResult<String>> {
     let mut results = vec![];
 
     for path in files {

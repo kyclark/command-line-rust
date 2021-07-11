@@ -1,5 +1,6 @@
 use assert_cmd::Command;
 use predicates::prelude::*;
+use rand::{distributions::Alphanumeric, Rng};
 use std::fs;
 
 const PRG: &str = "commr";
@@ -20,6 +21,47 @@ fn dies_no_args() -> TestResult {
 }
 
 // --------------------------------------------------
+fn gen_bad_file() -> String {
+    loop {
+        let filename: String = rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(7)
+            .map(char::from)
+            .collect();
+
+        if fs::metadata(&filename).is_err() {
+            return filename;
+        }
+    }
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_bad_file1() -> TestResult {
+    let bad = gen_bad_file();
+    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    Command::cargo_bin(PRG)?
+        .args(&[&bad, FILE1])
+        .assert()
+        .failure()
+        .stderr(predicate::str::is_match(expected)?);
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_bad_file2() -> TestResult {
+    let bad = gen_bad_file();
+    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    Command::cargo_bin(PRG)?
+        .args(&[FILE1, &bad])
+        .assert()
+        .failure()
+        .stderr(predicate::str::is_match(expected)?);
+    Ok(())
+}
+
+// --------------------------------------------------
 #[test]
 fn dies_both_stdin() -> TestResult {
     let expected = "Both input files cannot be STDIN (\"-\")";
@@ -32,158 +74,105 @@ fn dies_both_stdin() -> TestResult {
 }
 
 // --------------------------------------------------
-#[test]
-fn empty_empty() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/empty_empty.out")?;
-
+fn run(args: &[&str], expected_file: &str) -> TestResult {
+    let expected = fs::read_to_string(expected_file)?;
     Command::cargo_bin(PRG)?
-        .args(&[EMPTY, EMPTY])
+        .args(args)
         .assert()
         .stdout(expected);
-
     Ok(())
 }
+
+// --------------------------------------------------
+fn run_stdin(
+    args: &[&str],
+    input_file: &str,
+    expected_file: &str,
+) -> TestResult {
+    let input = fs::read_to_string(input_file)?;
+    let expected = fs::read_to_string(expected_file)?;
+
+    Command::cargo_bin(PRG)?
+        .args(args)
+        .write_stdin(input)
+        .assert()
+        .stdout(expected);
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn empty_empty() -> TestResult {
+    run(&[EMPTY, EMPTY], "tests/expected/empty_empty.out")
+}
+
 // --------------------------------------------------
 #[test]
 fn file1_file1() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file1.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&[FILE1, FILE1])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&[FILE1, FILE1], "tests/expected/file1_file1.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&[FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&[FILE1, FILE2], "tests/expected/file1_file2.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_empty() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_empty.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&[FILE1, EMPTY])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&[FILE1, EMPTY], "tests/expected/file1_empty.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn empty_file2() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/empty_file2.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&[EMPTY, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&[EMPTY, FILE2], "tests/expected/empty_file2.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_1() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.1.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-1", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&["-1", FILE1, FILE2], "tests/expected/file1_file2.1.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_2() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.2.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-2", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&["-2", FILE1, FILE2], "tests/expected/file1_file2.2.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_3() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.3.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-3", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&["-3", FILE1, FILE2], "tests/expected/file1_file2.3.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_1_2() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.12.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-12", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&["-12", FILE1, FILE2], "tests/expected/file1_file2.12.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_2_3() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.23.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-23", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&["-23", FILE1, FILE2], "tests/expected/file1_file2.23.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_13() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.13.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-13", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(&["-13", FILE1, FILE2], "tests/expected/file1_file2.13.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_123() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.123.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-123", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &["-123", FILE1, FILE2],
+        "tests/expected/file1_file2.123.out",
+    )
 }
 
 // --------------------------------------------------
@@ -191,121 +180,82 @@ fn file1_file2_123() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn file1_file2_1_i() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.1.i.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-1", "-i", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &["-1", "-i", FILE1, FILE2],
+        "tests/expected/file1_file2.1.i.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_2_i() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.2.i.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-2", "-i", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &["-2", "-i", FILE1, FILE2],
+        "tests/expected/file1_file2.2.i.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_3_i() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.3.i.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-3", "-i", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &["-3", "-i", FILE1, FILE2],
+        "tests/expected/file1_file2.3.i.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_1_2_i() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.12.i.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-12", "-i", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &["-12", "-i", FILE1, FILE2],
+        "tests/expected/file1_file2.12.i.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_2_3_i() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.23.i.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-23", "-i", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &["-23", "-i", FILE1, FILE2],
+        "tests/expected/file1_file2.23.i.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_13_i() -> TestResult {
-    let expected = fs::read_to_string("tests/expected/file1_file2.13.i.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-13", "-i", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &["-13", "-i", FILE1, FILE2],
+        "tests/expected/file1_file2.13.i.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn file1_file2_123_i() -> TestResult {
-    let expected =
-        fs::read_to_string("tests/expected/file1_file2.123.i.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-123", "-i", FILE1, FILE2])
-        .assert()
-        .stdout(expected);
-
-    Ok(())
+    run(
+        &["-123", "-i", FILE1, FILE2],
+        "tests/expected/file1_file2.123.i.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn stdin_file1() -> TestResult {
-    let input = fs::read_to_string("tests/inputs/file1.txt")?;
-    let expected =
-        fs::read_to_string("tests/expected/file1_file2.123.i.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-123", "-i", "-", FILE2])
-        .write_stdin(input)
-        .assert()
-        .stdout(expected);
-    Ok(())
+    run_stdin(
+        &["-123", "-i", "-", FILE2],
+        FILE1,
+        "tests/expected/file1_file2.123.i.out",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn stdin_file2() -> TestResult {
-    let input = fs::read_to_string("tests/inputs/file2.txt")?;
-    let expected =
-        fs::read_to_string("tests/expected/file1_file2.123.i.out")?;
-
-    Command::cargo_bin(PRG)?
-        .args(&["-123", "-i", FILE1, "-"])
-        .write_stdin(input)
-        .assert()
-        .stdout(expected);
-    Ok(())
+    run_stdin(
+        &["-123", "-i", FILE1, "-"],
+        FILE2,
+        "tests/expected/file1_file2.123.i.out",
+    )
 }

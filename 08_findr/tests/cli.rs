@@ -1,31 +1,44 @@
 use assert_cmd::Command;
 use predicates::prelude::*;
+use rand::{distributions::Alphanumeric, Rng};
 use std::fs;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
-struct Test<'a> {
-    args: &'a Vec<&'a str>,
-    out: &'a str,
-}
+const PRG: &str = "findr";
 
-static PRG: &str = "findr";
+// --------------------------------------------------
+fn gen_bad_file() -> String {
+    loop {
+        let filename: String = rand::thread_rng()
+            .sample_iter(&Alphanumeric)
+            .take(7)
+            .map(char::from)
+            .collect();
+
+        if fs::metadata(&filename).is_err() {
+            return filename;
+        }
+    }
+}
 
 // --------------------------------------------------
 #[test]
 fn dies_bad_dir() -> TestResult {
-    let mut cmd = Command::cargo_bin(PRG)?;
-    cmd.arg("blargh").assert().stderr(
-        predicate::str::is_match("\"blargh\": .* [(]os error 2[)]").unwrap(),
-    );
+    let bad = gen_bad_file();
+    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    Command::cargo_bin(PRG)?
+        .arg(&bad)
+        .assert()
+        .stderr(predicate::str::is_match(expected)?);
     Ok(())
 }
 
 // --------------------------------------------------
 #[test]
 fn dies_bad_name() -> TestResult {
-    let mut cmd = Command::cargo_bin(PRG)?;
-    cmd.args(&["--name", "*.csv"])
+    Command::cargo_bin(PRG)?
+        .args(&["--name", "*.csv"])
         .assert()
         .stderr(predicate::str::contains("Invalid --name regex \"*.csv\""));
     Ok(())
@@ -34,228 +47,203 @@ fn dies_bad_name() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dies_bad_type() -> TestResult {
-    let mut cmd = Command::cargo_bin(PRG)?;
     let expected = "error: 'x' isn't a valid value for '--type <TYPE>...'";
-    cmd.args(&["--type", "x"])
+    Command::cargo_bin(PRG)?
+        .args(&["--type", "x"])
         .assert()
-        .stderr(predicate::str::is_match(expected).unwrap());
+        .stderr(predicate::str::is_match(expected)?);
     Ok(())
 }
 
 // --------------------------------------------------
-fn run(test: &Test) -> TestResult {
-    let expected = fs::read_to_string(test.out)?;
-
+fn run(args: &[&str], expected_file: &str) -> TestResult {
+    let expected = fs::read_to_string(expected_file)?;
     Command::cargo_bin(PRG)?
-        .args(test.args)
+        .args(args)
         .assert()
         .stdout(expected);
-
     Ok(())
 }
 
 // --------------------------------------------------
 #[test]
 fn path1() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs"],
-        out: "tests/expected/path1.txt",
-    })
+    run(&["tests/inputs"], "tests/expected/path1.txt")
 }
 
 // --------------------------------------------------
 #[test]
 fn path_a() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/a"],
-        out: "tests/expected/path_a.txt",
-    })
+    run(&["tests/inputs/a"], "tests/expected/path_a.txt")
 }
 
 // --------------------------------------------------
 #[test]
 fn path_a_b() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/a/b"],
-        out: "tests/expected/path_a_b.txt",
-    })
+    run(&["tests/inputs/a/b"], "tests/expected/path_a_b.txt")
 }
 
 // --------------------------------------------------
 #[test]
 fn path_d() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/d"],
-        out: "tests/expected/path_d.txt",
-    })
+    run(&["tests/inputs/d"], "tests/expected/path_d.txt")
 }
 
 // --------------------------------------------------
 #[test]
 fn path_a_b_d() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/a/b", "tests/inputs/d"],
-        out: "tests/expected/path_a_b_d.txt",
-    })
+    run(
+        &["tests/inputs/a/b", "tests/inputs/d"],
+        "tests/expected/path_a_b_d.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_f() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs", "-t", "f"],
-        out: "tests/expected/type_f.txt",
-    })
+    run(&["tests/inputs", "-t", "f"], "tests/expected/type_f.txt")
 }
 
 // --------------------------------------------------
 #[test]
 fn type_f_path_a() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/a", "-t", "f"],
-        out: "tests/expected/type_f_path_a.txt",
-    })
+    run(
+        &["tests/inputs/a", "-t", "f"],
+        "tests/expected/type_f_path_a.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_f_path_a_b() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/a/b", "--type", "f"],
-        out: "tests/expected/type_f_path_a_b.txt",
-    })
+    run(
+        &["tests/inputs/a/b", "--type", "f"],
+        "tests/expected/type_f_path_a_b.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_f_path_d() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/d", "--type", "f"],
-        out: "tests/expected/type_f_path_d.txt",
-    })
+    run(
+        &["tests/inputs/d", "--type", "f"],
+        "tests/expected/type_f_path_d.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_f_path_a_b_d() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/a/b", "tests/inputs/d", "--type", "f"],
-        out: "tests/expected/type_f_path_a_b_d.txt",
-    })
+    run(
+        &["tests/inputs/a/b", "tests/inputs/d", "--type", "f"],
+        "tests/expected/type_f_path_a_b_d.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_d() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs", "-t", "d"],
-        out: "tests/expected/type_d.txt",
-    })
+    run(&["tests/inputs", "-t", "d"], "tests/expected/type_d.txt")
 }
 
 // --------------------------------------------------
 #[test]
 fn type_d_path_a() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/a", "-t", "d"],
-        out: "tests/expected/type_d_path_a.txt",
-    })
+    run(
+        &["tests/inputs/a", "-t", "d"],
+        "tests/expected/type_d_path_a.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_d_path_a_b() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/a/b", "--type", "d"],
-        out: "tests/expected/type_d_path_a_b.txt",
-    })
+    run(
+        &["tests/inputs/a/b", "--type", "d"],
+        "tests/expected/type_d_path_a_b.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_d_path_d() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/d", "--type", "d"],
-        out: "tests/expected/type_d_path_d.txt",
-    })
+    run(
+        &["tests/inputs/d", "--type", "d"],
+        "tests/expected/type_d_path_d.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_d_path_a_b_d() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/a/b", "tests/inputs/d", "--type", "d"],
-        out: "tests/expected/type_d_path_a_b_d.txt",
-    })
+    run(
+        &["tests/inputs/a/b", "tests/inputs/d", "--type", "d"],
+        "tests/expected/type_d_path_a_b_d.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_l() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs", "-t", "l"],
-        out: "tests/expected/type_l.txt",
-    })
+    run(&["tests/inputs", "-t", "l"], "tests/expected/type_l.txt")
 }
 
 // --------------------------------------------------
 #[test]
 fn type_f_l() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs", "-t", "l", "f"],
-        out: "tests/expected/type_f_l.txt",
-    })
+    run(
+        &["tests/inputs", "-t", "l", "f"],
+        "tests/expected/type_f_l.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn name_csv() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs", "-n", ".*\\.csv"],
-        out: "tests/expected/name_csv.txt",
-    })
+    run(
+        &["tests/inputs", "-n", ".*.csv"],
+        "tests/expected/name_csv.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn name_csv_mp3() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs", "-n", ".*.csv", "-n", ".*.mp3"],
-        out: "tests/expected/name_csv_mp3.txt",
-    })
+    run(
+        &["tests/inputs", "-n", ".*.csv", "-n", ".*.mp3"],
+        "tests/expected/name_csv_mp3.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn name_txt_path_a_d() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs/a", "tests/inputs/d", "--name", ".*.txt"],
-        out: "tests/expected/name_txt_path_a_d.txt",
-    })
+    run(
+        &["tests/inputs/a", "tests/inputs/d", "--name", ".*.txt"],
+        "tests/expected/name_txt_path_a_d.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn name_a() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs", "-n", "a"],
-        out: "tests/expected/name_a.txt",
-    })
+    run(&["tests/inputs", "-n", "a"], "tests/expected/name_a.txt")
 }
+
 // --------------------------------------------------
 #[test]
 fn type_f_name_a() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs", "-t", "f", "-n", "a"],
-        out: "tests/expected/type_f_name_a.txt",
-    })
+    run(
+        &["tests/inputs", "-t", "f", "-n", "a"],
+        "tests/expected/type_f_name_a.txt",
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_d_name_a() -> TestResult {
-    run(&Test {
-        args: &vec!["tests/inputs", "--type", "d", "--name", "a"],
-        out: "tests/expected/type_d_name_a.txt",
-    })
+    run(
+        &["tests/inputs", "--type", "d", "--name", "a"],
+        "tests/expected/type_d_name_a.txt",
+    )
 }

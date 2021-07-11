@@ -68,9 +68,7 @@ pub fn get_args() -> MyResult<Config> {
                         )));
                     }
                 }
-                Err(e) => {
-                    return Err(From::from(format!("\"{}\": {}", &dir, e)))
-                }
+                Err(e) => return Err(From::from(format!("{}: {}", &dir, e))),
             }
         }
     }
@@ -129,9 +127,9 @@ pub fn run(config: Config) -> MyResult<()> {
 
     let type_filter = |entry: &DirEntry| match &config.entry_types {
         Some(types) => types.iter().any(|t| match t {
-            &EntryType::Link => entry.path_is_symlink(),
-            &EntryType::Dir => entry.file_type().is_dir(),
-            &EntryType::File => entry.file_type().is_file(),
+            EntryType::Link => entry.path_is_symlink(),
+            EntryType::Dir => entry.file_type().is_dir(),
+            EntryType::File => entry.file_type().is_file(),
         }),
         _ => true,
     };

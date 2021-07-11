@@ -1,4 +1,5 @@
 use clap::{App, Arg};
+use std::cmp::Ordering;
 use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
@@ -89,8 +90,8 @@ pub fn get_args() -> MyResult<Config> {
         insensitive: matches.is_present("insensitive"),
         delimiter: matches
             .value_of("delimiter")
-            .and_then(|v| Some(v.to_string()))
-            .or(Some("\t".to_string()))
+            .map(|v| v.to_string())
+            .or_else(|| Some("\t".to_string()))
             .unwrap(),
     })
 }
@@ -104,16 +105,6 @@ pub fn run(config: Config) -> MyResult<()> {
         return Err(From::from("Both input files cannot be STDIN (\"-\")"));
     }
 
-    let file1: Box<dyn BufRead> = match filename1.as_str() {
-        "-" => Box::new(BufReader::new(io::stdin())),
-        _ => Box::new(BufReader::new(File::open(filename1)?)),
-    };
-
-    let file2: Box<dyn BufRead> = match filename2.as_str() {
-        "-" => Box::new(BufReader::new(io::stdin())),
-        _ => Box::new(BufReader::new(File::open(filename2)?)),
-    };
-
     let case = |line: String| {
         if config.insensitive {
             line.to_lowercase()
@@ -122,17 +113,15 @@ pub fn run(config: Config) -> MyResult<()> {
         }
     };
 
-    let mut lines1 = file1
+    let mut lines1 = open(filename1)?
         .lines()
         .filter_map(|line| line.ok())
-        .map(case)
-        .into_iter();
+        .map(case);
 
-    let mut lines2 = file2
+    let mut lines2 = open(filename2)?
         .lines()
         .filter_map(|line| line.ok())
-        .map(case)
-        .into_iter();
+        .map(case);
 
     let printer = |col: Column| {
         let default_col1 = if config.suppress_col1 {
@@ -148,33 +137,22 @@ pub fn run(config: Config) -> MyResult<()> {
 
         let out = match col {
             Column::Col1(val) => {
-                format!(
-                    "{}",
-                    if config.suppress_col1 {
-                        "".to_string()
-                    } else {
-                        val
-                    }
-                )
+                if config.suppress_col1 {
+                    "".to_string()
+                } else {
+                    val
+                }
             }
             Column::Col2(val) => format!(
                 "{}{}",
                 default_col1,
-                if config.suppress_col2 {
-                    "".to_string()
-                } else {
-                    val
-                },
+                if config.suppress_col2 { "" } else { &val },
             ),
             Column::Col3(val) => format!(
                 "{}{}{}",
                 default_col1,
                 default_col2,
-                if config.suppress_col3 {
-                    "".to_string()
-                } else {
-                    val
-                },
+                if config.suppress_col3 { "" } else { &val },
             ),
         };
 
@@ -188,19 +166,21 @@ pub fn run(config: Config) -> MyResult<()> {
 
     loop {
         match (&line1, &line2) {
-            (Some(val1), Some(val2)) => {
-                if val1 == val2 {
+            (Some(val1), Some(val2)) => match val1.cmp(val2) {
+                Ordering::Equal => {
                     printer(Column::Col3(val1.to_string()));
                     line1 = lines1.next();
                     line2 = lines2.next();
-                } else if val1 < val2 {
+                }
+                Ordering::Less => {
                     printer(Column::Col1(val1.to_string()));
                     line1 = lines1.next();
-                } else {
+                }
+                _ => {
                     printer(Column::Col2(val2.to_string()));
                     line2 = lines2.next();
                 }
-            }
+            },
             (Some(val1), None) => {
                 printer(Column::Col1(val1.to_string()));
                 line1 = lines1.next();
@@ -214,4 +194,15 @@ pub fn run(config: Config) -> MyResult<()> {
     }
 
     Ok(())
+}
+
+// --------------------------------------------------
+fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
+    match filename {
+        "-" => Ok(Box::new(BufReader::new(io::stdin()))),
+        _ => Ok(Box::new(BufReader::new(
+            File::open(filename)
+                .map_err(|e| format!("{}: {}", filename, e))?,
+        ))),
+    }
 }

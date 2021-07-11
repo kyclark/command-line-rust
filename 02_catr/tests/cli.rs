@@ -14,7 +14,7 @@ const BUSTLE: &str = "tests/inputs/the-bustle.txt";
 // --------------------------------------------------
 #[test]
 fn usage() -> TestResult {
-    for flag in vec!["-h", "--help"] {
+    for flag in &["-h", "--help"] {
         Command::cargo_bin(PRG)?
             .arg(flag)
             .assert()
@@ -42,17 +42,17 @@ fn gen_bad_file() -> String {
 #[test]
 fn bad_file() -> TestResult {
     let bad = gen_bad_file();
+    let expected = format!("{}: .* [(]os error 2[)]", bad);
     Command::cargo_bin(PRG)?
         .arg(&bad)
         .assert()
-        .failure()
-        .stderr(format!("\"{}\" is not a valid file.\n", &bad));
+        .stderr(predicate::str::is_match(expected)?);
 
     Ok(())
 }
 
 // --------------------------------------------------
-fn run(args: Vec<&str>, expected_file: &str) -> TestResult {
+fn run(args: &[&str], expected_file: &str) -> TestResult {
     let expected = fs::read_to_string(expected_file)?;
     Command::cargo_bin(PRG)?
         .args(args)
@@ -64,11 +64,11 @@ fn run(args: Vec<&str>, expected_file: &str) -> TestResult {
 
 // --------------------------------------------------
 fn run_stdin(
-    stdin_file: &str,
-    args: Vec<&str>,
+    input_file: &str,
+    args: &[&str],
     expected_file: &str,
 ) -> TestResult {
-    let input = fs::read_to_string(stdin_file)?;
+    let input = fs::read_to_string(input_file)?;
     let expected = fs::read_to_string(expected_file)?;
     Command::cargo_bin(PRG)?
         .args(args)
@@ -82,7 +82,7 @@ fn run_stdin(
 // --------------------------------------------------
 #[test]
 fn bustle_stdin() -> TestResult {
-    run_stdin(BUSTLE, vec!["-"], "tests/expected/the-bustle.txt.stdin.out")
+    run_stdin(BUSTLE, &["-"], "tests/expected/the-bustle.txt.stdin.out")
 }
 
 // --------------------------------------------------
@@ -90,7 +90,7 @@ fn bustle_stdin() -> TestResult {
 fn bustle_stdin_n() -> TestResult {
     run_stdin(
         BUSTLE,
-        vec!["-n", "-"],
+        &["-n", "-"],
         "tests/expected/the-bustle.txt.n.stdin.out",
     )
 }
@@ -100,7 +100,7 @@ fn bustle_stdin_n() -> TestResult {
 fn bustle_stdin_b() -> TestResult {
     run_stdin(
         BUSTLE,
-        vec!["-b", "-"],
+        &["-b", "-"],
         "tests/expected/the-bustle.txt.b.stdin.out",
     )
 }
@@ -108,59 +108,56 @@ fn bustle_stdin_b() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn empty() -> TestResult {
-    run(vec![EMPTY], "tests/expected/empty.txt.out")
+    run(&[EMPTY], "tests/expected/empty.txt.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn empty_n() -> TestResult {
-    run(vec!["-n", EMPTY], "tests/expected/empty.txt.n.out")
+    run(&["-n", EMPTY], "tests/expected/empty.txt.n.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn empty_b() -> TestResult {
-    run(vec!["-b", EMPTY], "tests/expected/empty.txt.b.out")
+    run(&["-b", EMPTY], "tests/expected/empty.txt.b.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn fox() -> TestResult {
-    run(vec![FOX], "tests/expected/fox.txt.out")
+    run(&[FOX], "tests/expected/fox.txt.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn fox_n() -> TestResult {
-    run(vec!["-n", FOX], "tests/expected/fox.txt.n.out")
+    run(&["-n", FOX], "tests/expected/fox.txt.n.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn fox_b() -> TestResult {
-    run(vec!["-b", FOX], "tests/expected/fox.txt.b.out")
+    run(&["-b", FOX], "tests/expected/fox.txt.b.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn spiders() -> TestResult {
-    run(vec![SPIDERS], "tests/expected/spiders.txt.out")
+    run(&[SPIDERS], "tests/expected/spiders.txt.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn spiders_n() -> TestResult {
-    run(
-        vec!["--number", SPIDERS],
-        "tests/expected/spiders.txt.n.out",
-    )
+    run(&["--number", SPIDERS], "tests/expected/spiders.txt.n.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn spiders_b() -> TestResult {
     run(
-        vec!["--number-nonblank", SPIDERS],
+        &["--number-nonblank", SPIDERS],
         "tests/expected/spiders.txt.b.out",
     )
 }
@@ -168,35 +165,35 @@ fn spiders_b() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn bustle() -> TestResult {
-    run(vec![BUSTLE], "tests/expected/the-bustle.txt.out")
+    run(&[BUSTLE], "tests/expected/the-bustle.txt.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn bustle_n() -> TestResult {
-    run(vec!["-n", BUSTLE], "tests/expected/the-bustle.txt.n.out")
+    run(&["-n", BUSTLE], "tests/expected/the-bustle.txt.n.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn bustle_b() -> TestResult {
-    run(vec!["-b", BUSTLE], "tests/expected/the-bustle.txt.b.out")
+    run(&["-b", BUSTLE], "tests/expected/the-bustle.txt.b.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn all() -> TestResult {
-    run(vec![FOX, SPIDERS, BUSTLE], "tests/expected/all.out")
+    run(&[FOX, SPIDERS, BUSTLE], "tests/expected/all.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn all_n() -> TestResult {
-    run(vec![FOX, SPIDERS, BUSTLE, "-n"], "tests/expected/all.n.out")
+    run(&[FOX, SPIDERS, BUSTLE, "-n"], "tests/expected/all.n.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn all_b() -> TestResult {
-    run(vec![FOX, SPIDERS, BUSTLE, "-b"], "tests/expected/all.b.out")
+    run(&[FOX, SPIDERS, BUSTLE, "-b"], "tests/expected/all.b.out")
 }

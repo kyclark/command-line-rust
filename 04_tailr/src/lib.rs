@@ -110,10 +110,10 @@ pub fn run(config: Config) -> MyResult<()> {
 
                 if let Some(num_bytes) = config.bytes {
                     // Handle empty files
-                    if file.seek(SeekFrom::End(num_bytes * -1)).is_ok() {
+                    if file.seek(SeekFrom::End(-num_bytes)).is_ok() {
                         let mut buffer = Vec::new();
                         file.read_to_end(&mut buffer)?;
-                        if buffer.len() > 0 {
+                        if !buffer.is_empty() {
                             print!("{}", String::from_utf8_lossy(&buffer));
                         }
                     }

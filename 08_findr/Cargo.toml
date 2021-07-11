@@ -14,3 +14,4 @@ regex = "1"
 [dev-dependencies]
 assert_cmd = "1"
 predicates = "1"
+rand = "0.8"
