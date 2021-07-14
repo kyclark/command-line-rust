@@ -3,6 +3,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::{self, BufReader};
+//use std::str::FromStr;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -114,6 +115,7 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
 // --------------------------------------------------
 fn parse_int(val: Option<&str>) -> MyResult<Option<usize>> {
     match val {
+        //Some(v) => match core::num::NonZeroUsize::from_str(v.trim()) {
         Some(v) => match v.trim().parse::<core::num::NonZeroUsize>() {
             Ok(n) => Ok(Some(usize::from(n))),
             Err(_) => Err(From::from(v)),

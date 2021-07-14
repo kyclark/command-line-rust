@@ -123,18 +123,18 @@ pub fn run(config: Config) -> MyResult<()> {
         .filter_map(|line| line.ok())
         .map(case);
 
-    let printer = |col: Column| {
-        let default_col1 = if config.suppress_col1 {
-            ""
-        } else {
-            &config.delimiter
-        };
-        let default_col2 = if config.suppress_col2 {
-            ""
-        } else {
-            &config.delimiter
-        };
+    let default_col1 = if config.suppress_col1 {
+        ""
+    } else {
+        &config.delimiter
+    };
+    let default_col2 = if config.suppress_col2 {
+        ""
+    } else {
+        &config.delimiter
+    };
 
+    let printer = |col: Column| {
         let out = match col {
             Column::Col1(val) => {
                 if config.suppress_col1 {
