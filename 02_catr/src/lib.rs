@@ -52,82 +52,37 @@ pub fn get_args() -> MyResult<Config> {
 }
 
 // --------------------------------------------------
-//pub fn run(config: Config) -> MyResult<()> {
-//    for filename in config.files {
-//        let file: MyResult<Box<dyn BufRead>> = match filename.as_str() {
-//            "-" => Ok(Box::new(BufReader::new(io::stdin()))),
-//            _ => match File::open(&filename) {
-//                Ok(file) => Ok(Box::new(BufReader::new(file))),
-//                Err(e) => Err(From::from(format!("{}: {}", &filename, e))),
-//            },
-//        };
-
-//        if let Err(e) = file {
-//            eprintln!("{}", e);
-//            continue;
-//        }
-
-//        let mut last_num = 0;
-//        for (line_num, line_result) in file.unwrap().lines().enumerate() {
-//            let line = line_result?;
-//            if config.number_lines {
-//                println!("{:6}\t{}", line_num + 1, line);
-//            } else if config.number_nonblank_lines {
-//                if !line.is_empty() {
-//                    last_num += 1;
-//                    println!("{:6}\t{}", last_num, line);
-//                } else {
-//                    println!();
-//                }
-//            } else {
-//                println!("{}", line);
-//            }
-//        }
-//    }
-
-//    Ok(())
-//}
-
-// --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
     for filename in config.files {
-        if let Err(e) =
-            cat(&filename, config.number_lines, config.number_nonblank_lines)
-        {
-            eprintln!("{}: {}", filename, e);
+        match open(&filename) {
+            Err(e) => eprintln!("{}: {}", filename, e),
+            Ok(file) => {
+                let mut last_num = 0;
+                for (line_num, line_result) in file.lines().enumerate() {
+                    let line = line_result?;
+                    if config.number_lines {
+                        println!("{:6}\t{}", line_num + 1, line);
+                    } else if config.number_nonblank_lines {
+                        if !line.is_empty() {
+                            last_num += 1;
+                            println!("{:6}\t{}", last_num, line);
+                        } else {
+                            println!();
+                        }
+                    } else {
+                        println!("{}", line);
+                    }
+                }
+            }
         }
     }
-
     Ok(())
 }
 
 // --------------------------------------------------
-fn cat(
-    filename: &str,
-    number_lines: bool,
-    number_nonblank_lines: bool,
-) -> MyResult<()> {
-    let file: Box<dyn BufRead> = match filename {
-        "-" => Box::new(BufReader::new(io::stdin())),
-        _ => Box::new(BufReader::new(File::open(&filename)?)),
-    };
-
-    let mut last_num = 0;
-    for (line_num, line_result) in file.lines().enumerate() {
-        let line = line_result?;
-        if number_lines {
-            println!("{:6}\t{}", line_num + 1, line);
-        } else if number_nonblank_lines {
-            if !line.is_empty() {
-                last_num += 1;
-                println!("{:6}\t{}", last_num, line);
-            } else {
-                println!();
-            }
-        } else {
-            println!("{}", line);
-        }
+fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
+    match filename {
+        "-" => Ok(Box::new(BufReader::new(io::stdin()))),
+        _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
     }
-
-    Ok(())
 }
