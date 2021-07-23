@@ -3,14 +3,13 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::{self, BufReader};
-//use std::str::FromStr;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
     files: Vec<String>,
-    lines: u64,
+    lines: usize,
     bytes: Option<usize>,
 }
 
@@ -47,16 +46,22 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let lines = parse_int(matches.value_of("lines"))
+    let lines = matches
+        .value_of("lines")
+        .map(parse_positive_int)
+        .transpose()
         .map_err(|e| format!("illegal line count -- {}", e))?;
 
-    let bytes = parse_int(matches.value_of("bytes"))
+    let bytes = matches
+        .value_of("bytes")
+        .map(parse_positive_int)
+        .transpose()
         .map_err(|e| format!("illegal byte count -- {}", e))?;
 
     Ok(Config {
-        lines: lines.unwrap() as u64,
-        bytes: bytes,
         files: matches.values_of_lossy("files").unwrap(),
+        lines: lines.unwrap(),
+        bytes,
     })
 }
 
@@ -66,6 +71,7 @@ pub fn run(config: Config) -> MyResult<()> {
 
     for (file_num, filename) in config.files.iter().enumerate() {
         match open(filename) {
+            Err(err) => eprintln!("{}: {}", filename, err),
             Ok(file) => {
                 if num_files > 1 {
                     println!(
@@ -83,7 +89,6 @@ pub fn run(config: Config) -> MyResult<()> {
                 } else {
                     let mut file = BufReader::new(file);
                     let mut line = String::new();
-                    //let mut line_num = 0;
                     for line_num in 0.. {
                         if line_num == config.lines {
                             break;
@@ -93,12 +98,10 @@ pub fn run(config: Config) -> MyResult<()> {
                             break;
                         }
                         print!("{}", line);
-                        //line_num += 1;
                         line.clear();
                     }
                 }
             }
-            Err(err) => eprintln!("{}: {}", filename, err),
         }
     }
     Ok(())
@@ -113,41 +116,28 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
 }
 
 // --------------------------------------------------
-fn parse_int(val: Option<&str>) -> MyResult<Option<usize>> {
-    match val {
-        //Some(v) => match core::num::NonZeroUsize::from_str(v.trim()) {
-        Some(v) => match v.trim().parse::<core::num::NonZeroUsize>() {
-            Ok(n) => Ok(Some(usize::from(n))),
-            Err(_) => Err(From::from(v)),
-        },
-        None => Ok(None),
+fn parse_positive_int(val: &str) -> MyResult<usize> {
+    match val.parse() {
+        Ok(n) if n > 0 => Ok(n),
+        _ => Err(From::from(val)),
     }
 }
 
 // --------------------------------------------------
 #[test]
-fn test_parse_int() {
-    // No value is OK
-    let res1 = parse_int(None);
-    assert!(res1.is_ok());
-    assert!(res1.unwrap().is_none());
-
+fn test_parse_positive_int() {
     // 3 is an OK integer
-    let res2 = parse_int(Some("3"));
-    assert!(res2.is_ok());
-    assert_eq!(res2.unwrap(), Some(3usize));
+    let res1 = parse_positive_int("3");
+    assert!(res1.is_ok());
+    assert_eq!(res1.unwrap(), 3);
 
     // Any string is an error
-    let res3 = parse_int(Some("foo"));
-    assert!(res3.is_err());
-    if let Err(e) = res3 {
-        assert_eq!(e.to_string(), "foo".to_string());
-    }
+    let res2 = parse_positive_int("foo");
+    assert!(res2.is_err());
+    assert_eq!(res2.unwrap_err().to_string(), "foo".to_string());
 
     // A zero is an error
-    let res4 = parse_int(Some("0"));
-    assert!(res4.is_err());
-    if let Err(e) = res4 {
-        assert_eq!(e.to_string(), "0".to_string());
-    }
+    let res3 = parse_positive_int("0");
+    assert!(res3.is_err());
+    assert_eq!(res3.unwrap_err().to_string(), "0".to_string());
 }

@@ -13,14 +13,18 @@ const TWO: &str = "./tests/inputs/two.txt";
 const THREE: &str = "./tests/inputs/three.txt";
 
 // --------------------------------------------------
+fn random_string() -> String {
+    rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(7)
+        .map(char::from)
+        .collect()
+}
+
+// --------------------------------------------------
 fn gen_bad_file() -> String {
     loop {
-        let filename: String = rand::thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(7)
-            .map(char::from)
-            .collect();
-
+        let filename = random_string();
         if fs::metadata(&filename).is_err() {
             return filename;
         }
@@ -29,25 +33,14 @@ fn gen_bad_file() -> String {
 
 // --------------------------------------------------
 #[test]
-fn dies_bad_file() -> TestResult {
-    let bad = gen_bad_file();
-    let expected = format!("{}: .* [(]os error 2[)]", bad);
-    Command::cargo_bin(PRG)?
-        .arg(bad)
-        .assert()
-        .stderr(predicate::str::is_match(expected)?);
-
-    Ok(())
-}
-
-// --------------------------------------------------
-#[test]
 fn dies_bad_bytes() -> TestResult {
+    let bad = random_string();
+    let expected = format!("illegal byte count -- {}", &bad);
     Command::cargo_bin(PRG)?
-        .args(&["-c", "foo", EMPTY])
+        .args(&["-c", &bad, EMPTY])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("illegal byte count -- foo"));
+        .stderr(predicate::str::contains(expected));
 
     Ok(())
 }
@@ -55,11 +48,13 @@ fn dies_bad_bytes() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dies_bad_lines() -> TestResult {
+    let bad = random_string();
+    let expected = format!("illegal line count -- {}", &bad);
     Command::cargo_bin(PRG)?
-        .args(&["-n", "bar", EMPTY])
+        .args(&["-n", &bad, EMPTY])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("illegal line count -- bar"));
+        .stderr(predicate::str::contains(expected));
 
     Ok(())
 }
@@ -75,6 +70,19 @@ fn dies_bytes_and_lines() -> TestResult {
         .assert()
         .failure()
         .stderr(predicate::str::contains(msg));
+
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn skips_bad_file() -> TestResult {
+    let bad = gen_bad_file();
+    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    Command::cargo_bin(PRG)?
+        .args([EMPTY, &bad, ONE])
+        .assert()
+        .stderr(predicate::str::is_match(expected)?);
 
     Ok(())
 }

@@ -7,6 +7,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = "~2.33"
-regex = "~1.4"
-textwrap = "~0.13"
+clap = "2.33"
+regex = "1.4"
+textwrap = "0.13"

@@ -33,7 +33,7 @@ fn gen_bad_file() -> String {
             .map(char::from)
             .collect();
 
-        if fs::metadata(&filename).is_err() {
+        if fs::metadata(filename).is_err() {
             return filename;
         }
     }

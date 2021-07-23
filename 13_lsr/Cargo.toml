@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 chrono = "0.4"
-clap = "~2.33"
+clap = "2.33"
 users = "0.11"
 
 [dev-dependencies]
