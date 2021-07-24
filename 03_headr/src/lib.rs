@@ -72,7 +72,7 @@ pub fn run(config: Config) -> MyResult<()> {
     for (file_num, filename) in config.files.iter().enumerate() {
         match open(filename) {
             Err(err) => eprintln!("{}: {}", filename, err),
-            Ok(file) => {
+            Ok(mut file) => {
                 if num_files > 1 {
                     println!(
                         "{}==> {} <==",
@@ -87,12 +87,8 @@ pub fn run(config: Config) -> MyResult<()> {
                     let n = handle.read(&mut buffer)?;
                     print!("{}", String::from_utf8_lossy(&buffer[..n]));
                 } else {
-                    let mut file = BufReader::new(file);
                     let mut line = String::new();
-                    for line_num in 0.. {
-                        if line_num == config.lines {
-                            break;
-                        }
+                    for _ in config.lines {
                         let bytes = file.read_line(&mut line)?;
                         if bytes == 0 {
                             break;

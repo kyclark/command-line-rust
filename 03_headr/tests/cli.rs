@@ -98,7 +98,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
     Command::cargo_bin(PRG)?
         .args(args)
         .assert()
-        .stdout(predicate::str::contains(expected));
+        .stdout(predicate::eq(&expected.as_bytes() as &[u8]));
 
     Ok(())
 }
@@ -109,6 +109,7 @@ fn run_stdin(
     input_file: &str,
     expected_file: &str,
 ) -> TestResult {
+    // Extra work here due to lossy UTF
     let mut file = File::open(expected_file)?;
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
@@ -119,7 +120,7 @@ fn run_stdin(
         .write_stdin(input)
         .args(args)
         .assert()
-        .stdout(predicate::str::contains(expected));
+        .stdout(predicate::eq(&expected.as_bytes() as &[u8]));
 
     Ok(())
 }
