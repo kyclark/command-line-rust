@@ -1,24 +1,32 @@
+#[macro_use]
+extern crate lazy_static;
+
 use clap::{App, Arg};
+use regex::Regex;
+use std::cmp::Ordering;
 use std::collections::VecDeque;
 use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
-use std::io::{BufReader, SeekFrom};
-use std::str::{self, FromStr};
+use std::io::{BufRead, BufReader, SeekFrom};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
+
+lazy_static! {
+    static ref NUM_RE: Regex = Regex::new(r"^([+-])?(\d+)$").unwrap();
+}
 
 #[derive(Debug)]
 pub struct Config {
     files: Vec<String>,
-    lines: usize,
+    lines: i64,
     bytes: Option<i64>,
     quiet: bool,
 }
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("tail")
+    let matches = App::new("tailr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust tail")
@@ -46,7 +54,7 @@ pub fn get_args() -> MyResult<Config> {
                 .help("Suppress headers"),
         )
         .arg(
-            Arg::with_name("file")
+            Arg::with_name("files")
                 .value_name("FILE")
                 .help("Input file(s)")
                 .required(true)
@@ -54,47 +62,31 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let lines = parse_int::<usize>(matches.value_of("lines"));
-    if let Err(bad_lines) = lines {
-        return Err(From::from(format!(
-            "illegal line count -- {}",
-            bad_lines
-        )));
-    }
+    let lines = matches
+        .value_of("lines")
+        .map(parse_num)
+        .transpose()
+        .map_err(|e| format!("illegal line count -- {}", e))?;
 
-    let bytes = parse_int::<i64>(matches.value_of("bytes"));
-    if let Err(bad_bytes) = bytes {
-        return Err(From::from(format!(
-            "illegal byte count -- {}",
-            bad_bytes
-        )));
-    }
+    let bytes = matches
+        .value_of("bytes")
+        .map(parse_num)
+        .transpose()
+        .map_err(|e| format!("illegal byte count -- {}", e))?;
 
     Ok(Config {
-        lines: lines?.unwrap(),
-        bytes: bytes?,
-        files: matches.values_of_lossy("file").unwrap(),
+        lines: lines.unwrap(),
+        bytes: bytes,
+        files: matches.values_of_lossy("files").unwrap(),
         quiet: matches.is_present("quiet"),
     })
 }
 
 // --------------------------------------------------
-fn parse_int<T: FromStr + num::Zero>(
-    val: Option<&str>,
-) -> MyResult<Option<T>> {
-    match val {
-        Some(v) => match v.trim().parse::<T>() {
-            Ok(n) if !n.is_zero() => Ok(Some(n)),
-            _ => Err(From::from(v)),
-        },
-        None => Ok(None),
-    }
-}
-
-// --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    let num_files = config.files.len();
+    //println!("{:#?}", config);
 
+    let num_files = config.files.len();
     for (file_num, filename) in config.files.iter().enumerate() {
         if !config.quiet && num_files > 1 {
             println!(
@@ -105,25 +97,15 @@ pub fn run(config: Config) -> MyResult<()> {
         }
 
         match File::open(filename) {
+            Err(err) => eprintln!("{}: {}", filename, err),
             Ok(file) => {
-                let mut file = BufReader::new(file);
-
+                let file = BufReader::new(file);
                 if let Some(num_bytes) = config.bytes {
-                    // Handle empty files
-                    if file.seek(SeekFrom::End(-num_bytes)).is_ok() {
-                        let mut buffer = Vec::new();
-                        file.read_to_end(&mut buffer)?;
-                        if !buffer.is_empty() {
-                            print!("{}", String::from_utf8_lossy(&buffer));
-                        }
-                    }
+                    read_bytes(file, num_bytes)?;
                 } else {
-                    for line in take_lines(file, config.lines)? {
-                        print!("{}", line);
-                    }
+                    read_lines(file, config.lines)?;
                 }
             }
-            Err(err) => eprintln!("{}: {}", filename, err),
         }
     }
 
@@ -131,7 +113,71 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn take_lines<T: BufRead>(
+fn read_bytes<T: Read + Seek>(mut file: T, num_bytes: i64) -> MyResult<()> {
+    let direction = match num_bytes.cmp(&0) {
+        Ordering::Less => Some(SeekFrom::End(num_bytes)),
+        Ordering::Greater => Some(SeekFrom::Start(num_bytes as u64)),
+        _ => None,
+    };
+
+    if let Some(seek_from) = direction {
+        if file.seek(seek_from).is_ok() {
+            let mut buffer = Vec::new();
+            file.read_to_end(&mut buffer)?;
+            if !buffer.is_empty() {
+                print!("{}", String::from_utf8_lossy(&buffer));
+            }
+        }
+    }
+    Ok(())
+}
+
+// --------------------------------------------------
+fn read_lines<T: BufRead + Seek>(
+    mut file: T,
+    num_lines: i64,
+) -> MyResult<()> {
+    if num_lines > 0 {
+        let mut line = String::new();
+        let mut line_num = 0;
+        loop {
+            let bytes = file.read_line(&mut line)?;
+            if bytes == 0 {
+                break;
+            }
+            line_num += 1;
+            if line_num >= num_lines {
+                print!("{}", line);
+            }
+            line.clear();
+        }
+    } else if num_lines < 0 {
+        for line in last_lines(file, num_lines.abs() as usize)? {
+            print!("{}", line);
+        }
+    }
+
+    Ok(())
+}
+
+// --------------------------------------------------
+fn parse_num(val: &str) -> MyResult<i64> {
+    let (sign, num) = match NUM_RE.captures(val) {
+        Some(caps) => (
+            caps.get(1).map_or("", |c| c.as_str()),
+            caps.get(2).unwrap().as_str(),
+        ),
+        _ => return Err(From::from(val)),
+    };
+
+    match num.parse() {
+        Ok(n) => Ok(if sign == "+" { n } else { -1 * n }),
+        _ => Err(From::from(val)),
+    }
+}
+
+// --------------------------------------------------
+fn last_lines<T: BufRead>(
     mut file: T,
     num_lines: usize,
 ) -> MyResult<VecDeque<String>> {
@@ -155,51 +201,42 @@ fn take_lines<T: BufRead>(
 // --------------------------------------------------
 #[cfg(test)]
 mod test {
-    use super::{parse_int, take_lines, MyResult};
+    use super::{last_lines, parse_num};
     use std::io::Cursor;
 
     #[test]
-    fn test_parse_int() {
-        // No value is OK
-        let res1 = parse_int::<u32>(None);
+    fn test_parse_num() {
+        let res0 = parse_num("3");
+        assert!(res0.is_ok());
+        assert_eq!(res0.unwrap(), -3);
+
+        let res1 = parse_num("+3");
         assert!(res1.is_ok());
-        assert!(res1.unwrap().is_none());
+        assert_eq!(res1.unwrap(), 3);
 
-        // 3 is an OK integer
-        let res2: MyResult<Option<u32>> = parse_int(Some("3"));
+        let res2 = parse_num("-3");
         assert!(res2.is_ok());
-        assert_eq!(res2.unwrap(), Some(3u32));
+        assert_eq!(res2.unwrap(), -3);
 
-        // 4 is an OK integer
-        let res3 = parse_int::<i64>(Some("4"));
-        assert!(res3.is_ok());
-        assert_eq!(res3.unwrap(), Some(4i64));
+        let res3 = parse_num("3.14");
+        assert!(res3.is_err());
+        assert_eq!(res3.unwrap_err().to_string(), "3.14".to_string());
 
-        // Any string is an error
-        let res4 = parse_int::<u32>(Some("foo"));
+        let res4 = parse_num("foo");
         assert!(res4.is_err());
-        if let Err(e) = res4 {
-            assert_eq!(e.to_string(), "foo".to_string());
-        }
-
-        // A zero is an error
-        let res5 = parse_int::<u32>(Some("0"));
-        assert!(res5.is_err());
-        if let Err(e) = res5 {
-            assert_eq!(e.to_string(), "0".to_string());
-        }
+        assert_eq!(res4.unwrap_err().to_string(), "foo".to_string());
     }
 
     #[test]
-    fn test_take_lines() {
+    fn test_last_lines() {
         let lines = b"lorem\nipsum\r\ndolor";
-        let res1 = take_lines(Cursor::new(lines), 1);
+        let res1 = last_lines(Cursor::new(lines), 1);
         assert!(res1.is_ok());
         if let Ok(vec) = res1 {
             assert_eq!(vec, vec!["dolor"]);
         }
 
-        let res2 = take_lines(Cursor::new(lines), 2);
+        let res2 = last_lines(Cursor::new(lines), 2);
         assert!(res2.is_ok());
         if let Ok(vec) = res2 {
             assert_eq!(vec, vec!["ipsum\r\n", "dolor"]);

@@ -9,6 +9,8 @@ edition = "2018"
 [dependencies]
 clap = "2.33"
 num = "0.4"
+regex = "1"
+lazy_static = "1"
 
 [dev-dependencies]
 assert_cmd = "1"
