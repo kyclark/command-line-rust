@@ -88,22 +88,22 @@ pub fn run(config: Config) -> MyResult<()> {
 
     let num_files = config.files.len();
     for (file_num, filename) in config.files.iter().enumerate() {
-        if !config.quiet && num_files > 1 {
-            println!(
-                "{}==> {} <==",
-                if file_num > 0 { "\n" } else { "" },
-                &filename
-            );
-        }
-
         match File::open(filename) {
             Err(err) => eprintln!("{}: {}", filename, err),
             Ok(file) => {
+                if !config.quiet && num_files > 1 {
+                    println!(
+                        "{}==> {} <==",
+                        if file_num > 0 { "\n" } else { "" },
+                        &filename
+                    );
+                }
+
                 let file = BufReader::new(file);
                 if let Some(num_bytes) = config.bytes {
-                    read_bytes(file, num_bytes)?;
+                    print_bytes(file, num_bytes)?;
                 } else {
-                    read_lines(file, config.lines)?;
+                    print_lines(file, config.lines)?;
                 }
             }
         }
@@ -113,10 +113,10 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn read_bytes<T: Read + Seek>(mut file: T, num_bytes: i64) -> MyResult<()> {
+fn print_bytes<T: Read + Seek>(mut file: T, num_bytes: i64) -> MyResult<()> {
     let direction = match num_bytes.cmp(&0) {
         Ordering::Less => Some(SeekFrom::End(num_bytes)),
-        Ordering::Greater => Some(SeekFrom::Start(num_bytes as u64)),
+        Ordering::Greater => Some(SeekFrom::Start(num_bytes as u64 - 1)),
         _ => None,
     };
 
@@ -129,11 +129,12 @@ fn read_bytes<T: Read + Seek>(mut file: T, num_bytes: i64) -> MyResult<()> {
             }
         }
     }
+
     Ok(())
 }
 
 // --------------------------------------------------
-fn read_lines<T: BufRead + Seek>(
+fn print_lines<T: BufRead + Seek>(
     mut file: T,
     num_lines: i64,
 ) -> MyResult<()> {
