@@ -84,8 +84,6 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    //println!("{:#?}", config);
-
     let num_files = config.files.len();
     for (file_num, filename) in config.files.iter().enumerate() {
         match File::open(filename) {
@@ -134,10 +132,23 @@ fn print_bytes<T: Read + Seek>(mut file: T, num_bytes: i64) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn print_lines<T: BufRead + Seek>(
-    mut file: T,
-    num_lines: i64,
-) -> MyResult<()> {
+fn parse_num(val: &str) -> MyResult<i64> {
+    let (sign, num) = match NUM_RE.captures(val) {
+        Some(caps) => (
+            caps.get(1).map_or("", |c| c.as_str()),
+            caps.get(2).unwrap().as_str(),
+        ),
+        _ => return Err(From::from(val)),
+    };
+
+    match num.parse() {
+        Ok(n) => Ok(if sign == "+" { n } else { -1 * n }),
+        _ => Err(From::from(val)),
+    }
+}
+
+// --------------------------------------------------
+fn print_lines(mut file: impl BufRead, num_lines: i64) -> MyResult<()> {
     if num_lines > 0 {
         let mut line = String::new();
         let mut line_num = 0;
@@ -162,24 +173,8 @@ fn print_lines<T: BufRead + Seek>(
 }
 
 // --------------------------------------------------
-fn parse_num(val: &str) -> MyResult<i64> {
-    let (sign, num) = match NUM_RE.captures(val) {
-        Some(caps) => (
-            caps.get(1).map_or("", |c| c.as_str()),
-            caps.get(2).unwrap().as_str(),
-        ),
-        _ => return Err(From::from(val)),
-    };
-
-    match num.parse() {
-        Ok(n) => Ok(if sign == "+" { n } else { -1 * n }),
-        _ => Err(From::from(val)),
-    }
-}
-
-// --------------------------------------------------
-fn last_lines<T: BufRead>(
-    mut file: T,
+fn last_lines(
+    mut file: impl BufRead,
     num_lines: usize,
 ) -> MyResult<VecDeque<String>> {
     let mut last: VecDeque<String> = VecDeque::with_capacity(num_lines);
@@ -233,14 +228,10 @@ mod test {
         let lines = b"lorem\nipsum\r\ndolor";
         let res1 = last_lines(Cursor::new(lines), 1);
         assert!(res1.is_ok());
-        if let Ok(vec) = res1 {
-            assert_eq!(vec, vec!["dolor"]);
-        }
+        assert_eq!(res1.unwrap(), vec!["dolor"]);
 
         let res2 = last_lines(Cursor::new(lines), 2);
         assert!(res2.is_ok());
-        if let Ok(vec) = res2 {
-            assert_eq!(vec, vec!["ipsum\r\n", "dolor"]);
-        }
+        assert_eq!(res2.unwrap(), vec!["ipsum\r\n", "dolor"]);
     }
 }
