@@ -1,0 +1,6 @@
+tests/inputs/d
+tests/inputs/d/b.csv
+tests/inputs/d/d.txt
+tests/inputs/d/d.tsv
+tests/inputs/d/e
+tests/inputs/d/e/e.mp3

@@ -33,7 +33,7 @@ fn gen_bad_file() -> String {
             .map(char::from)
             .collect();
 
-        if fs::metadata(filename).is_err() {
+        if fs::metadata(&filename).is_err() {
             return filename;
         }
     }
@@ -47,6 +47,7 @@ fn bad_file() -> TestResult {
     Command::cargo_bin(PRG)?
         .arg(&bad)
         .assert()
+        .success()
         .stderr(predicate::str::is_match(expected)?);
 
     Ok(())
@@ -58,6 +59,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
     Command::cargo_bin(PRG)?
         .args(args)
         .assert()
+        .success()
         .stdout(expected);
 
     Ok(())
@@ -75,6 +77,7 @@ fn run_stdin(
         .args(args)
         .write_stdin(input)
         .assert()
+        .success()
         .stdout(expected);
 
     Ok(())

@@ -1,0 +1,9 @@
+tests/inputs/g.csv
+tests/inputs/a/a.txt
+tests/inputs/a/b/b.csv
+tests/inputs/a/b/c/c.mp3
+tests/inputs/f/f.txt
+tests/inputs/d/b.csv
+tests/inputs/d/d.txt
+tests/inputs/d/d.tsv
+tests/inputs/d/e/e.mp3

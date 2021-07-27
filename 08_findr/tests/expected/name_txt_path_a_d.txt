@@ -1,2 +1,0 @@
-tests/inputs/a/a.txt
-tests/inputs/d/d.txt

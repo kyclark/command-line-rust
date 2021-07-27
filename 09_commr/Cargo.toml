@@ -1,0 +1,15 @@
+[package]
+name = "commr"
+version = "0.1.0"
+authors = ["Ken Youens-Clark <kyclark@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = "2.33"
+
+[dev-dependencies]
+assert_cmd = "1"
+predicates = "1"
+rand = "0.8"
