@@ -1,9 +1,9 @@
 use clap::{App, Arg};
-use std::error::Error;
-use std::fs::File;
-use std::io;
-use std::io::prelude::*;
-use std::io::BufReader;
+use std::{
+    error::Error,
+    fs::File,
+    io::{self, BufRead, BufReader, Write},
+};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
