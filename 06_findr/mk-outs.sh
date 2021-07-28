@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-set -u
-
 IN_DIR="tests/inputs"
 OUT_DIR="tests/expected"
 
@@ -10,11 +8,8 @@ if [[ ! -d "$IN_DIR" ]]; then
     exit 1
 fi
 
-if [[ -d "$OUT_DIR" ]]; then
-    rm $OUT_DIR/*
-else
-    mkdir -p "$OUT_DIR"
-fi
+[[ -d "$OUT_DIR" ]] && mkdir -p "$OUT_DIR"
+rm $OUT_DIR/*
 
 find "$IN_DIR" > "$OUT_DIR/path1.txt"
 find "$IN_DIR/a" > "$OUT_DIR/path_a.txt"
@@ -44,5 +39,3 @@ find "$IN_DIR/a" "$IN_DIR/d" -name \*.txt > "$OUT_DIR/name_txt_path_a_d.txt"
 find "$IN_DIR" -name a* > "$OUT_DIR/name_a.txt"
 find "$IN_DIR" -type f -name a* > "$OUT_DIR/type_f_name_a.txt"
 find "$IN_DIR" -type d -name a* > "$OUT_DIR/type_d_name_a.txt"
-
-echo "Done"

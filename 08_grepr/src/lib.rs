@@ -1,9 +1,10 @@
 use clap::{App, Arg};
 use regex::{Regex, RegexBuilder};
-use std::error::Error;
-use std::fs::{self, File};
-use std::io::prelude::*;
-use std::io::{self, BufReader};
+use std::{
+    error::Error,
+    fs::{self, File},
+    io::{self, BufRead, BufReader},
+};
 use walkdir::WalkDir;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
@@ -92,9 +93,9 @@ pub fn run(config: Config) -> MyResult<()> {
         .map_err(|_| format!("Invalid pattern \"{}\"", &config.pattern))?;
 
     let entries = find_files(&config.files, config.recursive);
-    let num_files = &entries.len();
+    let num_files = entries.len();
     let print = |fname: &str, val: &str| {
-        if num_files > &1 {
+        if num_files > 1 {
             print!("{}:{}", fname, val);
         } else {
             print!("{}", val);
@@ -105,7 +106,7 @@ pub fn run(config: Config) -> MyResult<()> {
         match entry {
             Err(e) => eprintln!("{}", e),
             Ok(filename) => match open(&filename) {
-                Err(e) => eprintln!("{}", e),
+                Err(e) => eprintln!("{}: {}", filename, e),
                 Ok(file) => {
                     match find_lines(file, &pattern, config.invert_match) {
                         Err(e) => eprintln!("{}", e),
@@ -134,10 +135,7 @@ pub fn run(config: Config) -> MyResult<()> {
 fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
     match filename {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
-        _ => Ok(Box::new(BufReader::new(
-            File::open(filename)
-                .map_err(|e| format!("{}: {}", filename, e))?,
-        ))),
+        _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
     }
 }
 
@@ -220,46 +218,44 @@ mod test {
         let lines = b"Lorem\nIpsum\r\nDOLOR";
 
         let re1 = Regex::new("or").unwrap();
-        let matches1 = find_lines(Cursor::new(&lines), &re1, false);
-        assert!(matches1.is_ok());
-        if let Ok(lines1) = matches1 {
-            assert_eq!(lines1.len(), 1);
+        let matches = find_lines(Cursor::new(&lines), &re1, false);
+        assert!(matches.is_ok());
+        if let Ok(lines) = matches {
+            assert_eq!(lines.len(), 1);
         }
 
-        let matches2 = find_lines(Cursor::new(&lines), &re1, true);
-        assert!(matches2.is_ok());
-        if let Ok(lines2) = matches2 {
-            assert_eq!(lines2.len(), 2);
+        let matches = find_lines(Cursor::new(&lines), &re1, true);
+        assert!(matches.is_ok());
+        if let Ok(lines) = matches {
+            assert_eq!(lines.len(), 2);
         }
 
         let re2 = RegexBuilder::new("or")
             .case_insensitive(true)
             .build()
             .unwrap();
-        let matches3 = find_lines(Cursor::new(&lines), &re2, false);
-        assert!(matches3.is_ok());
-        if let Ok(lines3) = matches3 {
-            assert_eq!(lines3.len(), 2);
+        let matches = find_lines(Cursor::new(&lines), &re2, false);
+        assert!(matches.is_ok());
+        if let Ok(lines) = matches {
+            assert_eq!(lines.len(), 2);
         }
 
-        let matches4 = find_lines(Cursor::new(&lines), &re2, true);
-        assert!(matches4.is_ok());
-        if let Ok(lines4) = matches4 {
-            assert_eq!(lines4.len(), 1);
+        let matches = find_lines(Cursor::new(&lines), &re2, true);
+        assert!(matches.is_ok());
+        if let Ok(lines) = matches {
+            assert_eq!(lines.len(), 1);
         }
     }
 
     #[test]
     fn test_find_files() {
-        let files1 =
+        let files =
             find_files(&vec!["./tests/inputs/fox.txt".to_string()], false);
-        assert_eq!(files1.len(), 1);
-        if let Ok(file) = &files1[0] {
-            assert_eq!(file, &"./tests/inputs/fox.txt".to_string());
-        }
+        assert_eq!(files.len(), 1);
+        assert_eq!(files[0].as_ref().unwrap(), "./tests/inputs/fox.txt");
 
-        let files2 = find_files(&vec!["./tests/inputs".to_string()], true);
-        assert_eq!(files2.len(), 4);
+        let files = find_files(&["./tests/inputs".to_string()], true);
+        assert_eq!(files.len(), 4);
 
         let bad: String = rand::thread_rng()
             .sample_iter(&Alphanumeric)
@@ -267,14 +263,12 @@ mod test {
             .map(char::from)
             .collect();
 
-        let files3 = find_files(&vec![bad.clone()], false);
-        assert_eq!(files3.len(), 1);
-        assert!(files3[0].is_err());
-        if let Err(e) = &files3[0] {
-            assert_eq!(
-                e.to_string(),
-                format!("{}: No such file or directory (os error 2)", &bad)
-            );
-        }
+        let files = find_files(&vec![bad.clone()], false);
+        assert_eq!(files.len(), 1);
+        assert!(files[0].is_err());
+        assert_eq!(
+            files[0].as_ref().unwrap_err().to_string(),
+            format!("{}: No such file or directory (os error 2)", &bad)
+        );
     }
 }

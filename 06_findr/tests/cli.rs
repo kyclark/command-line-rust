@@ -24,13 +24,14 @@ fn gen_bad_file() -> String {
 
 // --------------------------------------------------
 #[test]
-fn dies_bad_dir() -> TestResult {
+fn skips_bad_dir() -> TestResult {
     let bad = gen_bad_file();
-    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    let expected = format!("{} is not a directory", bad);
     Command::cargo_bin(PRG)?
         .arg(&bad)
         .assert()
-        .stderr(predicate::str::is_match(expected)?);
+        .success()
+        .stderr(predicate::str::contains(expected));
     Ok(())
 }
 
@@ -40,7 +41,8 @@ fn dies_bad_name() -> TestResult {
     Command::cargo_bin(PRG)?
         .args(&["--name", "*.csv"])
         .assert()
-        .stderr(predicate::str::contains("Invalid --name regex \"*.csv\""));
+        .failure()
+        .stderr(predicate::str::contains("Invalid --name \"*.csv\""));
     Ok(())
 }
 
@@ -51,7 +53,8 @@ fn dies_bad_type() -> TestResult {
     Command::cargo_bin(PRG)?
         .args(&["--type", "x"])
         .assert()
-        .stderr(predicate::str::is_match(expected)?);
+        .failure()
+        .stderr(predicate::str::contains(expected));
     Ok(())
 }
 
@@ -61,6 +64,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
     Command::cargo_bin(PRG)?
         .args(args)
         .assert()
+        .success()
         .stdout(expected);
     Ok(())
 }

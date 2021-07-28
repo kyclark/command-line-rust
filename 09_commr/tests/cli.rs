@@ -79,6 +79,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
     Command::cargo_bin(PRG)?
         .args(args)
         .assert()
+        .success()
         .stdout(expected);
     Ok(())
 }
@@ -91,11 +92,11 @@ fn run_stdin(
 ) -> TestResult {
     let input = fs::read_to_string(input_file)?;
     let expected = fs::read_to_string(expected_file)?;
-
     Command::cargo_bin(PRG)?
         .args(args)
         .write_stdin(input)
         .assert()
+        .success()
         .stdout(expected);
     Ok(())
 }

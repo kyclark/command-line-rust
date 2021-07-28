@@ -10,14 +10,18 @@ const CSV: &str = "tests/inputs/movies1.csv";
 const TSV: &str = "tests/inputs/movies1.tsv";
 
 // --------------------------------------------------
+fn random_string() -> String {
+    rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(7)
+        .map(char::from)
+        .collect()
+}
+
+// --------------------------------------------------
 fn gen_bad_file() -> String {
     loop {
-        let filename: String = rand::thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(7)
-            .map(char::from)
-            .collect();
-
+        let filename = random_string();
         if fs::metadata(&filename).is_err() {
             return filename;
         }
@@ -26,53 +30,70 @@ fn gen_bad_file() -> String {
 
 // --------------------------------------------------
 #[test]
-fn dies_bad_file() -> TestResult {
+fn skips_bad_file() -> TestResult {
     let bad = gen_bad_file();
     let expected = format!("{}: .* [(]os error 2[)]", bad);
     Command::cargo_bin(PRG)?
-        .args(&["-f", "1", &bad])
+        .args(&["-f", "1", CSV, &bad, TSV])
         .assert()
+        .success()
         .stderr(predicate::str::is_match(expected)?);
+    Ok(())
+}
+
+// --------------------------------------------------
+fn dies(args: &[&str], expected: &str) -> TestResult {
+    Command::cargo_bin(PRG)?
+        .args(args)
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(expected));
     Ok(())
 }
 
 // --------------------------------------------------
 #[test]
 fn dies_not_enough_args() -> TestResult {
-    Command::cargo_bin(PRG)?.arg(CSV).assert().stderr(
-        predicate::str::contains("Must have --fields, --bytes, or --chars"),
-    );
-    Ok(())
+    dies(&[CSV], "Must have --fields, --bytes, or --chars")
 }
 
 // --------------------------------------------------
 #[test]
 fn dies_bad_digit_field() -> TestResult {
-    Command::cargo_bin(PRG)?
-        .args(&[CSV, "-f", "blargh"])
-        .assert()
-        .stderr(predicate::str::contains("illegal list value: \"blargh\""));
-    Ok(())
+    let bad = random_string();
+    dies(
+        &[CSV, "-f", &bad],
+        &format!("illegal list value: \"{}\"", &bad),
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn dies_bad_digit_bytes() -> TestResult {
-    Command::cargo_bin(PRG)?
-        .args(&[CSV, "-b", "blargh"])
-        .assert()
-        .stderr(predicate::str::contains("illegal list value: \"blargh\""));
-    Ok(())
+    let bad = random_string();
+    dies(
+        &[CSV, "-b", &bad],
+        &format!("illegal list value: \"{}\"", &bad),
+    )
 }
 
 // --------------------------------------------------
 #[test]
 fn dies_bad_digit_chars() -> TestResult {
-    Command::cargo_bin(PRG)?
-        .args(&[CSV, "-c", "blargh"])
-        .assert()
-        .stderr(predicate::str::contains("illegal list value: \"blargh\""));
-    Ok(())
+    let bad = random_string();
+    dies(
+        &[CSV, "-c", &bad],
+        &format!("illegal list value: \"{}\"", &bad),
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_bad_delimiter() -> TestResult {
+    dies(
+        &[CSV, "-f", "1", "-d", ",,"],
+        "--delim \",,\" must be a single byte",
+    )
 }
 
 // --------------------------------------------------
@@ -121,6 +142,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
     Command::cargo_bin(PRG)?
         .args(args)
         .assert()
+        .success()
         .stdout(expected);
     Ok(())
 }
@@ -132,6 +154,7 @@ fn run_lossy(args: &[&str], expected_file: &str) -> TestResult {
     Command::cargo_bin(PRG)?
         .args(args)
         .assert()
+        .success()
         .stdout(predicate::str::contains(expected));
     Ok(())
 }
@@ -139,37 +162,37 @@ fn run_lossy(args: &[&str], expected_file: &str) -> TestResult {
 // --------------------------------------------------
 #[test]
 fn tsv_f1() -> TestResult {
-    run(&[TSV, "-f", "1"], "tests/inputs/movies1.tsv.f1.out")
+    run(&[TSV, "-f", "1"], "tests/expected/movies1.tsv.f1.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_f2() -> TestResult {
-    run(&[TSV, "-f", "2"], "tests/inputs/movies1.tsv.f2.out")
+    run(&[TSV, "-f", "2"], "tests/expected/movies1.tsv.f2.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_f3() -> TestResult {
-    run(&[TSV, "-f", "3"], "tests/inputs/movies1.tsv.f3.out")
+    run(&[TSV, "-f", "3"], "tests/expected/movies1.tsv.f3.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_f1_2() -> TestResult {
-    run(&[TSV, "-f", "1-2"], "tests/inputs/movies1.tsv.f1-2.out")
+    run(&[TSV, "-f", "1-2"], "tests/expected/movies1.tsv.f1-2.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_f2_3() -> TestResult {
-    run(&[TSV, "-f", "2-3"], "tests/inputs/movies1.tsv.f2-3.out")
+    run(&[TSV, "-f", "2-3"], "tests/expected/movies1.tsv.f2-3.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_f1_3() -> TestResult {
-    run(&[TSV, "-f", "1-3"], "tests/inputs/movies1.tsv.f1-3.out")
+    run(&[TSV, "-f", "1-3"], "tests/expected/movies1.tsv.f1-3.out")
 }
 
 // --------------------------------------------------
@@ -177,7 +200,7 @@ fn tsv_f1_3() -> TestResult {
 fn csv_f1() -> TestResult {
     run(
         &[CSV, "-f", "1", "-d", ","],
-        "tests/inputs/movies1.csv.f1.dcomma.out",
+        "tests/expected/movies1.csv.f1.dcomma.out",
     )
 }
 
@@ -186,7 +209,7 @@ fn csv_f1() -> TestResult {
 fn csv_f2() -> TestResult {
     run(
         &[CSV, "-f", "2", "-d", ","],
-        "tests/inputs/movies1.csv.f2.dcomma.out",
+        "tests/expected/movies1.csv.f2.dcomma.out",
     )
 }
 
@@ -195,7 +218,7 @@ fn csv_f2() -> TestResult {
 fn csv_f3() -> TestResult {
     run(
         &[CSV, "-f", "3", "-d", ","],
-        "tests/inputs/movies1.csv.f3.dcomma.out",
+        "tests/expected/movies1.csv.f3.dcomma.out",
     )
 }
 
@@ -204,7 +227,7 @@ fn csv_f3() -> TestResult {
 fn csv_f1_2() -> TestResult {
     run(
         &[CSV, "-f", "1-2", "-d", ","],
-        "tests/inputs/movies1.csv.f1-2.dcomma.out",
+        "tests/expected/movies1.csv.f1-2.dcomma.out",
     )
 }
 
@@ -213,7 +236,7 @@ fn csv_f1_2() -> TestResult {
 fn csv_f2_3() -> TestResult {
     run(
         &[CSV, "-f", "2-3", "-d", ","],
-        "tests/inputs/movies1.csv.f2-3.dcomma.out",
+        "tests/expected/movies1.csv.f2-3.dcomma.out",
     )
 }
 
@@ -222,78 +245,78 @@ fn csv_f2_3() -> TestResult {
 fn csv_f1_3() -> TestResult {
     run(
         &[CSV, "-f", "1-3", "-d", ","],
-        "tests/inputs/movies1.csv.f1-3.dcomma.out",
+        "tests/expected/movies1.csv.f1-3.dcomma.out",
     )
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_b1() -> TestResult {
-    run(&[TSV, "-b", "1"], "tests/inputs/movies1.tsv.b1.out")
+    run(&[TSV, "-b", "1"], "tests/expected/movies1.tsv.b1.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_b2() -> TestResult {
-    run(&[TSV, "-b", "2"], "tests/inputs/movies1.tsv.b2.out")
+    run(&[TSV, "-b", "2"], "tests/expected/movies1.tsv.b2.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_b8() -> TestResult {
-    run_lossy(&[TSV, "-b", "8"], "tests/inputs/movies1.tsv.b8.out")
+    run_lossy(&[TSV, "-b", "8"], "tests/expected/movies1.tsv.b8.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_b1_2() -> TestResult {
-    run(&[TSV, "-b", "1-2"], "tests/inputs/movies1.tsv.b1-2.out")
+    run(&[TSV, "-b", "1-2"], "tests/expected/movies1.tsv.b1-2.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_b2_3() -> TestResult {
-    run(&[TSV, "-b", "2-3"], "tests/inputs/movies1.tsv.b2-3.out")
+    run(&[TSV, "-b", "2-3"], "tests/expected/movies1.tsv.b2-3.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_b1_8() -> TestResult {
-    run_lossy(&[TSV, "-b", "1-8"], "tests/inputs/movies1.tsv.b1-8.out")
+    run_lossy(&[TSV, "-b", "1-8"], "tests/expected/movies1.tsv.b1-8.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_c1() -> TestResult {
-    run(&[TSV, "-c", "1"], "tests/inputs/movies1.tsv.c1.out")
+    run(&[TSV, "-c", "1"], "tests/expected/movies1.tsv.c1.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_c2() -> TestResult {
-    run(&[TSV, "-c", "2"], "tests/inputs/movies1.tsv.c2.out")
+    run(&[TSV, "-c", "2"], "tests/expected/movies1.tsv.c2.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_c8() -> TestResult {
-    run(&[TSV, "-c", "8"], "tests/inputs/movies1.tsv.c8.out")
+    run(&[TSV, "-c", "8"], "tests/expected/movies1.tsv.c8.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_c1_2() -> TestResult {
-    run(&[TSV, "-c", "1-2"], "tests/inputs/movies1.tsv.c1-2.out")
+    run(&[TSV, "-c", "1-2"], "tests/expected/movies1.tsv.c1-2.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_c2_3() -> TestResult {
-    run(&[TSV, "-c", "2-3"], "tests/inputs/movies1.tsv.c2-3.out")
+    run(&[TSV, "-c", "2-3"], "tests/expected/movies1.tsv.c2-3.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn tsv_c1_8() -> TestResult {
-    run(&[TSV, "-c", "1-8"], "tests/inputs/movies1.tsv.c1-8.out")
+    run(&[TSV, "-c", "1-8"], "tests/expected/movies1.tsv.c1-8.out")
 }

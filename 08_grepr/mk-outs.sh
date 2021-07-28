@@ -6,7 +6,6 @@ DIR="tests/inputs"
 OUT_DIR="tests/expected"
 
 [[ ! -d "$OUT_DIR" ]] && mkdir -p "$OUT_DIR"
-
 rm -f "$OUT_DIR/*"
 
 # Empty file

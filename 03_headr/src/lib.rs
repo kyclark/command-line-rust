@@ -88,7 +88,7 @@ pub fn run(config: Config) -> MyResult<()> {
                     print!("{}", String::from_utf8_lossy(&buffer[..n]));
                 } else {
                     let mut line = String::new();
-                    for _ in config.lines {
+                    for _ in 0..config.lines {
                         let bytes = file.read_line(&mut line)?;
                         if bytes == 0 {
                             break;

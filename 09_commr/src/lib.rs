@@ -1,8 +1,11 @@
+use crate::Column::*;
 use clap::{App, Arg};
-use std::cmp::Ordering;
-use std::error::Error;
-use std::fs::File;
-use std::io::{self, BufRead, BufReader};
+use std::{
+    cmp::Ordering::*,
+    error::Error,
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -128,6 +131,7 @@ pub fn run(config: Config) -> MyResult<()> {
     } else {
         &config.delimiter
     };
+
     let default_col2 = if config.suppress_col2 {
         ""
     } else {
@@ -136,19 +140,19 @@ pub fn run(config: Config) -> MyResult<()> {
 
     let printer = |col: Column| {
         let out = match col {
-            Column::Col1(val) => {
+            Col1(val) => {
                 if config.suppress_col1 {
                     "".to_string()
                 } else {
                     val
                 }
             }
-            Column::Col2(val) => format!(
+            Col2(val) => format!(
                 "{}{}",
                 default_col1,
                 if config.suppress_col2 { "" } else { &val },
             ),
-            Column::Col3(val) => format!(
+            Col3(val) => format!(
                 "{}{}{}",
                 default_col1,
                 default_col2,
@@ -167,26 +171,26 @@ pub fn run(config: Config) -> MyResult<()> {
     loop {
         match (&line1, &line2) {
             (Some(val1), Some(val2)) => match val1.cmp(val2) {
-                Ordering::Equal => {
-                    printer(Column::Col3(val1.to_string()));
+                Equal => {
+                    printer(Col3(val1.to_string()));
                     line1 = lines1.next();
                     line2 = lines2.next();
                 }
-                Ordering::Less => {
-                    printer(Column::Col1(val1.to_string()));
+                Less => {
+                    printer(Col1(val1.to_string()));
                     line1 = lines1.next();
                 }
                 _ => {
-                    printer(Column::Col2(val2.to_string()));
+                    printer(Col2(val2.to_string()));
                     line2 = lines2.next();
                 }
             },
             (Some(val1), None) => {
-                printer(Column::Col1(val1.to_string()));
+                printer(Col1(val1.to_string()));
                 line1 = lines1.next();
             }
             (None, Some(val2)) => {
-                printer(Column::Col2(val2.to_string()));
+                printer(Col2(val2.to_string()));
                 line2 = lines2.next();
             }
             (None, None) => break,
