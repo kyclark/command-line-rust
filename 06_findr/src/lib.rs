@@ -91,6 +91,15 @@ pub fn get_args() -> MyResult<Config> {
 pub fn run(config: Config) -> MyResult<()> {
     //println!("{:?}", config);
 
+    let type_filter = |entry: &DirEntry| match &config.entry_types {
+        Some(types) => types.iter().any(|t| match t {
+            Link => entry.path_is_symlink(),
+            Dir => entry.file_type().is_dir(),
+            //File => entry.file_type().is_file(),
+        }),
+        _ => true,
+    };
+
     let name_filter = |entry: &DirEntry| match &config.names {
         Some(names) => names
             .iter()
@@ -98,18 +107,10 @@ pub fn run(config: Config) -> MyResult<()> {
         _ => true,
     };
 
-    let type_filter = |entry: &DirEntry| match &config.entry_types {
-        Some(types) => types.iter().any(|t| match t {
-            Link => entry.path_is_symlink(),
-            Dir => entry.file_type().is_dir(),
-            File => entry.file_type().is_file(),
-        }),
-        _ => true,
-    };
-
     for dirname in &config.dirs {
-        match fs::metadata(&dirname) {
-            Ok(meta) if meta.is_dir() => {
+        match fs::read_dir(&dirname) {
+            Err(e) => eprintln!("{}: {}", dirname, e),
+            _ => {
                 let entries: Vec<String> = WalkDir::new(dirname)
                     .into_iter()
                     .filter_map(|e| e.ok())
@@ -120,7 +121,6 @@ pub fn run(config: Config) -> MyResult<()> {
 
                 println!("{}", entries.join("\n"));
             }
-            _ => eprintln!("{} is not a directory", dirname),
         }
     }
 

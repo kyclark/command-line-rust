@@ -26,12 +26,12 @@ fn gen_bad_file() -> String {
 #[test]
 fn skips_bad_dir() -> TestResult {
     let bad = gen_bad_file();
-    let expected = format!("{} is not a directory", bad);
+    let expected = format!("{}: .* [(]os error 2[)]", &bad);
     Command::cargo_bin(PRG)?
         .arg(&bad)
         .assert()
         .success()
-        .stderr(predicate::str::contains(expected));
+        .stderr(predicate::str::is_match(expected)?);
     Ok(())
 }
 

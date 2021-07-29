@@ -1,3 +1,4 @@
+use crate::Extract::*;
 use clap::{App, Arg};
 use csv::{ReaderBuilder, StringRecord, WriterBuilder};
 use regex::Regex;
@@ -86,11 +87,11 @@ pub fn get_args() -> MyResult<Config> {
     let chars = matches.value_of("chars").map(parse_pos).transpose()?;
 
     let extract = if let Some(field_pos) = fields {
-        Extract::Fields(field_pos)
+        Fields(field_pos)
     } else if let Some(byte_pos) = bytes {
-        Extract::Bytes(byte_pos)
+        Bytes(byte_pos)
     } else if let Some(char_pos) = chars {
-        Extract::Chars(char_pos)
+        Chars(char_pos)
     } else {
         return Err(From::from("Must have --fields, --bytes, or --chars"));
     };
@@ -104,13 +105,11 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    //println!("{:#?}", &config);
-
     for filename in &config.files {
         match open(&filename) {
             Err(err) => eprintln!("{}: {}", filename, err),
             Ok(file) => match &config.extract {
-                Extract::Fields(field_pos) => {
+                Fields(field_pos) => {
                     let mut reader = ReaderBuilder::new()
                         .delimiter(config.delimiter)
                         .has_headers(false)
@@ -127,12 +126,12 @@ pub fn run(config: Config) -> MyResult<()> {
                         ))?;
                     }
                 }
-                Extract::Bytes(byte_pos) => {
+                Bytes(byte_pos) => {
                     for line in file.lines() {
                         println!("{}", extract_bytes(&line?, &byte_pos));
                     }
                 }
-                Extract::Chars(char_pos) => {
+                Chars(char_pos) => {
                     for line in file.lines() {
                         println!("{}", extract_chars(&line?, &char_pos));
                     }
