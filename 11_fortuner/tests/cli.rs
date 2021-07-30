@@ -9,14 +9,18 @@ const PRG: &str = "fortuner";
 const FORTUNES: &str = "tests/inputs/fortunes";
 
 // --------------------------------------------------
+fn random_string() -> String {
+    rand::thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(7)
+        .map(char::from)
+        .collect()
+}
+
+// --------------------------------------------------
 fn gen_bad_file() -> String {
     loop {
-        let filename: String = rand::thread_rng()
-            .sample_iter(&Alphanumeric)
-            .take(7)
-            .map(char::from)
-            .collect();
-
+        let filename = random_string();
         if fs::metadata(&filename).is_err() {
             return filename;
         }
@@ -25,12 +29,13 @@ fn gen_bad_file() -> String {
 
 // --------------------------------------------------
 #[test]
-fn dies_bad_file() -> TestResult {
+fn skips_bad_file() -> TestResult {
     let bad = gen_bad_file();
     let expected = format!("{}: .* [(]os error 2[)]", bad);
     Command::cargo_bin(PRG)?
         .args(&[&bad])
         .assert()
+        .success()
         .stderr(predicate::str::is_match(expected)?);
     Ok(())
 }
@@ -38,10 +43,13 @@ fn dies_bad_file() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dies_bad_seed() -> TestResult {
+    let bad = random_string();
+    let expected = format!("\"{}\" not a valid integer", &bad);
     Command::cargo_bin(PRG)?
-        .args(&[FORTUNES, "--seed", "foo"])
+        .args(&[FORTUNES, "--seed", &bad])
         .assert()
-        .stderr(predicate::str::contains("Invalid integer \"foo\""));
+        .failure()
+        .stderr(predicate::str::contains(expected));
     Ok(())
 }
 
@@ -50,6 +58,7 @@ fn run(seed: &str, expected: &'static str) -> TestResult {
     Command::cargo_bin(PRG)?
         .args(&[FORTUNES, "-s", seed])
         .assert()
+        .success()
         .stdout(expected);
     Ok(())
 }
