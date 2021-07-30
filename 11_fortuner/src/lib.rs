@@ -11,7 +11,7 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
-    file: String,
+    files: Vec<String>,
     seed: Option<u64>,
 }
 
@@ -22,9 +22,10 @@ pub fn get_args() -> MyResult<Config> {
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust fortune")
         .arg(
-            Arg::with_name("file")
+            Arg::with_name("files")
                 .value_name("FILE")
                 .help("Fortune file")
+                .min_values(1)
                 .required(true),
         )
         .arg(
@@ -37,14 +38,14 @@ pub fn get_args() -> MyResult<Config> {
         .get_matches();
 
     Ok(Config {
-        file: matches.value_of("file").unwrap().to_string(),
+        files: matches.values_of_lossy("files").unwrap(),
         seed: parse_int(matches.value_of("seed"))?,
     })
 }
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    let fortunes = read_fortunes(&config.file)?;
+    let fortunes = read_fortunes(&config.files)?;
     println!("{}", pick_fortune(&fortunes, &config.seed));
     Ok(())
 }
@@ -61,23 +62,27 @@ fn parse_int<T: FromStr>(val: Option<&str>) -> MyResult<Option<T>> {
 }
 
 // --------------------------------------------------
-fn read_fortunes(filename: &str) -> MyResult<Vec<String>> {
-    let file = BufReader::new(
-        File::open(filename).map_err(|e| format!("{}: {}", filename, e))?,
-    );
+fn read_fortunes(filenames: &[&str]) -> MyResult<Vec<String>> {
     let mut fortunes = vec![];
     let mut buffer = vec![];
 
-    for line in file.lines() {
-        let line = &line?.trim().to_string();
+    for file in files {
+        let file = BufReader::new(
+            File::open(filename)
+                .map_err(|e| format!("{}: {}", filename, e))?,
+        );
 
-        if line == "%" {
-            if !buffer.is_empty() {
-                fortunes.push(buffer.join("\n"));
-                buffer.clear();
+        for line in file.lines() {
+            let line = &line?.trim().to_string();
+
+            if line == "%" {
+                if !buffer.is_empty() {
+                    fortunes.push(buffer.join("\n"));
+                    buffer.clear();
+                }
+            } else {
+                buffer.push(line.to_string());
             }
-        } else {
-            buffer.push(line.to_string());
         }
     }
 
@@ -111,24 +116,20 @@ mod tests {
 
         if let Ok(fortunes) = fortunes {
             assert_eq!(fortunes.len(), 5437);
-            let first = concat!(
-                "You cannot achieve the impossible without ",
-                "attempting the absurd."
-            );
+            let first = "You cannot achieve the impossible without \
+                attempting the absurd.";
             assert_eq!(fortunes[0], first);
 
-            let last =
-                concat!("There is no material safety data sheet for ",
-                "astatine. If there were, it would just be the word \"NO\" ",
-                "scrawled over and over in charred blood.\n",
-                "-- Randall Munroe, \"What If?\"");
+            let last = "There is no material safety data sheet for \
+                astatine. If there were, it would just be the word \"NO\" \
+                scrawled over and over in charred blood.\n\
+                -- Randall Munroe, \"What If?\"";
             assert_eq!(fortunes.last().unwrap(), last);
 
-            let expected =
-                concat!("If you put garbage in a computer nothing ",
-            "comes out but garbage. But this garbage, having passed through ",
-            "a very expensive machine, is somehow ennobled and none dare ",
-            "criticize it.");
+            let expected = "If you put garbage in a computer nothing \
+                comes out but garbage. But this garbage, having passed through \
+                a very expensive machine, is somehow ennobled and none dare \
+                criticize it.";
             assert_eq!(pick_fortune(&fortunes, &Some(1)), expected);
         }
     }
