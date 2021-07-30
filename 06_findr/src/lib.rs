@@ -95,7 +95,7 @@ pub fn run(config: Config) -> MyResult<()> {
         Some(types) => types.iter().any(|t| match t {
             Link => entry.path_is_symlink(),
             Dir => entry.file_type().is_dir(),
-            //File => entry.file_type().is_file(),
+            File => entry.file_type().is_file(),
         }),
         _ => true,
     };

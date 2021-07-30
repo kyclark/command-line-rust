@@ -1,8 +1,7 @@
 use clap::{App, Arg};
 use std::error::Error;
 use std::fs::File;
-use std::io::prelude::*;
-use std::io::{self, BufReader};
+use std::io::{self, BufRead, BufReader};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -100,7 +99,7 @@ pub fn run(config: Config) -> MyResult<()> {
     let mut total_chars = 0;
 
     for filename in &config.files {
-        match open(&filename) {
+        match open(filename) {
             Err(err) => eprintln!("{}: {}", filename, err),
             Ok(file) => {
                 if let Ok(info) = count(file) {

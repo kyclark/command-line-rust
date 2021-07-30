@@ -127,7 +127,7 @@ fn find_files(config: &Config) -> MyResult<(Vec<FileInfo>, Vec<String>)> {
                         let basename =
                             entry.file_name().to_string_lossy().to_string();
                         let hidden = basename.starts_with('.');
-                        if !hidden || (hidden && config.all) {
+                        if !hidden || config.all {
                             results.push(FileInfo {
                                 path: entry.path().display().to_string(),
                                 metadata: meta,

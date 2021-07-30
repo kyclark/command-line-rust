@@ -81,7 +81,7 @@ pub fn get_args() -> MyResult<Config> {
     }
 
     Ok(Config {
-        files: files,
+        files,
         outdir: matches.value_of("outdir").unwrap().to_string(),
         delimiter: *matches
             .value_of("delimiter")
@@ -115,7 +115,8 @@ pub fn run(config: Config) -> MyResult<()> {
         let sheets = excel.sheet_names().to_owned();
         for sheet in sheets {
             let ext = if config.delimiter == 44 { "csv" } else { "txt" };
-            let out_file = format!("{}__{}.{}", &stem, normalize(&sheet), ext);
+            let out_file =
+                format!("{}__{}.{}", &stem, normalize(&sheet), ext);
             let out_path = &out_dir.join(out_file);
             let mut wtr = WriterBuilder::new()
                 .delimiter(config.delimiter)
@@ -125,7 +126,7 @@ pub fn run(config: Config) -> MyResult<()> {
             if let Some(Ok(r)) = excel.worksheet_range(&sheet) {
                 for (rnum, row) in r.rows().enumerate() {
                     let vals = row
-                        .into_iter()
+                        .iter()
                         .map(|f| format!("{}", f))
                         .map(|f| if rnum == 0 { normalize(&f) } else { f })
                         .collect::<Vec<String>>();
@@ -141,17 +142,13 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn normalize(val: &String) -> String {
+fn normalize(val: &str) -> String {
     let mut new = val.to_string();
     let camel = Regex::new(r"(.*)([a-z])([A-Z].*)").unwrap();
 
     // First handle FooBar -> Foo_Bar
-    loop {
-        if let Some(cap) = camel.captures(&new) {
-            new = format!("{}{}_{}", &cap[1], &cap[2], &cap[3]);
-        } else {
-            break;
-        }
+    while let Some(cap) = camel.captures(&new) {
+        new = format!("{}{}_{}", &cap[1], &cap[2], &cap[3]);
     }
 
     let spaces = Regex::new(r"[\s]+").unwrap();
@@ -159,13 +156,13 @@ fn normalize(val: &String) -> String {
     let mult_underbar = Regex::new(r"[_]+").unwrap();
 
     new = new.to_ascii_lowercase();
-    new = spaces.replace_all(&new.to_string(), "_").to_string();
-    new = non_alphanum.replace_all(&new.to_string(), "").to_string();
-    mult_underbar.replace_all(&new.to_string(), "_").to_string()
+    new = spaces.replace_all(&new, "_").to_string();
+    new = non_alphanum.replace_all(&new, "").to_string();
+    mult_underbar.replace_all(&new, "_").to_string()
 }
 
 // --------------------------------------------------
-fn is_file(path: &String) -> bool {
+fn is_file(path: &str) -> bool {
     if let Ok(meta) = fs::metadata(path) {
         meta.is_file()
     } else {
@@ -210,7 +207,8 @@ mod tests {
                 Ok(_) => {
                     let expected_dir = PathBuf::from(outdir);
                     assert!(expected_dir.is_dir());
-                    let expected_file = expected_dir.join("test1__sheet1.txt");
+                    let expected_file =
+                        expected_dir.join("test1__sheet1.txt");
                     assert!(expected_file.is_file());
 
                     let contents =
@@ -244,7 +242,8 @@ mod tests {
                     let expected_dir =
                         PathBuf::from(tmp_dir.path().join("test_2"));
                     assert!(expected_dir.is_dir());
-                    let expected_file = expected_dir.join("test_2__sheet1.csv");
+                    let expected_file =
+                        expected_dir.join("test_2__sheet1.csv");
                     assert!(expected_file.is_file());
 
                     let contents =

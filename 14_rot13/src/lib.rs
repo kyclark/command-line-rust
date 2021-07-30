@@ -1,15 +1,10 @@
-extern crate clap;
-extern crate regex;
-
 use clap::{App, Arg};
-use textwrap;
-//use regex::Regex;
-use std::collections::HashMap;
-use std::error::Error;
-use std::fs::File;
-use std::io;
-use std::io::prelude::*;
-use std::io::BufReader;
+use std::{
+    collections::HashMap,
+    error::Error,
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -58,7 +53,7 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let file = matches.value_of("file").and_then(|v| Some(v.to_string()));
+    let file = matches.value_of("file").map(|v| v.to_string());
 
     if let Some(filename) = &file {
         if let Some(error) = File::open(filename).err() {
@@ -71,7 +66,7 @@ pub fn get_args() -> MyResult<Config> {
         .and_then(|v| v.parse::<usize>().ok())
         .unwrap_or(13);
 
-    if rotate > 26 || rotate < 1 {
+    if !(1..=26).contains(&rotate) {
         return Err(From::from(format!(
             "--rotate \"{}\" must be between 1 and 26",
             rotate
@@ -103,10 +98,10 @@ pub fn get_args() -> MyResult<Config> {
     }
 
     Ok(Config {
-        file: file,
-        rotate: rotate,
-        chunk: chunk,
-        width: width,
+        file,
+        rotate,
+        chunk,
+        width,
     })
 }
 

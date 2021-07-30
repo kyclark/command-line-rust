@@ -118,7 +118,7 @@ pub fn run(config: Config) -> MyResult<()> {
                                 );
                             } else {
                                 for line in &matches {
-                                    print(&filename, &line);
+                                    print(&filename, line);
                                 }
                             }
                         }

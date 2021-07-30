@@ -1,14 +1,13 @@
 use clap::{App, Arg};
 use rand::{rngs::StdRng, Rng, SeedableRng};
-use std::error::Error;
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::BufReader;
-use std::str::FromStr;
+use std::{
+    error::Error,
+    fs::File,
+    io::{BufRead, BufReader},
+    str::FromStr,
+};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
-type Fortune = String;
-type Fortunes = Vec<Fortune>;
 
 #[derive(Debug)]
 pub struct Config {
@@ -62,12 +61,12 @@ fn parse_int<T: FromStr>(val: Option<&str>) -> MyResult<Option<T>> {
 }
 
 // --------------------------------------------------
-fn read_fortunes(filename: &String) -> MyResult<Fortunes> {
+fn read_fortunes(filename: &str) -> MyResult<Vec<String>> {
     let file = BufReader::new(
         File::open(filename).map_err(|e| format!("{}: {}", filename, e))?,
     );
-    let mut fortunes: Vec<String> = vec![];
-    let mut buffer: Vec<String> = vec![];
+    let mut fortunes = vec![];
+    let mut buffer = vec![];
 
     for line in file.lines() {
         let line = &line?.trim().to_string();
@@ -75,7 +74,7 @@ fn read_fortunes(filename: &String) -> MyResult<Fortunes> {
         if line == "%" {
             if !buffer.is_empty() {
                 fortunes.push(buffer.join("\n"));
-                buffer = vec![];
+                buffer.clear();
             }
         } else {
             buffer.push(line.to_string());
@@ -86,7 +85,7 @@ fn read_fortunes(filename: &String) -> MyResult<Fortunes> {
 }
 
 // --------------------------------------------------
-fn pick_fortune(fortunes: &Fortunes, seed: &Option<u64>) -> Fortune {
+fn pick_fortune(fortunes: &[String], seed: &Option<u64>) -> String {
     let range = 0..fortunes.len();
     let i: usize = match &seed {
         Some(seed) => StdRng::seed_from_u64(*seed).gen_range(range),
@@ -98,8 +97,7 @@ fn pick_fortune(fortunes: &Fortunes, seed: &Option<u64>) -> Fortune {
 // --------------------------------------------------
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use std::path::PathBuf;
+    use super::{pick_fortune, read_fortunes};
 
     #[test]
     fn test_read_fortunes_bad_file() {
@@ -108,9 +106,7 @@ mod tests {
 
     #[test]
     fn test_read_fortunes_good_file() {
-        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let file = manifest_dir.join(PathBuf::from("tests/inputs/fortunes"));
-        let fortunes = read_fortunes(&file.to_str().unwrap().to_string());
+        let fortunes = read_fortunes("tests/inputs/fortunes");
         assert!(fortunes.is_ok());
 
         if let Ok(fortunes) = fortunes {

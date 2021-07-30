@@ -3,12 +3,13 @@ extern crate lazy_static;
 
 use clap::{App, Arg};
 use regex::Regex;
-use std::cmp::Ordering;
-use std::collections::VecDeque;
-use std::error::Error;
-use std::fs::File;
-use std::io::prelude::*;
-use std::io::{BufRead, BufReader, SeekFrom};
+use std::{
+    cmp::Ordering::*,
+    collections::VecDeque,
+    error::Error,
+    fs::File,
+    io::{BufRead, BufReader, Read, Seek, SeekFrom},
+};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -75,9 +76,9 @@ pub fn get_args() -> MyResult<Config> {
         .map_err(|e| format!("illegal byte count -- {}", e))?;
 
     Ok(Config {
-        lines: lines.unwrap(),
-        bytes: bytes,
         files: matches.values_of_lossy("files").unwrap(),
+        lines: lines.unwrap(),
+        bytes,
         quiet: matches.is_present("quiet"),
     })
 }
@@ -113,8 +114,8 @@ pub fn run(config: Config) -> MyResult<()> {
 // --------------------------------------------------
 fn print_bytes<T: Read + Seek>(mut file: T, num_bytes: i64) -> MyResult<()> {
     let direction = match num_bytes.cmp(&0) {
-        Ordering::Less => Some(SeekFrom::End(num_bytes)),
-        Ordering::Greater => Some(SeekFrom::Start(num_bytes as u64 - 1)),
+        Less => Some(SeekFrom::End(num_bytes)),
+        Greater => Some(SeekFrom::Start(num_bytes as u64 - 1)),
         _ => None,
     };
 
@@ -142,32 +143,36 @@ fn parse_num(val: &str) -> MyResult<i64> {
     };
 
     match num.parse() {
-        Ok(n) => Ok(if sign == "+" { n } else { -1 * n }),
+        Ok(n) => Ok(if sign == "+" { n } else { -n }),
         _ => Err(From::from(val)),
     }
 }
 
 // --------------------------------------------------
 fn print_lines(mut file: impl BufRead, num_lines: i64) -> MyResult<()> {
-    if num_lines > 0 {
-        let mut line = String::new();
-        let mut line_num = 0;
-        loop {
-            let bytes = file.read_line(&mut line)?;
-            if bytes == 0 {
-                break;
+    match num_lines.cmp(&0) {
+        Greater => {
+            let mut line = String::new();
+            let mut line_num = 0;
+            loop {
+                let bytes = file.read_line(&mut line)?;
+                if bytes == 0 {
+                    break;
+                }
+                line_num += 1;
+                if line_num >= num_lines {
+                    print!("{}", line);
+                }
+                line.clear();
             }
-            line_num += 1;
-            if line_num >= num_lines {
+        }
+        Less => {
+            for line in last_lines(file, num_lines.abs() as usize)? {
                 print!("{}", line);
             }
-            line.clear();
         }
-    } else if num_lines < 0 {
-        for line in last_lines(file, num_lines.abs() as usize)? {
-            print!("{}", line);
-        }
-    }
+        _ => {}
+    };
 
     Ok(())
 }
@@ -196,7 +201,7 @@ fn last_lines(
 
 // --------------------------------------------------
 #[cfg(test)]
-mod test {
+mod tests {
     use super::{last_lines, parse_num};
     use std::io::Cursor;
 

@@ -1,7 +1,7 @@
 use clap::{App, Arg};
 use std::error::Error;
 use std::fs::File;
-use std::io::prelude::*;
+use std::io::prelude::*; // TODO fix this
 use std::io::{self, BufReader};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;

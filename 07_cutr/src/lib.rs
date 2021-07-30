@@ -106,7 +106,7 @@ pub fn get_args() -> MyResult<Config> {
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
     for filename in &config.files {
-        match open(&filename) {
+        match open(filename) {
             Err(err) => eprintln!("{}: {}", filename, err),
             Ok(file) => match &config.extract {
                 Fields(field_pos) => {
@@ -121,19 +121,17 @@ pub fn run(config: Config) -> MyResult<()> {
 
                     for record in reader.records() {
                         let record = record?;
-                        wtr.write_record(extract_fields(
-                            &record, &field_pos,
-                        ))?;
+                        wtr.write_record(extract_fields(&record, field_pos))?;
                     }
                 }
                 Bytes(byte_pos) => {
                     for line in file.lines() {
-                        println!("{}", extract_bytes(&line?, &byte_pos));
+                        println!("{}", extract_bytes(&line?, byte_pos));
                     }
                 }
                 Chars(char_pos) => {
                     for line in file.lines() {
-                        println!("{}", extract_chars(&line?, &char_pos));
+                        println!("{}", extract_chars(&line?, char_pos));
                     }
                 }
             },

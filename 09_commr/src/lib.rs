@@ -93,14 +93,13 @@ pub fn get_args() -> MyResult<Config> {
         insensitive: matches.is_present("insensitive"),
         delimiter: matches
             .value_of("delimiter")
-            .map(|v| v.to_string())
-            .or_else(|| Some("\t".to_string()))
-            .unwrap(),
+            .map_or("\t".to_string(), |v| v.to_string()),
     })
 }
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
+    //println!("{:?}", config);
     let filename1 = &config.file1;
     let filename2 = &config.file2;
 
@@ -116,15 +115,11 @@ pub fn run(config: Config) -> MyResult<()> {
         }
     };
 
-    let mut lines1 = open(filename1)?
-        .lines()
-        .filter_map(|line| line.ok())
-        .map(case);
+    let mut lines1 =
+        open(filename1)?.lines().filter_map(Result::ok).map(case);
 
-    let mut lines2 = open(filename2)?
-        .lines()
-        .filter_map(|line| line.ok())
-        .map(case);
+    let mut lines2 =
+        open(filename2)?.lines().filter_map(Result::ok).map(case);
 
     let default_col1 = if config.suppress_col1 {
         ""
