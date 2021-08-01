@@ -1,8 +1,10 @@
+pub mod fortune;
+
 use clap::{App, Arg};
+use fortune::Fortune;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use regex::{Regex, RegexBuilder};
 use std::{
-    cmp::Ordering,
     error::Error,
     ffi::OsStr,
     fs::{self, File},
@@ -18,32 +20,6 @@ pub struct Config {
     sources: Vec<String>,
     pattern: Option<Regex>,
     seed: Option<u64>,
-}
-
-#[derive(Debug, Eq)]
-pub struct Fortune {
-    source: String,
-    text: String,
-}
-
-impl Ord for Fortune {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.source
-            .cmp(&other.text)
-            .then(self.text.cmp(&other.text))
-    }
-}
-
-impl PartialOrd for Fortune {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
-impl PartialEq for Fortune {
-    fn eq(&self, other: &Self) -> bool {
-        self.source == other.source && self.text == other.text
-    }
 }
 
 // --------------------------------------------------
@@ -83,12 +59,11 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let insensitive = matches.is_present("insensitive");
     let pattern = matches
         .value_of("pattern")
         .map(|val| {
             RegexBuilder::new(val)
-                .case_insensitive(insensitive)
+                .case_insensitive(matches.is_present("insensitive"))
                 .build()
                 .map_err(|_| format!("Invalid --pattern \"{}\"", val))
         })
@@ -96,7 +71,7 @@ pub fn get_args() -> MyResult<Config> {
 
     Ok(Config {
         sources: matches.values_of_lossy("sources").unwrap(),
-        seed: matches.value_of("seed").map(parse_int).transpose()?,
+        seed: matches.value_of("seed").map(parse_u64).transpose()?,
         pattern,
     })
 }
@@ -105,7 +80,7 @@ pub fn get_args() -> MyResult<Config> {
 pub fn run(config: Config) -> MyResult<()> {
     // println!("{:#?}", config);
 
-    let files = find_files(&config.sources);
+    let files = find_files(&config.sources)?;
     let fortunes = read_fortunes(&files, &config.pattern)?;
     match config.pattern.is_some() {
         true => {
@@ -129,7 +104,7 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn parse_int(val: &str) -> MyResult<u64> {
+fn parse_u64(val: &str) -> MyResult<u64> {
     match val.trim().parse() {
         Ok(n) => Ok(n),
         Err(_) => Err(From::from(format!("\"{}\" not a valid integer", val))),
@@ -187,33 +162,28 @@ fn read_fortunes(
 }
 
 // --------------------------------------------------
-fn find_files(sources: &Vec<String>) -> Vec<PathBuf> {
-    let mut results = vec![];
+fn find_files(sources: &Vec<String>) -> MyResult<Vec<PathBuf>> {
+    let dat = OsStr::new("dat");
+    let mut results: Vec<PathBuf> = vec![];
 
-    for path in sources {
-        match fs::metadata(path) {
-            Err(e) => eprintln!("{}: {}", path, e),
-            Ok(meta) => {
-                if meta.is_file() {
-                    results.push(PathBuf::from(path));
-                } else if meta.is_dir() {
-                    for entry in WalkDir::new(path)
+    for source in sources {
+        match File::open(source) {
+            Err(e) => Err(From::from(format!("{}: {}", source, e))),
+            Ok(_) =>
+                results.extend(
+                    WalkDir::new(source)
                         .into_iter()
                         .filter_map(|e| e.ok())
-                        .filter(|e| e.file_type().is_file())
-                    {
-                        results.push(entry.path().into());
-                    }
-                }
-            }
+                        .filter(|e| {
+                            e.file_type().is_file()
+                                && e.path().extension() != Some(dat)
+                        })
+                        .map(|e| e.path().into()),
+                );
         }
     }
 
-    // Exclude ".dat" files
-    results
-        .into_iter()
-        .filter(|path| path.as_path().extension() != Some(OsStr::new("dat")))
-        .collect()
+    Ok(results)
 }
 
 // --------------------------------------------------
@@ -238,21 +208,21 @@ fn pick_fortune(
 #[cfg(test)]
 mod tests {
     use super::{
-        find_files, parse_int, pick_fortune, read_fortunes, Fortune,
+        find_files, parse_u64, pick_fortune, read_fortunes, Fortune,
     };
     use std::path::PathBuf;
 
     #[test]
-    fn test_parse_int() {
-        let res = parse_int("a");
+    fn test_parse_u64() {
+        let res = parse_u64("a");
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "\"a\" not a valid integer");
 
-        let res = parse_int("0");
+        let res = parse_u64("0");
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), 0);
 
-        let res = parse_int("4");
+        let res = parse_u64("4");
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), 4);
     }
@@ -260,8 +230,10 @@ mod tests {
     #[test]
     fn test_find_files() {
         // Verify that the function finds a file known to exist
-        let input = vec!["./tests/inputs/fortunes".to_string()];
-        let files = find_files(&input);
+        let res = find_files(&vec!["./tests/inputs/fortunes".to_string()]);
+        assert!(res.is_ok());
+
+        let files = res.unwrap();
         assert_eq!(files.len(), 1);
         assert_eq!(
             files.iter().nth(0).unwrap().to_string_lossy(),
@@ -269,14 +241,13 @@ mod tests {
         );
 
         // Fails to find a bad file
-        let input = vec!["/path/does/not/exist".to_string()];
-        let files = find_files(&input);
-        assert_eq!(files.len(), 0);
+        let res = find_files(&vec!["/path/does/not/exist".to_string()]);
+        assert!(res.is_err());
 
         // Finds all the input files, excludes ".dat"
-        let input = vec!["./tests/inputs".to_string()];
-        let files = find_files(&input);
-        assert_eq!(files.len(), 5);
+        let res = find_files(&vec!["./tests/inputs".to_string()]);
+        assert!(res.is_ok());
+        assert_eq!(res.unwrap().len(), 5);
     }
 
     #[test]
@@ -299,7 +270,7 @@ mod tests {
             assert_eq!(
                 fortunes.iter().nth(0).unwrap().text,
                 "You cannot achieve the impossible without \
-                attempting the absurd.\n"
+                attempting the absurd."
             );
 
             assert_eq!(

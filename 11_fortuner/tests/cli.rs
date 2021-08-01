@@ -31,13 +31,13 @@ fn gen_bad_file() -> String {
 
 // --------------------------------------------------
 #[test]
-fn skips_bad_file() -> TestResult {
+fn dies_bad_file() -> TestResult {
     let bad = gen_bad_file();
     let expected = format!("{}: .* [(]os error 2[)]", bad);
     Command::cargo_bin(PRG)?
-        .args(&[&bad])
+        .args(&[FORTUNES, &bad])
         .assert()
-        .success()
+        .failure()
         .stderr(predicate::str::is_match(expected)?);
     Ok(())
 }
@@ -67,37 +67,37 @@ fn run(args: &[&str], expected: &'static str) -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn fortunes_seed_52() -> TestResult {
+fn fortunes_seed_5() -> TestResult {
     run(
-        &[FORTUNES, "-s", "52"],
+        &[FORTUNES, "-s", "5"],
         concat!(
-            "Everything we know is only some kind of approximation.\n",
-            "-- Richard Feynman\n"
+            "Rivers know this: There is no hurry. We shall get there.\n",
+            "-- A. A. Milne\n"
         ),
     )
 }
 
 //// --------------------------------------------------
 #[test]
-fn humorists_seed_5() -> TestResult {
+fn humorists_seed_31() -> TestResult {
     run(
-        &[HUMORISTS, "-s", "5"],
+        &[HUMORISTS, "-s", "31"],
         concat!(
-            "I base my fashion taste on what doesn't itch.\n",
-            "		-- Gilda Radner\n"
+            "I bought some used paint. It was in the shape of a house.\n",
+            "		-- Steven Wright\n"
         ),
     )
 }
 
 // --------------------------------------------------
 #[test]
-fn dir_seed_45() -> TestResult {
+fn dir_seed_1() -> TestResult {
     run(
-        &[FORTUNE_DIR, "-s", "45"],
+        &[FORTUNE_DIR, "-s", "1"],
         concat!(
-            "Honesty may be the best policy, but it's important to ",
-            "remember that apparently, by elimination, dishonesty ",
-            "is the second-best policy.\n-- George Carlin\n"
+            "A classic is something that everybody wants to have read ",
+            "and nobody wants to read.\n",
+            "-- Mark Twain\n"
         ),
     )
 }
