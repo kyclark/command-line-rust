@@ -3,8 +3,10 @@ use rand::{rngs::StdRng, Rng, SeedableRng};
 use regex::{Regex, RegexBuilder};
 use std::{
     error::Error,
+    ffi::OsStr,
     fs::{self, File},
     io::{BufRead, BufReader},
+    path::PathBuf,
 };
 use walkdir::WalkDir;
 
@@ -15,6 +17,12 @@ pub struct Config {
     sources: Vec<String>,
     pattern: Option<Regex>,
     seed: Option<u64>,
+}
+
+#[derive(Debug)]
+pub struct Fortune {
+    source: String,
+    text: String,
 }
 
 // --------------------------------------------------
@@ -78,9 +86,23 @@ pub fn run(config: Config) -> MyResult<()> {
 
     let files = find_files(&config.sources);
     let fortunes = read_fortunes(&files, &config.pattern)?;
-    if let Some(fortune) = pick_fortune(&fortunes, &config.seed) {
-        println!("{}", fortune);
-    }
+    match config.pattern.is_some() {
+        true => {
+            let mut last_source: Option<String> = None;
+            for fortune in fortunes {
+                if last_source.map_or(true, |s| s != fortune.source) {
+                    eprintln!("({})\n%", fortune.source);
+                }
+                println!("{}\n%", fortune.text);
+                last_source = Some(fortune.source.clone());
+            }
+        }
+        _ => {
+            if let Some(fortune) = pick_fortune(&fortunes, &config.seed) {
+                println!("{}", fortune);
+            }
+        }
+    };
 
     Ok(())
 }
@@ -95,37 +117,44 @@ fn parse_int(val: &str) -> MyResult<u64> {
 
 // --------------------------------------------------
 fn read_fortunes(
-    filenames: &Vec<String>,
+    paths: &Vec<PathBuf>,
     pattern: &Option<Regex>,
-) -> MyResult<Vec<String>> {
+) -> MyResult<Vec<Fortune>> {
     let mut fortunes = vec![];
     let mut buffer = vec![];
 
-    for filename in filenames {
-        match File::open(filename) {
-            Err(e) => eprintln!("{}: {}", filename, e),
+    for path in paths {
+        match File::open(path) {
+            Err(e) => eprintln!("{}: {}", path.display(), e),
             Ok(file) => {
                 let file = BufReader::new(file);
                 for line in file.lines() {
-                    let line = &line?.trim().to_string();
+                    let line = &line?.trim_end().to_string();
 
                     if line == "%" {
                         if !buffer.is_empty() {
-                            let fortune = buffer.join("\n");
+                            let text = buffer.join("\n");
                             buffer.clear();
 
                             if pattern
                                 .as_ref()
-                                .map_or(true, |re| re.is_match(&fortune))
+                                .map_or(true, |re| re.is_match(&text))
                             {
-                                fortunes.push(fortune);
+                                fortunes.push(Fortune {
+                                    source: path
+                                        .file_name()
+                                        .unwrap()
+                                        .to_string_lossy()
+                                        .into_owned(),
+                                    text,
+                                });
                             }
 
                             //if let Some(re) = pattern {
-                            //        fortunes.push(fortune);
+                            //        fortunes.push(Fortune {source, text});
                             //    }
                             //} else {
-                            //    fortunes.push(fortune);
+                            //    fortunes.push(Fortune {source, text});
                             //}
                         }
                     } else {
@@ -140,7 +169,7 @@ fn read_fortunes(
 }
 
 // --------------------------------------------------
-fn find_files(sources: &Vec<String>) -> Vec<String> {
+fn find_files(sources: &Vec<String>) -> Vec<PathBuf> {
     let mut results = vec![];
 
     for path in sources {
@@ -148,26 +177,30 @@ fn find_files(sources: &Vec<String>) -> Vec<String> {
             Err(e) => eprintln!("{}: {}", path, e),
             Ok(meta) => {
                 if meta.is_file() {
-                    results.push(path.to_owned());
+                    results.push(PathBuf::from(path));
                 } else if meta.is_dir() {
                     for entry in WalkDir::new(path)
                         .into_iter()
                         .filter_map(|e| e.ok())
                         .filter(|e| e.file_type().is_file())
                     {
-                        results.push(entry.path().display().to_string());
+                        results.push(entry.path().into());
                     }
                 }
             }
         }
     }
 
+    // Exclude ".dat" files
     results
+        .into_iter()
+        .filter(|path| path.as_path().extension() != Some(OsStr::new("dat")))
+        .collect()
 }
 
 // --------------------------------------------------
 fn pick_fortune(
-    fortunes: &Vec<String>,
+    fortunes: &Vec<Fortune>,
     seed: &Option<u64>,
 ) -> Option<String> {
     match fortunes.is_empty() {
@@ -178,7 +211,7 @@ fn pick_fortune(
                 Some(seed) => StdRng::seed_from_u64(*seed).gen_range(range),
                 _ => rand::thread_rng().gen_range(range),
             };
-            fortunes.get(i).map(|v| v.to_string())
+            fortunes.get(i).map(|v| v.text.to_string())
         }
     }
 }
@@ -186,12 +219,16 @@ fn pick_fortune(
 // --------------------------------------------------
 #[cfg(test)]
 mod tests {
-    use super::{find_files, parse_int, pick_fortune, read_fortunes};
+    use super::{
+        find_files, parse_int, pick_fortune, read_fortunes, Fortune,
+    };
+    use std::path::PathBuf;
 
     #[test]
     fn test_parse_int() {
         let res = parse_int("a");
         assert!(res.is_err());
+        assert_eq!(res.unwrap_err().to_string(), "\"a\" not a valid integer");
 
         let res = parse_int("0");
         assert!(res.is_ok());
@@ -208,47 +245,77 @@ mod tests {
         let input = vec!["./tests/inputs/fortunes".to_string()];
         let files = find_files(&input);
         assert_eq!(files.len(), 1);
-        assert_eq!(files.iter().nth(0).unwrap(), &"./tests/inputs/fortunes");
+        assert_eq!(
+            files.iter().nth(0).unwrap().to_string_lossy(),
+            "./tests/inputs/fortunes"
+        );
 
+        // Fails to find a bad file
+        let input = vec!["/path/does/not/exist".to_string()];
+        let files = find_files(&input);
+        assert_eq!(files.len(), 0);
+
+        // Finds all the input files, excludes ".dat"
         let input = vec!["./tests/inputs".to_string()];
         let files = find_files(&input);
-        assert_eq!(files.len(), 2);
+        assert_eq!(files.len(), 5);
     }
 
     #[test]
     fn test_read_fortunes() {
-        let res = read_fortunes(&vec!["/file/does/not/exist"]);
+        let res = read_fortunes(
+            &vec![PathBuf::from("/file/does/not/exist")],
+            &None,
+        );
         assert!(res.is_ok());
 
-        let res = read_fortunes(&vec!["tests/inputs/fortunes"]);
+        let res = read_fortunes(
+            &vec![PathBuf::from("./tests/inputs/fortunes")],
+            &None,
+        );
         assert!(res.is_ok());
 
         if let Ok(fortunes) = res {
             assert_eq!(fortunes.len(), 5437);
             assert_eq!(
-                fortunes[0],
+                fortunes.iter().nth(0).unwrap().text,
                 "You cannot achieve the impossible \
                 without attempting the absurd."
             );
 
             assert_eq!(
-                fortunes.last().unwrap(),
+                fortunes.last().unwrap().text,
                 "There is no material safety data sheet for \
                 astatine. If there were, it would just be the word \"NO\" \
                 scrawled over and over in charred blood.\n\
                 -- Randall Munroe, \"What If?\""
             );
-
-            assert_eq!(
-                pick_fortune(&fortunes, &Some(1)),
-                Some(
-                    "If you put garbage in a computer nothing \
-                    comes out but garbage. But this garbage, having \
-                    passed through a very expensive machine, is somehow \
-                    ennobled and none dare criticize it."
-                        .to_string()
-                )
-            );
         }
+    }
+
+    #[test]
+    fn test_pick_fortune() {
+        let fortunes = vec![
+            Fortune {
+                source: "fortunes".to_string(),
+                text: "You cannot achieve the impossible without \
+                      attempting the absurd."
+                    .to_string(),
+            },
+            Fortune {
+                source: "fortunes".to_string(),
+                text: "Assumption is the mother of all screw-ups."
+                    .to_string(),
+            },
+            Fortune {
+                source: "fortunes".to_string(),
+                text: "Neckties strangle clear thinking.".to_string(),
+            },
+        ];
+
+        assert_eq!(
+            pick_fortune(&fortunes, &Some(1)).unwrap(),
+            "Neckties strangle clear thinking.".to_string()
+        );
     }
 }

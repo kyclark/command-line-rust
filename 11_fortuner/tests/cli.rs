@@ -6,7 +6,9 @@ use std::fs;
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 const PRG: &str = "fortuner";
-const FORTUNES: &str = "tests/inputs/fortunes";
+const FORTUNE_DIR: &str = "./tests/inputs";
+const HUMORISTS: &str = "./tests/inputs/humorists";
+const FORTUNES: &str = "./tests/inputs/fortunes";
 
 // --------------------------------------------------
 fn random_string() -> String {
@@ -54,9 +56,9 @@ fn dies_bad_seed() -> TestResult {
 }
 
 // --------------------------------------------------
-fn run(seed: &str, expected: &'static str) -> TestResult {
+fn run(args: &[&str], expected: &'static str) -> TestResult {
     Command::cargo_bin(PRG)?
-        .args(&[FORTUNES, "-s", seed])
+        .args(args)
         .assert()
         .success()
         .stdout(expected);
@@ -65,14 +67,104 @@ fn run(seed: &str, expected: &'static str) -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn seed_3() -> TestResult {
-    run("3",
+fn fortunes_seed_3() -> TestResult {
+    run(&[FORTUNES, "-s", "3"],
         "It always seems impossible until its done.\n-- Theodor Seuss Geisel\n"
     )
 }
 
 // --------------------------------------------------
 #[test]
-fn seed_100() -> TestResult {
-    run("100", "Excellent day to have a rotten day.\n")
+fn humorists_seed_1() -> TestResult {
+    run(
+        &[HUMORISTS, "-s", "1"],
+        concat!(
+            "Life is wasted on the living.\n",
+            "		-- The Restaurant at the Edge of the Universe.\n"
+        ),
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn dir_seed_5() -> TestResult {
+    run(
+        &[FORTUNE_DIR, "-s", "5"],
+        "It is good to have an end to journey toward; \
+        but it is the journey that matters, in the end.\n\
+        -- Ursula K. Le Guin\n",
+    )
+}
+
+// --------------------------------------------------
+fn run_outfiles(args: &[&str], out_file: &str, err_file: &str) -> TestResult {
+    let out = fs::read_to_string(out_file)?;
+    let err = fs::read_to_string(err_file)?;
+    Command::cargo_bin(PRG)?
+        .args(args)
+        .assert()
+        .success()
+        .stderr(err)
+        .stdout(out);
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn yogi_berra_cap() -> TestResult {
+    run_outfiles(
+        &["--pattern", "Yogi Berra", FORTUNE_DIR],
+        "tests/expected/berra_cap.out",
+        "tests/expected/berra_cap.err",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn will_rogers_cap() -> TestResult {
+    run_outfiles(
+        &["-m", "Will Rogers", FORTUNE_DIR],
+        "tests/expected/rogers_cap.out",
+        "tests/expected/rogers_cap.err",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn yogi_berra_lower() -> TestResult {
+    run_outfiles(
+        &["--pattern", "yogi berra", FORTUNE_DIR],
+        "tests/expected/berra_lower.out",
+        "tests/expected/berra_lower.err",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn will_rogers_lower() -> TestResult {
+    run_outfiles(
+        &["-m", "will rogers", FORTUNE_DIR],
+        "tests/expected/rogers_lower.out",
+        "tests/expected/rogers_lower.err",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn yogi_berra_lower_i() -> TestResult {
+    run_outfiles(
+        &["--insensitive", "--pattern", "yogi berra", FORTUNE_DIR],
+        "tests/expected/berra_lower_i.out",
+        "tests/expected/berra_lower_i.err",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn will_rogers_lower_i() -> TestResult {
+    run_outfiles(
+        &["-i", "-m", "will rogers", FORTUNE_DIR],
+        "tests/expected/rogers_lower_i.out",
+        "tests/expected/rogers_lower_i.err",
+    )
 }
