@@ -295,14 +295,12 @@ mod tests {
 
         if let Ok(fortunes) = res {
             assert_eq!(fortunes.len(), 5433);
-            let first =
-                concat!("\"Contrariwise,\" continued Tweedledee, ",
-                "\"if it was so, it might be; and if it were so, it would ",
-                "be; but as it isn't, it ain't. That's logic!\"\n",
-                "-- Lewis Carroll, \"Through the Looking Glass\""
-            );
 
-            assert_eq!(fortunes.iter().nth(0).unwrap().text, first);
+            assert_eq!(
+                fortunes.iter().nth(0).unwrap().text,
+                "You cannot achieve the impossible without \
+                attempting the absurd.\n"
+            );
 
             assert_eq!(
                 fortunes.last().unwrap().text,
