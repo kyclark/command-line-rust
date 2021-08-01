@@ -2,6 +2,7 @@ use clap::{App, Arg};
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use regex::{Regex, RegexBuilder};
 use std::{
+    cmp::Ordering,
     error::Error,
     ffi::OsStr,
     fs::{self, File},
@@ -19,10 +20,30 @@ pub struct Config {
     seed: Option<u64>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq)]
 pub struct Fortune {
     source: String,
     text: String,
+}
+
+impl Ord for Fortune {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.source
+            .cmp(&other.text)
+            .then(self.text.cmp(&other.text))
+    }
+}
+
+impl PartialOrd for Fortune {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for Fortune {
+    fn eq(&self, other: &Self) -> bool {
+        self.source == other.source && self.text == other.text
+    }
 }
 
 // --------------------------------------------------
@@ -124,47 +145,44 @@ fn read_fortunes(
     let mut buffer = vec![];
 
     for path in paths {
-        match File::open(path) {
-            Err(e) => eprintln!("{}: {}", path.display(), e),
-            Ok(file) => {
-                let file = BufReader::new(file);
-                for line in file.lines() {
-                    let line = &line?.trim_end().to_string();
+        let file = File::open(path)
+            .map_err(|e| format!("{}: {}", path.display(), e))?;
+        let file = BufReader::new(file);
 
-                    if line == "%" {
-                        if !buffer.is_empty() {
-                            let text = buffer.join("\n");
-                            buffer.clear();
+        for line in file.lines() {
+            let line = &line?.trim_end().to_string();
 
-                            if pattern
-                                .as_ref()
-                                .map_or(true, |re| re.is_match(&text))
-                            {
-                                fortunes.push(Fortune {
-                                    source: path
-                                        .file_name()
-                                        .unwrap()
-                                        .to_string_lossy()
-                                        .into_owned(),
-                                    text,
-                                });
-                            }
+            if line == "%" {
+                if !buffer.is_empty() {
+                    let text = buffer.join("\n");
+                    buffer.clear();
 
-                            //if let Some(re) = pattern {
-                            //        fortunes.push(Fortune {source, text});
-                            //    }
-                            //} else {
-                            //    fortunes.push(Fortune {source, text});
-                            //}
-                        }
-                    } else {
-                        buffer.push(line.to_string());
+                    if pattern.as_ref().map_or(true, |re| re.is_match(&text))
+                    {
+                        fortunes.push(Fortune {
+                            source: path
+                                .file_name()
+                                .unwrap()
+                                .to_string_lossy()
+                                .into_owned(),
+                            text,
+                        });
                     }
+
+                    //if let Some(re) = pattern {
+                    //        fortunes.push(Fortune {source, text});
+                    //    }
+                    //} else {
+                    //    fortunes.push(Fortune {source, text});
+                    //}
                 }
+            } else {
+                buffer.push(line.to_string());
             }
         }
     }
 
+    fortunes.sort();
     Ok(fortunes)
 }
 
@@ -267,7 +285,7 @@ mod tests {
             &vec![PathBuf::from("/file/does/not/exist")],
             &None,
         );
-        assert!(res.is_ok());
+        assert!(res.is_err());
 
         let res = read_fortunes(
             &vec![PathBuf::from("./tests/inputs/fortunes")],
@@ -276,19 +294,23 @@ mod tests {
         assert!(res.is_ok());
 
         if let Ok(fortunes) = res {
-            assert_eq!(fortunes.len(), 5437);
-            assert_eq!(
-                fortunes.iter().nth(0).unwrap().text,
-                "You cannot achieve the impossible \
-                without attempting the absurd."
+            assert_eq!(fortunes.len(), 5433);
+            let first =
+                concat!("\"Contrariwise,\" continued Tweedledee, ",
+                "\"if it was so, it might be; and if it were so, it would ",
+                "be; but as it isn't, it ain't. That's logic!\"\n",
+                "-- Lewis Carroll, \"Through the Looking Glass\""
             );
+
+            assert_eq!(fortunes.iter().nth(0).unwrap().text, first);
 
             assert_eq!(
                 fortunes.last().unwrap().text,
-                "There is no material safety data sheet for \
-                astatine. If there were, it would just be the word \"NO\" \
-                scrawled over and over in charred blood.\n\
-                -- Randall Munroe, \"What If?\""
+                concat!(
+                    "listen: there's a hell of a good universe next door;\n",
+                    "let's go.\n",
+                    "-- ee cummings"
+                )
             );
         }
     }

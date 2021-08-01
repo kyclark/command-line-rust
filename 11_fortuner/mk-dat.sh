@@ -2,6 +2,7 @@
 
 DIR="./tests/inputs"
 cd $DIR
+rm *.dat
 
 for FILE in *; do
     echo $FILE

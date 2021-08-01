@@ -67,32 +67,38 @@ fn run(args: &[&str], expected: &'static str) -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn fortunes_seed_3() -> TestResult {
-    run(&[FORTUNES, "-s", "3"],
-        "It always seems impossible until its done.\n-- Theodor Seuss Geisel\n"
+fn fortunes_seed_52() -> TestResult {
+    run(
+        &[FORTUNES, "-s", "52"],
+        concat!(
+            "Everything we know is only some kind of approximation.\n",
+            "-- Richard Feynman\n"
+        ),
     )
 }
 
-// --------------------------------------------------
+//// --------------------------------------------------
 #[test]
-fn humorists_seed_1() -> TestResult {
+fn humorists_seed_5() -> TestResult {
     run(
-        &[HUMORISTS, "-s", "1"],
+        &[HUMORISTS, "-s", "5"],
         concat!(
-            "Life is wasted on the living.\n",
-            "		-- The Restaurant at the Edge of the Universe.\n"
+            "I base my fashion taste on what doesn't itch.\n",
+            "		-- Gilda Radner\n"
         ),
     )
 }
 
 // --------------------------------------------------
 #[test]
-fn dir_seed_5() -> TestResult {
+fn dir_seed_45() -> TestResult {
     run(
-        &[FORTUNE_DIR, "-s", "5"],
-        "It is good to have an end to journey toward; \
-        but it is the journey that matters, in the end.\n\
-        -- Ursula K. Le Guin\n",
+        &[FORTUNE_DIR, "-s", "45"],
+        concat!(
+            "Honesty may be the best policy, but it's important to ",
+            "remember that apparently, by elimination, dishonesty ",
+            "is the second-best policy.\n-- George Carlin\n"
+        ),
     )
 }
 
