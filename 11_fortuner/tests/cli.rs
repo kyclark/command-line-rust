@@ -91,14 +91,10 @@ fn humorists_seed_31() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn dir_seed_1() -> TestResult {
+fn dir_seed_51() -> TestResult {
     run(
-        &[FORTUNE_DIR, "-s", "1"],
-        concat!(
-            "A classic is something that everybody wants to have read ",
-            "and nobody wants to read.\n",
-            "-- Mark Twain\n"
-        ),
+        &[FORTUNE_DIR, "-s", "51"],
+        "Fall seven times, stand up eight.\n-- Japanese Proverb\n",
     )
 }
 

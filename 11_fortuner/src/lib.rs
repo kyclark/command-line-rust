@@ -1,7 +1,7 @@
-pub mod fortune;
+//pub mod fortune;
 
 use clap::{App, Arg};
-use fortune::Fortune;
+//use fortune::Fortune;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use regex::{Regex, RegexBuilder};
 use std::{
@@ -20,6 +20,12 @@ pub struct Config {
     sources: Vec<String>,
     pattern: Option<Regex>,
     seed: Option<u64>,
+}
+
+#[derive(Debug)]
+pub struct Fortune {
+    pub source: String,
+    pub text: String,
 }
 
 // --------------------------------------------------
@@ -148,7 +154,7 @@ fn read_fortunes(
         }
     }
 
-    fortunes.sort();
+    //fortunes.sort();
     Ok(fortunes)
 }
 
@@ -258,12 +264,18 @@ mod tests {
                 "You cannot achieve the impossible without \
                 attempting the absurd."
             );
+            //concat!("\"Contrariwise,\" continued Tweedledee, ",
+            //    "\"if it was so, it might be; and if it were so, ",
+            //    "it would be; but as it isn't, it ain't. That's logic!\"\n",
+            //    "-- Lewis Carroll, \"Through the Looking Glass\""
+            //)
             assert_eq!(
                 fortunes.last().unwrap().text,
                 concat!(
-                    "listen: there's a hell of a good universe next door;\n",
-                    "let's go.\n",
-                    "-- ee cummings"
+                    "There is no material safety data sheet for ",
+                    "astatine. If there were, it would just be the word ",
+                    "\"NO\" scrawled over and over in charred blood.\n",
+                    "-- Randall Munroe, \"What If?\""
                 )
             );
         }

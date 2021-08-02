@@ -9,7 +9,7 @@ pub struct Fortune {
 impl Ord for Fortune {
     fn cmp(&self, other: &Self) -> Ordering {
         self.source
-            .cmp(&other.text)
+            .cmp(&other.source)
             .then(self.text.cmp(&other.text))
     }
 }
