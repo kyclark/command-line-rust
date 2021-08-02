@@ -7,7 +7,7 @@ use regex::{Regex, RegexBuilder};
 use std::{
     error::Error,
     ffi::OsStr,
-    fs::{self, File},
+    fs::File,
     io::{BufRead, BufReader},
     path::PathBuf,
 };
@@ -82,6 +82,7 @@ pub fn run(config: Config) -> MyResult<()> {
 
     let files = find_files(&config.sources)?;
     let fortunes = read_fortunes(&files, &config.pattern)?;
+
     match config.pattern.is_some() {
         true => {
             let mut last_source: Option<String> = None;
@@ -119,37 +120,27 @@ fn read_fortunes(
     let mut fortunes = vec![];
     let mut buffer = vec![];
 
+    let is_match =
+        |text: &str| pattern.as_ref().map_or(true, |re| re.is_match(&text));
+
     for path in paths {
-        let file = File::open(path)
-            .map_err(|e| format!("{}: {}", path.display(), e))?;
-        let file = BufReader::new(file);
-
-        for line in file.lines() {
-            let line = &line?.trim_end().to_string();
-
+        let source = path.file_name().unwrap().to_string_lossy().into_owned();
+        for line in BufReader::new(File::open(path)?)
+            .lines()
+            .filter_map(Result::ok)
+            .map(|line| line.trim_end().to_owned())
+        {
             if line == "%" {
                 if !buffer.is_empty() {
                     let text = buffer.join("\n");
                     buffer.clear();
 
-                    if pattern.as_ref().map_or(true, |re| re.is_match(&text))
-                    {
+                    if is_match(&text) {
                         fortunes.push(Fortune {
-                            source: path
-                                .file_name()
-                                .unwrap()
-                                .to_string_lossy()
-                                .into_owned(),
+                            source: source.clone(),
                             text,
                         });
                     }
-
-                    //if let Some(re) = pattern {
-                    //        fortunes.push(Fortune {source, text});
-                    //    }
-                    //} else {
-                    //    fortunes.push(Fortune {source, text});
-                    //}
                 }
             } else {
                 buffer.push(line.to_string());
@@ -167,20 +158,19 @@ fn find_files(sources: &Vec<String>) -> MyResult<Vec<PathBuf>> {
     let mut results: Vec<PathBuf> = vec![];
 
     for source in sources {
-        match File::open(source) {
-            Err(e) => Err(From::from(format!("{}: {}", source, e))),
-            Ok(_) =>
-                results.extend(
-                    WalkDir::new(source)
-                        .into_iter()
-                        .filter_map(|e| e.ok())
-                        .filter(|e| {
-                            e.file_type().is_file()
-                                && e.path().extension() != Some(dat)
-                        })
-                        .map(|e| e.path().into()),
-                );
-        }
+        File::open(source).map_err(|e| format!("{}: {}", source, e))?;
+        results.extend(
+            WalkDir::new(source)
+                .into_iter()
+                .filter_map(|e| e.ok())
+                .filter(|e| {
+                    e.file_type().is_file()
+                        && e.path().extension() != Some(dat)
+                })
+                .map(|e| Into::into(e.path())),
+            //.map(|e| PathBuf::from(e.path())),
+            //.map(|e| e.path().into()),
+        );
     }
 
     Ok(results)
@@ -210,6 +200,7 @@ mod tests {
     use super::{
         find_files, parse_u64, pick_fortune, read_fortunes, Fortune,
     };
+    use regex::Regex;
     use std::path::PathBuf;
 
     #[test]
@@ -252,12 +243,7 @@ mod tests {
 
     #[test]
     fn test_read_fortunes() {
-        let res = read_fortunes(
-            &vec![PathBuf::from("/file/does/not/exist")],
-            &None,
-        );
-        assert!(res.is_err());
-
+        // Parses all the fortunes without a filter
         let res = read_fortunes(
             &vec![PathBuf::from("./tests/inputs/fortunes")],
             &None,
@@ -265,14 +251,13 @@ mod tests {
         assert!(res.is_ok());
 
         if let Ok(fortunes) = res {
+            // Correct number and sorting
             assert_eq!(fortunes.len(), 5433);
-
             assert_eq!(
                 fortunes.iter().nth(0).unwrap().text,
                 "You cannot achieve the impossible without \
                 attempting the absurd."
             );
-
             assert_eq!(
                 fortunes.last().unwrap().text,
                 concat!(
@@ -282,10 +267,19 @@ mod tests {
                 )
             );
         }
+
+        // Filters for matching text
+        let res = read_fortunes(
+            &vec![PathBuf::from("./tests/inputs/fortunes")],
+            &Some(Regex::new("Yogi Berra").unwrap()),
+        );
+        assert!(res.is_ok());
+        assert_eq!(res.unwrap().len(), 2);
     }
 
     #[test]
     fn test_pick_fortune() {
+        // Create a vector of fortunes
         let fortunes = vec![
             Fortune {
                 source: "fortunes".to_string(),
@@ -304,6 +298,7 @@ mod tests {
             },
         ];
 
+        // Pick a fortune with a seed
         assert_eq!(
             pick_fortune(&fortunes, &Some(1)).unwrap(),
             "Neckties strangle clear thinking.".to_string()
