@@ -5,6 +5,7 @@ for DIR in $DIRS; do
     DIRNAME=$(basename "$DIR")
     echo "==> $DIRNAME <=="
     (cd $DIR && cargo test -q > /dev/null && cargo clippy)
+    [[ $DIRNAME == "10_tailr" ]] && break
 done
 
 echo "Done."
