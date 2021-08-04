@@ -2,6 +2,7 @@ use assert_cmd::Command;
 use predicates::prelude::*;
 use rand::{distributions::Alphanumeric, Rng};
 use std::fs;
+use sys_info::os_type;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -60,7 +61,12 @@ fn dies_bad_type() -> TestResult {
 
 // --------------------------------------------------
 fn run(args: &[&str], expected_file: &str) -> TestResult {
-    let expected = fs::read_to_string(expected_file)?;
+    let expected = if os_type().unwrap() == "Windows" {
+        fs::read_to_string(format!("{}.windows", expected_file))?
+    } else {
+        fs::read_to_string(expected_file)?
+    };
+     
     Command::cargo_bin(PRG)?
         .args(args)
         .assert()
