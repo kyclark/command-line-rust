@@ -1,7 +1,5 @@
 fn main() {
-    if let Err(e) =
-        fortuner::get_args().and_then(|config| fortuner::run(config))
-    {
+    if let Err(e) = fortuner::get_args().and_then(fortuner::run) {
         eprintln!("{}", e);
         std::process::exit(1);
     }
