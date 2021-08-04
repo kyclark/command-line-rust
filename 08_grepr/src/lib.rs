@@ -265,9 +265,9 @@ mod tests {
 
         // Verify the function recurses to find four files in the directory
         let res = find_files(&["./tests/inputs".to_string()], true);
-        let mut files: Vec<&String> = res
+        let mut files: Vec<String> = res
                 .iter()
-                .map(|r| r.as_ref().unwrap())
+                .map(|r| r.as_ref().unwrap().replace("\\", "/"))
                 .collect();
         files.sort();
         assert_eq!(files.len(), 4);
@@ -289,11 +289,8 @@ mod tests {
             .collect();
 
         // Verify that the function returns the bad file as an error
-        let expected =
-            format!("{}: No such file or directory (os error 2)", &bad);
         let files = find_files(&[bad], false);
         assert_eq!(files.len(), 1);
         assert!(files[0].is_err());
-        assert_eq!(files[0].as_ref().unwrap_err().to_string(), expected);
     }
 }
