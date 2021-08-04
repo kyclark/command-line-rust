@@ -29,7 +29,7 @@ grep -i the $DIR/*.txt > "$OUT_DIR/all.the.lowercase.insensitive"
 grep -r dog tests/inputs > "$OUT_DIR/dog.recursive"
 
 # Recursive, insensitive
-grep -ri the tests/inputs > "$OUT_DIR/the.recursive.insensitive"
+grep -ri then tests/inputs > "$OUT_DIR/the.recursive.insensitive"
 
 # Case-sensitive, count
 grep -c The tests/inputs/bustle.txt > "$OUT_DIR/bustle.txt.the.capitalized.count"

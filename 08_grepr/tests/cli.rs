@@ -152,7 +152,7 @@ fn recursive() -> TestResult {
 #[test]
 fn recursive_insensitive() -> TestResult {
     run(
-        &["-ri", "the", INPUTS_DIR],
+        &["-ri", "then", INPUTS_DIR],
         "tests/expected/the.recursive.insensitive",
     )
 }
