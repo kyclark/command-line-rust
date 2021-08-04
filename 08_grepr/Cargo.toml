@@ -1,7 +1,6 @@
 [package]
 name = "grepr"
 version = "0.1.0"
-authors = ["Ken Youens-Clark <kyclark@gmail.com>"]
 edition = "2018"
 
 [dependencies]

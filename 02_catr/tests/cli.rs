@@ -41,7 +41,7 @@ fn gen_bad_file() -> String {
 
 // --------------------------------------------------
 #[test]
-fn bad_file() -> TestResult {
+fn skips_bad_file() -> TestResult {
     let bad = gen_bad_file();
     let expected = format!("{}: .* [(]os error 2[)]", bad);
     Command::cargo_bin(PRG)?
@@ -49,7 +49,6 @@ fn bad_file() -> TestResult {
         .assert()
         .success()
         .stderr(predicate::str::is_match(expected)?);
-
     Ok(())
 }
 
@@ -61,7 +60,6 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
         .assert()
         .success()
         .stdout(expected);
-
     Ok(())
 }
 
@@ -79,7 +77,6 @@ fn run_stdin(
         .assert()
         .success()
         .stdout(expected);
-
     Ok(())
 }
 

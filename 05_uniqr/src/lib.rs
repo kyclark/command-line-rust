@@ -43,7 +43,7 @@ pub fn get_args() -> MyResult<Config> {
 
     Ok(Config {
         in_file: matches.value_of("in_file").map(str::to_string).unwrap(),
-        out_file: matches.value_of("out_file").map(str::to_string),
+        out_file: matches.value_of("out_file").map(String::from),
         count: matches.is_present("count"),
     })
 }
