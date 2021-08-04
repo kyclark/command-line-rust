@@ -9,7 +9,7 @@ if [[ ! -d "$IN_DIR" ]]; then
 fi
 
 [[ -d "$OUT_DIR" ]] && mkdir -p "$OUT_DIR"
-rm $OUT_DIR/*
+rm $OUT_DIR/*.txt
 
 find "$IN_DIR" > "$OUT_DIR/path1.txt"
 find "$IN_DIR/a" > "$OUT_DIR/path_a.txt"

@@ -264,18 +264,20 @@ mod tests {
         }
 
         // Verify the function recurses to find four files in the directory
-        let files = find_files(&["./tests/inputs".to_string()], true);
-        assert_eq!(files.len(), 4);
-        assert_eq!(
-            files
+        let res = find_files(&["./tests/inputs".to_string()], true);
+        let mut files: Vec<&String> = res
                 .iter()
                 .map(|r| r.as_ref().unwrap())
-                .collect::<Vec<_>>(),
+                .collect();
+        files.sort();
+        assert_eq!(files.len(), 4);
+        assert_eq!(
+            files,
             vec![
-                "./tests/inputs/empty.txt",
-                "./tests/inputs/nobody.txt",
                 "./tests/inputs/bustle.txt",
+                "./tests/inputs/empty.txt",
                 "./tests/inputs/fox.txt",
+                "./tests/inputs/nobody.txt",
             ]
         );
 
