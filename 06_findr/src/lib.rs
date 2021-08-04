@@ -107,22 +107,26 @@ pub fn run(config: Config) -> MyResult<()> {
         _ => true,
     };
 
+    let mut out = vec![];
     for dirname in &config.dirs {
         match fs::read_dir(&dirname) {
             Err(e) => eprintln!("{}: {}", dirname, e),
             _ => {
-                let entries: Vec<String> = WalkDir::new(dirname)
-                    .into_iter()
-                    .filter_map(|e| e.ok())
-                    .filter(type_filter)
-                    .filter(name_filter)
-                    .map(|entry| entry.path().display().to_string())
-                    .collect();
-
-                println!("{}", entries.join("\n"));
+                out.extend(
+                    WalkDir::new(dirname)
+                        .into_iter()
+                        .filter_map(|e| e.ok())
+                        .filter(type_filter)
+                        .filter(name_filter)
+                        .map(|entry| entry.path().display().to_string())
+                        .collect::<Vec<String>>(),
+                );
             }
         }
     }
+
+    out.sort();
+    println!("{}", out.join("\n"));
 
     Ok(())
 }
