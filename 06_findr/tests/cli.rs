@@ -27,7 +27,7 @@ fn gen_bad_file() -> String {
 #[test]
 fn skips_bad_dir() -> TestResult {
     let bad = gen_bad_file();
-    let expected = format!("{}: .* [(]os error 2[)]", &bad);
+    let expected = format!("{}: .* [(]os error [23][)]", &bad);
     Command::cargo_bin(PRG)?
         .arg(&bad)
         .assert()
@@ -211,7 +211,7 @@ fn type_f_l() -> TestResult {
 #[test]
 fn name_csv() -> TestResult {
     run(
-        &["tests/inputs", "-n", ".*.csv"],
+        &["tests/inputs", "-n", ".*[.]csv"],
         "tests/expected/name_csv.txt",
     )
 }
@@ -220,7 +220,7 @@ fn name_csv() -> TestResult {
 #[test]
 fn name_csv_mp3() -> TestResult {
     run(
-        &["tests/inputs", "-n", ".*.csv", "-n", ".*.mp3"],
+        &["tests/inputs", "-n", ".*[.]csv", "-n", ".*[.]mp3"],
         "tests/expected/name_csv_mp3.txt",
     )
 }
