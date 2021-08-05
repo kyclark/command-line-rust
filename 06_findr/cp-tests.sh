@@ -17,7 +17,7 @@ cp -r tests "$DEST"
 cd "$DEST"
 
 echo "Fixing symlink"
-rm tests/inputs/d/b.csv
-ln -s tests/inputs/a/b.csv tests/inputs/d/b.csv
+rm $DEST/tests/inputs/d/b.csv
+ln -s $DEST/tests/inputs/a/b.csv $DEST/tests/inputs/d/b.csv
 
 echo "Done."
