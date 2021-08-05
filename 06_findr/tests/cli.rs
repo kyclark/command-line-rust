@@ -66,12 +66,18 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
     } else {
         fs::read_to_string(expected_file)?
     };
-     
-    Command::cargo_bin(PRG)?
-        .args(args)
-        .assert()
-        .success()
-        .stdout(expected);
+    let mut expected: Vec<&str> = expected.split("\n").collect();
+    expected.sort();
+
+    let cmd = Command::cargo_bin(PRG)?.args(args).assert().success();
+    let out = cmd.get_output();
+    let stdout = String::from_utf8(out.stdout.clone())?;
+    let mut lines: Vec<&str> = stdout.split("\n").collect();
+    lines.sort();
+
+    assert_eq!(lines.len(), expected.len());
+    assert_eq!(lines, expected);
+
     Ok(())
 }
 
