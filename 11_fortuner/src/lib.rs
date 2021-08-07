@@ -24,8 +24,8 @@ pub struct Config {
 
 #[derive(Debug)]
 pub struct Fortune {
-    pub source: String,
-    pub text: String,
+    source: String,
+    text: String,
 }
 
 // --------------------------------------------------
@@ -112,15 +112,14 @@ pub fn run(config: Config) -> MyResult<()> {
 
 // --------------------------------------------------
 fn parse_u64(val: &str) -> MyResult<u64> {
-    match val.trim().parse() {
-        Ok(n) => Ok(n),
-        Err(_) => Err(From::from(format!("\"{}\" not a valid integer", val))),
-    }
+    val.trim()
+        .parse()
+        .map_err(|_| format!("\"{}\" not a valid integer", val).into())
 }
 
 // --------------------------------------------------
 fn read_fortunes(
-    paths: &Vec<PathBuf>,
+    paths: &[PathBuf],
     pattern: &Option<Regex>,
 ) -> MyResult<Vec<Fortune>> {
     let mut fortunes = vec![];
@@ -153,13 +152,11 @@ fn read_fortunes(
             }
         }
     }
-
-    //fortunes.sort();
     Ok(fortunes)
 }
 
 // --------------------------------------------------
-fn find_files(sources: &Vec<String>) -> MyResult<Vec<PathBuf>> {
+fn find_files(sources: &[String]) -> MyResult<Vec<PathBuf>> {
     let dat = OsStr::new("dat");
     let mut results: Vec<PathBuf> = vec![];
 
@@ -183,10 +180,7 @@ fn find_files(sources: &Vec<String>) -> MyResult<Vec<PathBuf>> {
 }
 
 // --------------------------------------------------
-fn pick_fortune(
-    fortunes: &Vec<Fortune>,
-    seed: &Option<u64>,
-) -> Option<String> {
+fn pick_fortune(fortunes: &[Fortune], seed: &Option<u64>) -> Option<String> {
     match fortunes.is_empty() {
         true => None,
         _ => {
@@ -195,7 +189,7 @@ fn pick_fortune(
                 Some(seed) => StdRng::seed_from_u64(*seed).gen_range(range),
                 _ => rand::thread_rng().gen_range(range),
             };
-            fortunes.get(i).map(|v| v.text.to_string())
+            fortunes.get(i).map(|fortune| fortune.text.to_string())
         }
     }
 }
@@ -238,11 +232,11 @@ mod tests {
         );
 
         // Fails to find a bad file
-        let res = find_files(&vec!["/path/does/not/exist".to_string()]);
+        let res = find_files(&["/path/does/not/exist".to_string()]);
         assert!(res.is_err());
 
         // Finds all the input files, excludes ".dat"
-        let res = find_files(&vec!["./tests/inputs".to_string()]);
+        let res = find_files(&["./tests/inputs".to_string()]);
         assert!(res.is_ok());
         assert_eq!(res.unwrap().len(), 5);
     }
@@ -250,10 +244,8 @@ mod tests {
     #[test]
     fn test_read_fortunes() {
         // Parses all the fortunes without a filter
-        let res = read_fortunes(
-            &vec![PathBuf::from("./tests/inputs/fortunes")],
-            &None,
-        );
+        let res =
+            read_fortunes(&[PathBuf::from("./tests/inputs/fortunes")], &None);
         assert!(res.is_ok());
 
         if let Ok(fortunes) = res {
@@ -264,25 +256,18 @@ mod tests {
                 "You cannot achieve the impossible without \
                 attempting the absurd."
             );
-            //concat!("\"Contrariwise,\" continued Tweedledee, ",
-            //    "\"if it was so, it might be; and if it were so, ",
-            //    "it would be; but as it isn't, it ain't. That's logic!\"\n",
-            //    "-- Lewis Carroll, \"Through the Looking Glass\""
-            //)
             assert_eq!(
                 fortunes.last().unwrap().text,
-                concat!(
-                    "There is no material safety data sheet for ",
-                    "astatine. If there were, it would just be the word ",
-                    "\"NO\" scrawled over and over in charred blood.\n",
-                    "-- Randall Munroe, \"What If?\""
-                )
+                "There is no material safety data sheet for \
+                astatine. If there were, it would just be the word \
+                \"NO\" scrawled over and over in charred blood.\n\
+                -- Randall Munroe, \"What If?\""
             );
         }
 
         // Filters for matching text
         let res = read_fortunes(
-            &vec![PathBuf::from("./tests/inputs/fortunes")],
+            &[PathBuf::from("./tests/inputs/fortunes")],
             &Some(Regex::new("Yogi Berra").unwrap()),
         );
         assert!(res.is_ok());

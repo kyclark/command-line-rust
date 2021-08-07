@@ -122,17 +122,17 @@ fn parse_positive_int(val: &str) -> MyResult<usize> {
 #[test]
 fn test_parse_positive_int() {
     // 3 is an OK integer
-    let res1 = parse_positive_int("3");
-    assert!(res1.is_ok());
-    assert_eq!(res1.unwrap(), 3);
+    let res = parse_positive_int("3");
+    assert!(res.is_ok());
+    assert_eq!(res.unwrap(), 3);
 
     // Any string is an error
-    let res2 = parse_positive_int("foo");
-    assert!(res2.is_err());
-    assert_eq!(res2.unwrap_err().to_string(), "foo".to_string());
+    let res = parse_positive_int("foo");
+    assert!(res.is_err());
+    assert_eq!(res.unwrap_err().to_string(), "foo".to_string());
 
     // A zero is an error
-    let res3 = parse_positive_int("0");
-    assert!(res3.is_err());
-    assert_eq!(res3.unwrap_err().to_string(), "0".to_string());
+    let res = parse_positive_int("0");
+    assert!(res.is_err());
+    assert_eq!(res.unwrap_err().to_string(), "0".to_string());
 }

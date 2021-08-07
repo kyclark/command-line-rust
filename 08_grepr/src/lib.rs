@@ -11,10 +11,9 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
-    pattern: String,
+    pattern: Regex,
     files: Vec<String>,
     recursive: bool,
-    insensitive: bool,
     count: bool,
     invert_match: bool,
 }
@@ -73,11 +72,16 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
+    let pattern = matches.value_of("pattern").unwrap();
+    let pattern = RegexBuilder::new(pattern)
+        .case_insensitive(matches.is_present("insensitive"))
+        .build()
+        .map_err(|_| format!("Invalid pattern \"{}\"", pattern))?;
+
     Ok(Config {
-        pattern: matches.value_of("pattern").unwrap().to_string(),
+        pattern,
         files: matches.values_of_lossy("files").unwrap(),
         recursive: matches.is_present("recursive"),
-        insensitive: matches.is_present("insensitive"),
         count: matches.is_present("count"),
         invert_match: matches.is_present("invert"),
     })
@@ -86,11 +90,6 @@ pub fn get_args() -> MyResult<Config> {
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
     // println!("{:#?}", config);
-
-    let pattern = RegexBuilder::new(&config.pattern)
-        .case_insensitive(config.insensitive)
-        .build()
-        .map_err(|_| format!("Invalid pattern \"{}\"", &config.pattern))?;
 
     let entries = find_files(&config.files, config.recursive);
     let num_files = entries.len();
@@ -108,7 +107,11 @@ pub fn run(config: Config) -> MyResult<()> {
             Ok(filename) => match open(&filename) {
                 Err(e) => eprintln!("{}: {}", filename, e),
                 Ok(file) => {
-                    match find_lines(file, &pattern, config.invert_match) {
+                    match find_lines(
+                        file,
+                        &config.pattern,
+                        config.invert_match,
+                    ) {
                         Err(e) => eprintln!("{}", e),
                         Ok(matches) => {
                             if config.count {
@@ -127,7 +130,6 @@ pub fn run(config: Config) -> MyResult<()> {
             },
         }
     }
-
     Ok(())
 }
 
@@ -254,7 +256,7 @@ mod tests {
         assert_eq!(files[0].as_ref().unwrap(), "./tests/inputs/fox.txt");
 
         // The function should reject a directory without the recursive option
-        let files = find_files(&vec!["./tests/inputs".to_string()], false);
+        let files = find_files(&["./tests/inputs".to_string()], false);
         assert_eq!(files.len(), 1);
         if let Err(e) = &files[0] {
             assert_eq!(
@@ -266,9 +268,9 @@ mod tests {
         // Verify the function recurses to find four files in the directory
         let res = find_files(&["./tests/inputs".to_string()], true);
         let mut files: Vec<String> = res
-                .iter()
-                .map(|r| r.as_ref().unwrap().replace("\\", "/"))
-                .collect();
+            .iter()
+            .map(|r| r.as_ref().unwrap().replace("\\", "/"))
+            .collect();
         files.sort();
         assert_eq!(files.len(), 4);
         assert_eq!(

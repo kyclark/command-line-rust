@@ -1,4 +1,3 @@
-//use anyhow::{anyhow, Result};
 use chrono::prelude::*;
 use chrono::{Datelike, NaiveDate};
 use clap::{App, Arg};
@@ -44,24 +43,20 @@ pub fn get_args() -> MyResult<Config> {
         .arg(Arg::with_name("year").value_name("YEAR").help("Year"))
         .get_matches();
 
-    let mut month = match matches.value_of("month") {
-        Some(m) => {
-            let month = parse_month(m)?;
-            Some(month)
-        }
-        _ => None,
-    };
+    let mut month = matches.value_of("month").map(parse_month).transpose()?;
 
-    let mut year = match matches.value_of("year") {
-        Some(y) => {
-            let year = parse_int_range::<i32>(y, |n| (1..=9999).contains(&n))
-                .map_err(|_| {
-                    format!("year \"{}\" not in the range 1..9999", y)
-                })?;
-            Some(year)
-        }
-        _ => None,
-    };
+    //let mut year = match matches.value_of("year") {
+    //    Some(y) => {
+    //        let year = parse_int_range::<i32>(y, |n| (1..=9999).contains(&n))
+    //            .map_err(|_| {
+    //                format!("year \"{}\" not in the range 1..9999", y)
+    //            })?;
+    //        Some(year)
+    //    }
+    //    _ => None,
+    //};
+
+    let mut year = matches.value_of("year").map(parse_year).transpose()?;
 
     let today = Utc::today();
     if month.is_none() && year.is_none() {
@@ -108,6 +103,13 @@ pub fn run(config: Config) -> MyResult<()> {
     }
 
     Ok(())
+}
+
+// --------------------------------------------------
+fn parse_year(year: &str) -> MyResult<u32> {
+    parse_int_range::<u32>(year, |n| (1..=9999).contains(&n)).map_err(|_| {
+        format!("year \"{}\" not in the range 1..9999", year).into()
+    })
 }
 
 // --------------------------------------------------

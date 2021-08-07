@@ -91,9 +91,7 @@ pub fn get_args() -> MyResult<Config> {
         suppress_col2: matches.is_present("suppress_col2"),
         suppress_col3: matches.is_present("suppress_col3"),
         insensitive: matches.is_present("insensitive"),
-        delimiter: matches
-            .value_of("delimiter")
-            .map_or("\t".to_string(), |v| v.to_string()),
+        delimiter: matches.value_of("delimiter").unwrap_or("\t").to_string(),
     })
 }
 

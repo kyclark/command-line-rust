@@ -211,32 +211,32 @@ mod tests {
         assert!(res0.is_ok());
         assert_eq!(res0.unwrap(), -3);
 
-        let res1 = parse_num("+3");
-        assert!(res1.is_ok());
-        assert_eq!(res1.unwrap(), 3);
+        let res = parse_num("+3");
+        assert!(res.is_ok());
+        assert_eq!(res.unwrap(), 3);
 
-        let res2 = parse_num("-3");
-        assert!(res2.is_ok());
-        assert_eq!(res2.unwrap(), -3);
+        let res = parse_num("-3");
+        assert!(res.is_ok());
+        assert_eq!(res.unwrap(), -3);
 
-        let res3 = parse_num("3.14");
-        assert!(res3.is_err());
-        assert_eq!(res3.unwrap_err().to_string(), "3.14".to_string());
+        let res = parse_num("3.14");
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err().to_string(), "3.14".to_string());
 
-        let res4 = parse_num("foo");
-        assert!(res4.is_err());
-        assert_eq!(res4.unwrap_err().to_string(), "foo".to_string());
+        let res = parse_num("foo");
+        assert!(res.is_err());
+        assert_eq!(res.unwrap_err().to_string(), "foo".to_string());
     }
 
     #[test]
     fn test_last_lines() {
         let lines = b"lorem\nipsum\r\ndolor";
-        let res1 = last_lines(Cursor::new(lines), 1);
-        assert!(res1.is_ok());
-        assert_eq!(res1.unwrap(), vec!["dolor"]);
+        let res = last_lines(Cursor::new(lines), 1);
+        assert!(res.is_ok());
+        assert_eq!(res.unwrap(), vec!["dolor"]);
 
-        let res2 = last_lines(Cursor::new(lines), 2);
-        assert!(res2.is_ok());
-        assert_eq!(res2.unwrap(), vec!["ipsum\r\n", "dolor"]);
+        let res = last_lines(Cursor::new(lines), 2);
+        assert!(res.is_ok());
+        assert_eq!(res.unwrap(), vec!["ipsum\r\n", "dolor"]);
     }
 }
