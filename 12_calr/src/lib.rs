@@ -44,18 +44,6 @@ pub fn get_args() -> MyResult<Config> {
         .get_matches();
 
     let mut month = matches.value_of("month").map(parse_month).transpose()?;
-
-    //let mut year = match matches.value_of("year") {
-    //    Some(y) => {
-    //        let year = parse_int_range::<i32>(y, |n| (1..=9999).contains(&n))
-    //            .map_err(|_| {
-    //                format!("year \"{}\" not in the range 1..9999", y)
-    //            })?;
-    //        Some(year)
-    //    }
-    //    _ => None,
-    //};
-
     let mut year = matches.value_of("year").map(parse_year).transpose()?;
 
     let today = Utc::today();
@@ -106,16 +94,27 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn parse_year(year: &str) -> MyResult<u32> {
-    parse_int_range::<u32>(year, |n| (1..=9999).contains(&n)).map_err(|_| {
-        format!("year \"{}\" not in the range 1..9999", year).into()
+fn parse_year(year: &str) -> MyResult<i32> {
+    parse_int::<i32>(year).and_then(|n| {
+        if (1..=9999).contains(&n) {
+            Ok(n)
+        } else {
+            Err(format!("year \"{}\" not in the range 1..9999", year).into())
+        }
     })
 }
 
 // --------------------------------------------------
 fn parse_month(month: &str) -> MyResult<u32> {
-    match parse_int_range::<u32>(month, |n| (1..=12).contains(&n)) {
-        Ok(num) => Ok(num),
+    match parse_int::<u32>(month) {
+        Ok(num) => {
+            if (1..=12).contains(&num) {
+                Ok(num)
+            } else {
+                Err(format!("month \"{}\" not in the range 1..12", month)
+                    .into())
+            }
+        }
         _ => {
             let lower = &month.to_lowercase();
             let matches: Vec<usize> = MONTH_NAMES
@@ -140,14 +139,10 @@ fn parse_month(month: &str) -> MyResult<u32> {
 }
 
 // --------------------------------------------------
-fn parse_int_range<T: FromStr + Copy>(
-    val: &str,
-    pred: fn(T) -> bool,
-) -> MyResult<T> {
-    match val.trim().parse::<T>() {
-        Ok(n) if pred(n) => Ok(n),
-        _ => Err(From::from(val)),
-    }
+fn parse_int<T: FromStr>(val: &str) -> MyResult<T> {
+    val.trim()
+        .parse::<T>()
+        .map_err(|_| format!("Invalid integer \"{}\"", val).into())
 }
 
 // --------------------------------------------------
@@ -237,9 +232,7 @@ fn format_month(
 // --------------------------------------------------
 #[cfg(test)]
 mod tests {
-    use super::{
-        format_month, last_day_in_month, parse_int_range, parse_month,
-    };
+    use super::{format_month, last_day_in_month, parse_month};
     use chrono::{NaiveDate, Utc};
 
     #[test]
@@ -307,24 +300,24 @@ mod tests {
         assert!(res.is_err());
     }
 
-    #[test]
-    fn test_parse_int_range() {
-        let res = parse_int_range::<usize>("1", |n| (0..10).contains(&n));
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap(), 1usize);
+    //#[test]
+    //fn test_parse_int_range() {
+    //    let res = parse_int_range::<usize>("1", |n| (0..10).contains(&n));
+    //    assert!(res.is_ok());
+    //    assert_eq!(res.unwrap(), 1usize);
 
-        let res = parse_int_range::<u32>("1", |n| (0..10).contains(&n));
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap(), 1u32);
+    //    let res = parse_int_range::<u32>("1", |n| (0..10).contains(&n));
+    //    assert!(res.is_ok());
+    //    assert_eq!(res.unwrap(), 1u32);
 
-        let res = parse_int_range::<usize>("foo", |n| (0..10).contains(&n));
-        assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "foo");
+    //    let res = parse_int_range::<usize>("foo", |n| (0..10).contains(&n));
+    //    assert!(res.is_err());
+    //    assert_eq!(res.unwrap_err().to_string(), "foo");
 
-        let res = parse_int_range::<u32>("11", |n| (0..10).contains(&n));
-        assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "11");
-    }
+    //    let res = parse_int_range::<u32>("11", |n| (0..10).contains(&n));
+    //    assert!(res.is_err());
+    //    assert_eq!(res.unwrap_err().to_string(), "11");
+    //}
 
     #[test]
     fn test_last_day_in_month() {
