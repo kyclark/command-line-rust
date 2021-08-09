@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-anyhow = "1.0"
 clap = "2"
 chrono = "0.4"
 itertools = "0.10"
