@@ -10,7 +10,7 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
-    file: Option<String>,
+    files: Vec<String>,
     rotate: usize,
     chunk: usize,
     width: usize,
@@ -23,9 +23,11 @@ pub fn get_args() -> MyResult<Config> {
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust uniq")
         .arg(
-            Arg::with_name("file")
+            Arg::with_name("files")
                 .value_name("FILE")
-                .help("Input file(s)"),
+                .help("Input file(s)")
+                .default_value("-")
+                .min_values(1),
         )
         .arg(
             Arg::with_name("rotate")
@@ -53,24 +55,18 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let file = matches.value_of("file").map(|v| v.to_string());
-
-    if let Some(filename) = &file {
-        if let Some(error) = File::open(filename).err() {
-            return Err(From::from(format!("{}: {}", filename, error)));
-        }
-    }
-
     let rotate = matches
         .value_of("rotate")
-        .and_then(|v| v.parse::<usize>().ok())
-        .unwrap_or(13);
+        .map(parse_positive_int)
+        .transpose()?
+        .unwrap();
 
     if !(1..=26).contains(&rotate) {
-        return Err(From::from(format!(
+        return Err(format!(
             "--rotate \"{}\" must be between 1 and 26",
             rotate
-        )));
+        )
+        .into());
     }
 
     let chunk = matches
@@ -98,7 +94,7 @@ pub fn get_args() -> MyResult<Config> {
     }
 
     Ok(Config {
-        file,
+        files: matches.values_of_lossy("files").unwrap(),
         rotate,
         chunk,
         width,
@@ -107,26 +103,40 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    let file: Box<dyn BufRead> = match &config.file {
-        None => Box::new(BufReader::new(io::stdin())),
-        Some(filename) => {
-            Box::new(BufReader::new(File::open(filename).unwrap()))
-        }
-    };
+    for filename in config.files {
+        match open(&filename) {
+            Err(err) => eprintln!("{}: {}", filename, err),
+            Ok(mut file) => {
+                let mut text = String::new();
+                file.read_to_string(&mut text)?;
+                let rotated = rot(&text, &config.rotate);
+                let chunks = chunk_text(&rotated, &config.chunk).join(" ");
 
-    let lines = io::BufReader::new(file).lines();
-    let mut text: String = "".to_string();
-    for line in lines {
-        let line = line?;
-        text += &line;
+                println!(
+                    "{}",
+                    textwrap::wrap(&chunks, config.width).join("\n")
+                );
+            }
+        }
     }
 
-    let rotated = rot(&text, &config.rotate);
-    let chunks = chunk_text(&rotated, &config.chunk).join(" ");
-
-    println!("{}", textwrap::wrap(&chunks, config.width).join("\n"));
-
     Ok(())
+}
+
+// --------------------------------------------------
+fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
+    match filename {
+        "-" => Ok(Box::new(BufReader::new(io::stdin()))),
+        _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
+    }
+}
+
+// --------------------------------------------------
+fn parse_positive_int(val: &str) -> MyResult<usize> {
+    match val.parse() {
+        Ok(n) if n > 0 => Ok(n),
+        _ => Err(From::from(val)),
+    }
 }
 
 // --------------------------------------------------

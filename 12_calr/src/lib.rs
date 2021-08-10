@@ -117,9 +117,9 @@ fn parse_int<T: FromStr>(val: &str) -> MyResult<T> {
 
 // --------------------------------------------------
 fn parse_year(year: &str) -> MyResult<i32> {
-    parse_int(year).and_then(|n| {
-        if (1..=9999).contains(&n) {
-            Ok(n)
+    parse_int(year).and_then(|num| {
+        if (1..=9999).contains(&num) {
+            Ok(num)
         } else {
             Err(format!("year \"{}\" not in the range 1..9999", year).into())
         }
@@ -162,7 +162,7 @@ fn parse_month(month: &str) -> MyResult<u32> {
 
 // --------------------------------------------------
 fn last_day_in_month(year: i32, month: u32) -> NaiveDate {
-    // the first day of the next month...
+    // The first day of the next month...
     let (y, m) = if month == 12 {
         (year + 1, 1)
     } else {
@@ -176,13 +176,12 @@ fn format_month(
     year: i32,
     month: u32,
     print_year: bool,
-    today: NaiveDate, // Date<Utc>,
+    today: NaiveDate,
 ) -> Vec<String> {
     let first = NaiveDate::from_ymd(year, month, 1);
     let last = last_day_in_month(year, month);
     let mut days: Vec<String> = (1..first.weekday().number_from_sunday())
-        .collect::<Vec<u32>>()
-        .iter()
+        .into_iter()
         .map(|_| "  ".to_string())
         .collect();
 
@@ -191,23 +190,16 @@ fn format_month(
     };
 
     let placeholder = "XX";
-    let nums: Vec<String> = (first.day()..=last.day())
-        .collect::<Vec<u32>>()
-        .iter()
-        .map(|num| {
-            let day = format!("{:2}", num);
-            if is_today(num) {
-                placeholder.to_string()
-            } else {
-                day
-            }
-        })
-        .collect();
-    days.extend(nums);
+    days.extend((first.day()..=last.day()).into_iter().map(|num| {
+        if is_today(&num) {
+            placeholder.to_string()
+        } else {
+            format!("{:>2}", num)
+        }
+    }));
 
     let width = 22;
     let mut lines: Vec<String> = vec![];
-
     if let Some(month_name) = MONTH_NAMES.iter().nth(month as usize - 1) {
         lines.push(format!(
             "{:^20}  ",
@@ -217,16 +209,11 @@ fn format_month(
                 month_name.to_string()
             }
         ));
-        lines.push(format!(
-            "{:width$}",
-            "Su Mo Tu We Th Fr Sa",
-            width = width
-        ));
+        lines.push("Su Mo Tu We Th Fr Sa  ".to_string());
 
         for week in days.chunks(7) {
             let mut disp =
                 format!("{:width$}", week.join(" "), width = width);
-
             if disp.contains(&placeholder) {
                 disp = disp.replace(
                     &placeholder,
@@ -254,11 +241,18 @@ mod tests {
 
     #[test]
     fn test_parse_int() {
-        let res = parse_month("1");
+        // Parse positive int as usize
+        let res = parse_int::<usize>("1");
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), 1u32);
+        assert_eq!(res.unwrap(), 1usize);
 
-        let res = parse_month("foo");
+        // Parse negative int as i32
+        let res = parse_int::<i32>("-1");
+        assert!(res.is_ok());
+        assert_eq!(res.unwrap(), -1i32);
+
+        // Fail on a string
+        let res = parse_int::<i64>("foo");
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "Invalid integer \"foo\"");
     }

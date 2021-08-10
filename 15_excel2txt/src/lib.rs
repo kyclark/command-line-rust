@@ -1,15 +1,12 @@
-extern crate clap;
-extern crate csv;
-extern crate regex;
-extern crate tempdir;
-
 use calamine::{open_workbook, Reader, Xlsx};
 use clap::{App, Arg};
 use csv::WriterBuilder;
 use regex::Regex;
-use std::error::Error;
-use std::fs::{self, DirBuilder};
-use std::path::{Path, PathBuf};
+use std::{
+    error::Error,
+    fs::{self, DirBuilder},
+    path::{Path, PathBuf},
+};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
