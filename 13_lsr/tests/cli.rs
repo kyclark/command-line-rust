@@ -1,17 +1,15 @@
 use assert_cmd::Command;
 use predicates::prelude::*;
 use rand::{distributions::Alphanumeric, Rng};
-use std::fs;
+use std::{error::Error, fs};
 
-type TestResult = Result<(), Box<dyn std::error::Error>>;
+type TestResult = Result<(), Box<dyn Error>>;
 
 const PRG: &str = "lsr";
 const HIDDEN: &str = "tests/inputs/.hidden";
 const EMPTY: &str = "tests/inputs/empty.txt";
 const BUSTLE: &str = "tests/inputs/bustle.txt";
 const FOX: &str = "tests/inputs/fox.txt";
-const DIR: &str = "tests/inputs/dir";
-//const SPIDERS: &str = "tests/inputs/dir/spiders.txt";
 
 // --------------------------------------------------
 fn gen_bad_file() -> String {
@@ -29,25 +27,6 @@ fn gen_bad_file() -> String {
 }
 
 // --------------------------------------------------
-fn make_long_re(filename: &str, size: &str) -> String {
-    vec![
-        r"([ld-][r-][w-][x-][r-][w-][x-][r-][w-][x-])", // perms
-        r"[ ]",                                         // space
-        r"[\d ]{2}",                                    // num links
-        r"[ ]",                                         // space
-        r"\w+",                                         // username
-        r"[ ]",                                         // space
-        r"\w+",                                         // groupname
-        r"[ ]",                                         // space
-        size,
-        r"[ ]", // space
-        r"\w+", // stuff
-        filename,
-    ]
-    .join("")
-}
-
-// --------------------------------------------------
 #[test]
 fn bad_file() -> TestResult {
     let bad = gen_bad_file();
@@ -58,7 +37,6 @@ fn bad_file() -> TestResult {
         .assert()
         .success()
         .stderr(predicate::str::contains(expected));
-
     Ok(())
 }
 
@@ -74,192 +52,193 @@ fn no_args() -> TestResult {
 }
 
 // --------------------------------------------------
+fn run_short(arg: &str) -> TestResult {
+    Command::cargo_bin(PRG)?
+        .arg(arg)
+        .assert()
+        .success()
+        .stdout(format!("{}\n", arg));
+    Ok(())
+}
+
+// --------------------------------------------------
+fn run_long(arg: &str, permissions: &str, size: &str) -> TestResult {
+    let cmd = Command::cargo_bin(PRG)?
+        .args(&["--long", arg])
+        .assert()
+        .success();
+    let stdout = String::from_utf8(cmd.get_output().stdout.clone())?;
+    let parts: Vec<_> = stdout.split_whitespace().collect();
+    assert_eq!(parts.get(0).unwrap(), &permissions);
+    assert_eq!(parts.get(4).unwrap(), &size);
+    assert_eq!(parts.last().unwrap(), &arg);
+    Ok(())
+}
+
+// --------------------------------------------------
 #[test]
 fn empty() -> TestResult {
-    Command::cargo_bin(PRG)?
-        .arg(EMPTY)
-        .assert()
-        .success()
-        .stdout("tests/inputs/empty.txt\n");
-    Ok(())
+    run_short(EMPTY)
 }
 
-// --------------------------------------------------
 #[test]
 fn empty_long() -> TestResult {
-    let expected = make_long_re(EMPTY, "[ ]{7}0");
-    Command::cargo_bin(PRG)?
-        .args(&["--long", EMPTY])
-        .assert()
-        .success()
-        .stdout(predicate::str::is_match(expected).unwrap());
-    Ok(())
-}
-
-// --------------------------------------------------
-#[test]
-fn dir_long() -> TestResult {
-    let expected = make_long_re("tests/inputs/dir", r"[\d ]{8}");
-    Command::cargo_bin(PRG)?
-        .args(&["--long", "tests/inputs/dir"])
-        .assert()
-        .success()
-        .stdout(predicate::str::is_match(expected).unwrap());
-    Ok(())
-}
-
-// --------------------------------------------------
-#[test]
-fn fox() -> TestResult {
-    Command::cargo_bin(PRG)?
-        .arg("tests/inputs/fox.txt")
-        .assert()
-        .success()
-        .stdout("tests/inputs/fox.txt\n");
-    Ok(())
-}
-
-// --------------------------------------------------
-#[test]
-fn fox_long() -> TestResult {
-    let expected = make_long_re("tests/inputs/fox.txt", "[ ]{6}45");
-    Command::cargo_bin(PRG)?
-        .args(&["--long", "tests/inputs/fox.txt"])
-        .assert()
-        .success()
-        .stdout(predicate::str::is_match(expected).unwrap());
-    Ok(())
+    run_long(EMPTY, "-rw-r--r--", "0")
 }
 
 // --------------------------------------------------
 #[test]
 fn bustle() -> TestResult {
-    Command::cargo_bin(PRG)?
-        .arg("tests/inputs/bustle.txt")
-        .assert()
-        .success()
-        .stdout("tests/inputs/bustle.txt\n");
-    Ok(())
+    run_short(BUSTLE)
 }
 
-// --------------------------------------------------
 #[test]
 fn bustle_long() -> TestResult {
-    let expected = make_long_re("tests/inputs/bustle.txt", "[ ]{5}193");
-    Command::cargo_bin(PRG)?
-        .args(&["--long", "tests/inputs/bustle.txt"])
-        .assert()
-        .success()
-        .stdout(predicate::str::is_match(expected).unwrap());
-    Ok(())
+    run_long(BUSTLE, "-rw-r--r--", "193")
 }
 
 // --------------------------------------------------
 #[test]
-fn spiders() -> TestResult {
-    Command::cargo_bin(PRG)?
-        .arg("tests/inputs/dir/spiders.txt")
-        .assert()
-        .success()
-        .stdout("tests/inputs/dir/spiders.txt\n");
-    Ok(())
+fn fox() -> TestResult {
+    run_short(FOX)
+}
+
+#[test]
+fn fox_long() -> TestResult {
+    run_long(FOX, "-rw-------", "45")
 }
 
 // --------------------------------------------------
 #[test]
-fn spiders_long() -> TestResult {
-    let expected = make_long_re("tests/inputs/dir/spiders.txt", "[ ]{6}45");
-    Command::cargo_bin(PRG)?
-        .args(&["--long", "tests/inputs/dir/spiders.txt"])
-        .assert()
-        .success()
-        .stdout(predicate::str::is_match(expected).unwrap());
-    Ok(())
+fn hidden() -> TestResult {
+    run_short(HIDDEN)
+}
+
+#[test]
+fn hidden_long() -> TestResult {
+    run_long(HIDDEN, "-rw-r--r--", "0")
 }
 
 // --------------------------------------------------
-#[test]
-fn dir_list() -> TestResult {
-    for expected in &[EMPTY, BUSTLE, FOX, DIR] {
-        Command::cargo_bin(PRG)?
-            .arg("tests/inputs")
-            .assert()
-            .success()
-            .stdout(predicate::str::contains(expected.to_string()));
-    }
-    Ok(())
-}
-
-// --------------------------------------------------
-#[test]
-fn dir_list_all() -> TestResult {
-    for expected in &[HIDDEN, EMPTY, BUSTLE, FOX, DIR] {
-        Command::cargo_bin(PRG)?
-            .args(&["--all", "tests/inputs"])
-            .assert()
-            .success()
-            .stdout(predicate::str::contains(expected.to_string()));
-    }
-    Ok(())
-}
-
-// --------------------------------------------------
-#[test]
-fn dir_list_long() -> TestResult {
-    for expected in &[
-        make_long_re(EMPTY, "[ ]{7}0"),
-        make_long_re(BUSTLE, "[ ]{5}193"),
-        make_long_re(FOX, "[ ]{6}45"),
-        make_long_re(DIR, r"[\d ]{8}"),
-    ] {
-        Command::cargo_bin(PRG)?
-            .args(&["-l", "tests/inputs"])
-            .assert()
-            .success()
-            .stdout(predicate::str::is_match(expected).unwrap());
-    }
-    Ok(())
-}
-
-// --------------------------------------------------
-#[test]
-fn dir_list_long_all() -> TestResult {
-    for expected in &[
-        make_long_re(HIDDEN, "[ ]{7}0"),
-        make_long_re(EMPTY, "[ ]{7}0"),
-        make_long_re(BUSTLE, "[ ]{5}193"),
-        make_long_re(FOX, "[ ]{6}45"),
-        make_long_re(DIR, r"[\d ]{8}"),
-    ] {
-        Command::cargo_bin(PRG)?
-            .args(&["-la", "tests/inputs"])
-            .assert()
-            .stdout(predicate::str::is_match(expected).unwrap());
-    }
-    Ok(())
-}
-
-// --------------------------------------------------
-#[test]
-fn dir_list_with_link() -> TestResult {
-    let cmd = Command::cargo_bin(PRG)?
-        .args(&["--long", DIR])
-        .assert()
-        .success();
+fn dir_short(args: &[&str], expected: &[&str]) -> TestResult {
+    let cmd = Command::cargo_bin(PRG)?.args(args).assert().success();
     let stdout = String::from_utf8(cmd.get_output().stdout.clone())?;
-    let mut lines: Vec<&str> =
+    let lines: Vec<&str> =
         stdout.split("\n").filter(|s| !s.is_empty()).collect();
-    lines.sort();
+    assert_eq!(lines.len(), expected.len());
+    for filename in expected {
+        assert!(lines.contains(&filename));
+    }
+    Ok(())
+}
 
-    assert_eq!(lines.len(), 2);
+#[test]
+fn dir1() -> TestResult {
+    dir_short(
+        &["tests/inputs"],
+        &[
+            "tests/inputs/empty.txt",
+            "tests/inputs/bustle.txt",
+            "tests/inputs/fox.txt",
+            "tests/inputs/dir",
+        ],
+    )
+}
 
-    if let Some(first) = lines.first() {
-        assert!(first.starts_with("-"));
+#[test]
+fn dir1_all() -> TestResult {
+    dir_short(
+        &["tests/inputs", "--all"],
+        &[
+            "tests/inputs/empty.txt",
+            "tests/inputs/bustle.txt",
+            "tests/inputs/fox.txt",
+            "tests/inputs/.hidden",
+            "tests/inputs/dir",
+        ],
+    )
+}
+
+#[test]
+fn dir2() -> TestResult {
+    dir_short(&["tests/inputs/dir"], &["tests/inputs/dir/spiders.txt"])
+}
+
+#[test]
+fn dir2_all() -> TestResult {
+    dir_short(
+        &["-a", "tests/inputs/dir"],
+        &["tests/inputs/dir/spiders.txt", "tests/inputs/dir/.gitkeep"],
+    )
+}
+
+// --------------------------------------------------
+fn dir_long(args: &[&str], expected: &[(&str, &str, &str)]) -> TestResult {
+    let cmd = Command::cargo_bin(PRG)?.args(args).assert().success();
+    let stdout = String::from_utf8(cmd.get_output().stdout.clone())?;
+    let lines: Vec<&str> =
+        stdout.split("\n").filter(|s| !s.is_empty()).collect();
+    assert_eq!(lines.len(), expected.len());
+
+    let mut check = vec![];
+    for line in lines {
+        let parts: Vec<_> = line.split_whitespace().collect();
+        let permissions = parts.get(0).unwrap().clone();
+        let size = parts.get(4).unwrap().clone();
+        let path = parts.last().unwrap().clone();
+        check.push((path, permissions, size));
     }
 
-    if let Some(last) = lines.last() {
-        assert!(last.starts_with("l"));
+    for entry in expected {
+        assert!(check.contains(entry));
     }
 
     Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn dir1_long() -> TestResult {
+    dir_long(
+        &["-l", "tests/inputs"],
+        &[
+            ("tests/inputs/empty.txt", "-rw-r--r--", "0"),
+            ("tests/inputs/bustle.txt", "-rw-r--r--", "193"),
+            ("tests/inputs/fox.txt", "-rw-------", "45"),
+            ("tests/inputs/dir", "drwxr-xr-x", "128"),
+        ],
+    )
+}
+
+#[test]
+fn dir1_long_all() -> TestResult {
+    dir_long(
+        &["-la", "tests/inputs"],
+        &[
+            ("tests/inputs/empty.txt", "-rw-r--r--", "0"),
+            ("tests/inputs/bustle.txt", "-rw-r--r--", "193"),
+            ("tests/inputs/fox.txt", "-rw-------", "45"),
+            ("tests/inputs/dir", "drwxr-xr-x", "128"),
+            ("tests/inputs/.hidden", "-rw-r--r--", "0"),
+        ],
+    )
+}
+
+#[test]
+fn dir2_long() -> TestResult {
+    dir_long(
+        &["--long", "tests/inputs/dir"],
+        &[("tests/inputs/dir/spiders.txt", "-rw-r--r--", "45")],
+    )
+}
+
+#[test]
+fn dir2_long_all() -> TestResult {
+    dir_long(
+        &["tests/inputs/dir", "--long", "--all"],
+        &[
+            ("tests/inputs/dir/spiders.txt", "-rw-r--r--", "45"),
+            ("tests/inputs/dir/.gitkeep", "-rw-r--r--", "0"),
+        ],
+    )
 }
