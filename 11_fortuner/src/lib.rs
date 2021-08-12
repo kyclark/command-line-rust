@@ -4,7 +4,7 @@ use regex::{Regex, RegexBuilder};
 use std::{
     error::Error,
     ffi::OsStr,
-    fs::File,
+    fs::{self, File},
     io::{BufRead, BufReader},
     path::PathBuf,
 };
@@ -158,7 +158,7 @@ fn find_files(sources: &[String]) -> MyResult<Vec<PathBuf>> {
     let mut results: Vec<PathBuf> = vec![];
 
     for source in sources {
-        File::open(source).map_err(|e| format!("{}: {}", source, e))?;
+        fs::metadata(source).map_err(|e| format!("{}: {}", source, e))?;
         results.extend(
             WalkDir::new(source)
                 .into_iter()
