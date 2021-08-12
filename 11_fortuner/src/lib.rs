@@ -1,7 +1,4 @@
-//pub mod fortune;
-
 use clap::{App, Arg};
-//use fortune::Fortune;
 use rand::{rngs::StdRng, Rng, SeedableRng};
 use regex::{Regex, RegexBuilder};
 use std::{
