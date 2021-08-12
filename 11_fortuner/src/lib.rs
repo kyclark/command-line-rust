@@ -175,6 +175,7 @@ fn find_files(sources: &[String]) -> MyResult<Vec<PathBuf>> {
             //.map(|e| e.path().into()),
         );
     }
+    results.sort();
 
     Ok(results)
 }

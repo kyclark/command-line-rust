@@ -94,7 +94,7 @@ fn humorists_seed_31() -> TestResult {
 fn dir_seed_51() -> TestResult {
     run(
         &[FORTUNE_DIR, "-s", "51"],
-        "Fall seven times, stand up eight.\n-- Japanese Proverb\n",
+        "Friendship is love with understanding.\n",
     )
 }
 
