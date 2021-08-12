@@ -7,7 +7,10 @@ edition = "2018"
 chrono = "0.4"
 clap = "2.33"
 users = "0.11"
+walkdir = "2"
+tabular = "0.1.4"
 
 [dev-dependencies]
 assert_cmd = "1"
 predicates = "1"
+rand = "0.8"
