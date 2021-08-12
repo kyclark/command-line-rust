@@ -115,15 +115,11 @@ fn parse_u64(val: &str) -> MyResult<u64> {
 }
 
 // --------------------------------------------------
-fn read_fortunes(
-    paths: &[PathBuf],
-    pattern: &Option<Regex>,
-) -> MyResult<Vec<Fortune>> {
+fn read_fortunes(paths: &[PathBuf], pattern: &Option<Regex>) -> MyResult<Vec<Fortune>> {
     let mut fortunes = vec![];
     let mut buffer = vec![];
 
-    let is_match =
-        |text: &str| pattern.as_ref().map_or(true, |re| re.is_match(text));
+    let is_match = |text: &str| pattern.as_ref().map_or(true, |re| re.is_match(text));
 
     for path in paths {
         let source = path.file_name().unwrap().to_string_lossy().into_owned();
@@ -163,10 +159,7 @@ fn find_files(sources: &[String]) -> MyResult<Vec<PathBuf>> {
             WalkDir::new(source)
                 .into_iter()
                 .filter_map(|e| e.ok())
-                .filter(|e| {
-                    e.file_type().is_file()
-                        && e.path().extension() != Some(dat)
-                })
+                .filter(|e| e.file_type().is_file() && e.path().extension() != Some(dat))
                 .map(|e| Into::into(e.path())),
             //.map(|e| PathBuf::from(e.path())),
             //.map(|e| e.path().into()),
@@ -195,9 +188,7 @@ fn pick_fortune(fortunes: &[Fortune], seed: &Option<u64>) -> Option<String> {
 // --------------------------------------------------
 #[cfg(test)]
 mod tests {
-    use super::{
-        find_files, parse_u64, pick_fortune, read_fortunes, Fortune,
-    };
+    use super::{find_files, parse_u64, pick_fortune, read_fortunes, Fortune};
     use regex::Regex;
     use std::path::PathBuf;
 
@@ -238,21 +229,16 @@ mod tests {
         assert!(res.is_ok());
         let files = res.unwrap();
         assert_eq!(files.len(), 5);
-        assert_eq!(
-            files.get(0).unwrap().display().to_string(),
-            "./tests/inputs/ascii-art".to_string()
-        );
-        assert_eq!(
-            files.last().unwrap().display().to_string(),
-            "./tests/inputs/startrek".to_string()
-        );
+        let first = files.get(0).unwrap().display().to_string();
+        assert!(first.contains("ascii-art"));
+        let last = files.last().unwrap().display().to_string();
+        assert!(last.contains("startrek"));
     }
 
     #[test]
     fn test_read_fortunes() {
         // Parses all the fortunes without a filter
-        let res =
-            read_fortunes(&[PathBuf::from("./tests/inputs/fortunes")], &None);
+        let res = read_fortunes(&[PathBuf::from("./tests/inputs/fortunes")], &None);
         assert!(res.is_ok());
 
         if let Ok(fortunes) = res {
@@ -293,8 +279,7 @@ mod tests {
             },
             Fortune {
                 source: "fortunes".to_string(),
-                text: "Assumption is the mother of all screw-ups."
-                    .to_string(),
+                text: "Assumption is the mother of all screw-ups.".to_string(),
             },
             Fortune {
                 source: "fortunes".to_string(),
