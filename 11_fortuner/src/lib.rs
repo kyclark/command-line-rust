@@ -236,7 +236,16 @@ mod tests {
         // Finds all the input files, excludes ".dat"
         let res = find_files(&["./tests/inputs".to_string()]);
         assert!(res.is_ok());
-        assert_eq!(res.unwrap().len(), 5);
+        let files = res.unwrap();
+        assert_eq!(files.len(), 5);
+        assert_eq!(
+            files.get(0).unwrap().display().to_string(),
+            "./tests/inputs/ascii-art".to_string()
+        );
+        assert_eq!(
+            files.last().unwrap().display().to_string(),
+            "./tests/inputs/startrek".to_string()
+        );
     }
 
     #[test]
