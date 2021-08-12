@@ -69,7 +69,7 @@ pub fn get_args() -> MyResult<Config> {
 
     Ok(Config {
         month,
-        year: year.unwrap_or(today.year()),
+        year: year.unwrap_or_else(|| today.year()),
     })
 }
 

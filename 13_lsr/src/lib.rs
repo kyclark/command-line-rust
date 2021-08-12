@@ -89,7 +89,7 @@ fn find_files(paths: &[String], show_hidden: bool) -> MyResult<Vec<PathBuf>> {
                         let path = entry.path();
                         let is_hidden =
                             path.file_name().map_or(false, |name| {
-                                name.to_string_lossy().starts_with(".")
+                                name.to_string_lossy().starts_with('.')
                             });
                         if !is_hidden || show_hidden {
                             results.push(PathBuf::from(entry.path()));

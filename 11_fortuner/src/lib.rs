@@ -123,7 +123,7 @@ fn read_fortunes(
     let mut buffer = vec![];
 
     let is_match =
-        |text: &str| pattern.as_ref().map_or(true, |re| re.is_match(&text));
+        |text: &str| pattern.as_ref().map_or(true, |re| re.is_match(text));
 
     for path in paths {
         let source = path.file_name().unwrap().to_string_lossy().into_owned();
