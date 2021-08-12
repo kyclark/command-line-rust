@@ -223,17 +223,24 @@ mod test {
         assert_eq!(filenames, expected);
     }
 
-    fn long_match(line: &str, permissions: &str, size: &str, path: &str) {
+    fn long_match(
+        line: &str,
+        path: &str,
+        permissions: &str,
+        size: Option<&str>,
+    ) {
         let parts: Vec<_> = line.split_whitespace().collect();
 
+        if let Some(file_path) = &parts.last() {
+            assert_eq!(file_path, &&path);
+        }
         if let Some(file_perm) = &parts.get(0) {
             assert_eq!(file_perm, &&permissions);
         }
-        if let Some(file_size) = &parts.get(4) {
-            assert_eq!(file_size, &&size);
-        }
-        if let Some(file_path) = &parts.last() {
-            assert_eq!(file_path, &&path);
+        if let Some(size) = size {
+            if let Some(file_size) = &parts.get(4) {
+                assert_eq!(file_size, &&size);
+            }
         }
     }
 
@@ -251,7 +258,7 @@ mod test {
         assert_eq!(lines.len(), 1);
 
         let line1 = lines.first().unwrap();
-        long_match(&line1, "-rw-r--r--", "193", bustle_path);
+        long_match(&line1, bustle_path, "-rw-r--r--", Some("193"));
     }
 
     #[test]
@@ -269,10 +276,15 @@ mod test {
         assert_eq!(lines.len(), 2);
 
         let empty_line = lines.remove(0);
-        long_match(&empty_line, "-rw-r--r--", "0", "tests/inputs/empty.txt");
+        long_match(
+            &empty_line,
+            "tests/inputs/empty.txt",
+            "-rw-r--r--",
+            Some("0"),
+        );
 
         let dir_line = lines.remove(0);
-        long_match(&dir_line, "drwxr-xr-x", "128", "tests/inputs/dir");
+        long_match(&dir_line, "tests/inputs/dir", "drwxr-xr-x", None);
     }
 
     #[test]
