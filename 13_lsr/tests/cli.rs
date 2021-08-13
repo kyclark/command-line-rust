@@ -62,16 +62,16 @@ fn run_short(arg: &str) -> TestResult {
 }
 
 // --------------------------------------------------
-fn run_long(arg: &str, permissions: &str, size: &str) -> TestResult {
+fn run_long(filename: &str, permissions: &str, size: &str) -> TestResult {
     let cmd = Command::cargo_bin(PRG)?
-        .args(&["--long", arg])
+        .args(&["--long", filename])
         .assert()
         .success();
     let stdout = String::from_utf8(cmd.get_output().stdout.clone())?;
     let parts: Vec<_> = stdout.split_whitespace().collect();
     assert_eq!(parts.get(0).unwrap(), &permissions);
     assert_eq!(parts.get(4).unwrap(), &size);
-    assert_eq!(parts.last().unwrap(), &arg);
+    assert_eq!(parts.last().unwrap(), &filename);
     Ok(())
 }
 

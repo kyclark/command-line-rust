@@ -115,11 +115,15 @@ fn parse_u64(val: &str) -> MyResult<u64> {
 }
 
 // --------------------------------------------------
-fn read_fortunes(paths: &[PathBuf], pattern: &Option<Regex>) -> MyResult<Vec<Fortune>> {
+fn read_fortunes(
+    paths: &[PathBuf],
+    pattern: &Option<Regex>,
+) -> MyResult<Vec<Fortune>> {
     let mut fortunes = vec![];
     let mut buffer = vec![];
 
-    let is_match = |text: &str| pattern.as_ref().map_or(true, |re| re.is_match(text));
+    let is_match =
+        |text: &str| pattern.as_ref().map_or(true, |re| re.is_match(text));
 
     for path in paths {
         let source = path.file_name().unwrap().to_string_lossy().into_owned();
@@ -159,7 +163,10 @@ fn find_files(sources: &[String]) -> MyResult<Vec<PathBuf>> {
             WalkDir::new(source)
                 .into_iter()
                 .filter_map(|e| e.ok())
-                .filter(|e| e.file_type().is_file() && e.path().extension() != Some(dat))
+                .filter(|e| {
+                    e.file_type().is_file()
+                        && e.path().extension() != Some(dat)
+                })
                 .map(|e| Into::into(e.path())),
             //.map(|e| PathBuf::from(e.path())),
             //.map(|e| e.path().into()),
@@ -188,7 +195,9 @@ fn pick_fortune(fortunes: &[Fortune], seed: &Option<u64>) -> Option<String> {
 // --------------------------------------------------
 #[cfg(test)]
 mod tests {
-    use super::{find_files, parse_u64, pick_fortune, read_fortunes, Fortune};
+    use super::{
+        find_files, parse_u64, pick_fortune, read_fortunes, Fortune,
+    };
     use regex::Regex;
     use std::path::PathBuf;
 
@@ -210,13 +219,13 @@ mod tests {
     #[test]
     fn test_find_files() {
         // Verify that the function finds a file known to exist
-        let res = find_files(&vec!["./tests/inputs/fortunes".to_string()]);
+        let res = find_files(&["./tests/inputs/fortunes".to_string()]);
         assert!(res.is_ok());
 
         let files = res.unwrap();
         assert_eq!(files.len(), 1);
         assert_eq!(
-            files.iter().nth(0).unwrap().to_string_lossy(),
+            files.get(0).unwrap().to_string_lossy(),
             "./tests/inputs/fortunes"
         );
 
@@ -227,6 +236,8 @@ mod tests {
         // Finds all the input files, excludes ".dat"
         let res = find_files(&["./tests/inputs".to_string()]);
         assert!(res.is_ok());
+
+        // Check number and order of files
         let files = res.unwrap();
         assert_eq!(files.len(), 5);
         let first = files.get(0).unwrap().display().to_string();
@@ -238,7 +249,8 @@ mod tests {
     #[test]
     fn test_read_fortunes() {
         // Parses all the fortunes without a filter
-        let res = read_fortunes(&[PathBuf::from("./tests/inputs/fortunes")], &None);
+        let res =
+            read_fortunes(&[PathBuf::from("./tests/inputs/fortunes")], &None);
         assert!(res.is_ok());
 
         if let Ok(fortunes) = res {
@@ -270,7 +282,7 @@ mod tests {
     #[test]
     fn test_pick_fortune() {
         // Create a vector of fortunes
-        let fortunes = vec![
+        let fortunes = &[
             Fortune {
                 source: "fortunes".to_string(),
                 text: "You cannot achieve the impossible without \
@@ -279,7 +291,8 @@ mod tests {
             },
             Fortune {
                 source: "fortunes".to_string(),
-                text: "Assumption is the mother of all screw-ups.".to_string(),
+                text: "Assumption is the mother of all screw-ups."
+                    .to_string(),
             },
             Fortune {
                 source: "fortunes".to_string(),
@@ -289,7 +302,7 @@ mod tests {
 
         // Pick a fortune with a seed
         assert_eq!(
-            pick_fortune(&fortunes, &Some(1)).unwrap(),
+            pick_fortune(fortunes, &Some(1)).unwrap(),
             "Neckties strangle clear thinking.".to_string()
         );
     }
