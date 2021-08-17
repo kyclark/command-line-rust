@@ -78,12 +78,13 @@ pub fn run(config: Config) -> MyResult<()> {
 // --------------------------------------------------
 fn find_files(paths: &[String], show_hidden: bool) -> MyResult<Vec<PathBuf>> {
     let mut results = vec![];
-    for path in paths {
-        match fs::metadata(path) {
-            Err(e) => eprintln!("{}: {}", path, e),
+    for filename in paths {
+        match fs::metadata(filename) {
+            Err(e) => eprintln!("{}: {}", filename, e),
             Ok(meta) => {
                 if meta.is_dir() {
-                    for entry in WalkDir::new(path).min_depth(1).max_depth(1)
+                    for entry in
+                        WalkDir::new(filename).min_depth(1).max_depth(1)
                     {
                         let entry = entry?;
                         let path = entry.path();
@@ -96,7 +97,7 @@ fn find_files(paths: &[String], show_hidden: bool) -> MyResult<Vec<PathBuf>> {
                         }
                     }
                 } else {
-                    results.push(PathBuf::from(path));
+                    results.push(PathBuf::from(filename));
                 }
             }
         }

@@ -1,10 +1,13 @@
 use assert_cmd::Command;
 use predicates::prelude::*;
 use rand::{distributions::Alphanumeric, Rng};
-use std::fs::{self, File};
 use std::io::prelude::*;
+use std::{
+    error::Error,
+    fs::{self, File},
+};
 
-type TestResult = Result<(), Box<dyn std::error::Error>>;
+type TestResult = Result<(), Box<dyn Error>>;
 
 const PRG: &str = "headr";
 const EMPTY: &str = "./tests/inputs/empty.txt";
