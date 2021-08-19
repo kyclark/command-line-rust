@@ -1,5 +1,5 @@
 fn main() {
-    if let Err(e) = rot13::get_args().and_then(rot13::run) {
+    if let Err(e) = paster::get_args().and_then(paster::run) {
         eprintln!("{}", e);
         std::process::exit(1);
     }

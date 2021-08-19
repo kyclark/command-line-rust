@@ -1,9 +1,9 @@
 [package]
-name = "rot13"
+name = "hello"
 version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-clap = "2.33"
-regex = "1.4"
-textwrap = "0.13"
+
+[dev-dependencies]
+assert_cmd = "1"
