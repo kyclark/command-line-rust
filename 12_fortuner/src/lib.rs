@@ -81,8 +81,6 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    // println!("{:#?}", config);
-
     let files = find_files(&config.sources)?;
     let fortunes = read_fortunes(&files, &config.pattern)?;
 
