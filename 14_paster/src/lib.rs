@@ -30,6 +30,7 @@ pub fn get_args() -> MyResult<Config> {
         .arg(
             Arg::with_name("delimiters")
                 .short("d")
+                .long("delimiter")
                 .value_name("DELIMITER")
                 .help("Delimiter")
                 .takes_value(true),
@@ -37,23 +38,12 @@ pub fn get_args() -> MyResult<Config> {
         .arg(
             Arg::with_name("serial")
                 .short("s")
+                .long("serial")
                 .value_name("SERIAL")
                 .help("Concatenate lines of each file serially")
                 .takes_value(false),
         )
         .get_matches();
-
-    //let delimiters: Vec<_> = matches
-    //    .value_of("delimiters")
-    //    .map_or("\t".to_string(), |v| {
-    //        v.replace("\\n", "\n")
-    //            .replace("\\t", "\t")
-    //            .replace("\\\\", "\\")
-    //            .replace("\\", "")
-    //    })
-    //    .chars()
-    //    .map(String::from)
-    //    .collect();
 
     let delimiters = matches
         .value_of("delimiters")
@@ -71,7 +61,7 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    // println!("{:#?}", config);
+    //println!("{:#?}", config);
 
     let mut files = vec![];
     for filename in config.files {
@@ -84,9 +74,8 @@ pub fn run(config: Config) -> MyResult<()> {
         }
     }
 
-    let delims = &mut config.delimiters.into_iter().cycle();
-
     if config.serial {
+        let delims = &mut config.delimiters.into_iter().cycle();
         for file in files {
             let mut out = String::new();
             for (i, line) in file.enumerate() {
@@ -98,6 +87,7 @@ pub fn run(config: Config) -> MyResult<()> {
             println!("{}", out);
         }
     } else {
+        let delim = config.delimiters.first().unwrap();
         loop {
             let mut lines = vec![];
             for iter in &mut files {
@@ -106,7 +96,7 @@ pub fn run(config: Config) -> MyResult<()> {
             if lines.join("").is_empty() {
                 break;
             }
-            println!("{}", lines.join(&delims.next().unwrap()));
+            println!("{}", lines.join(&delim));
         }
     }
 
@@ -123,11 +113,10 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
 
 // --------------------------------------------------
 fn parse_delimiters(given: &str) -> MyResult<Vec<String>> {
-    let chrs: Vec<char> = given.chars().collect();
-    let mut chrs = chrs.iter().peekable();
+    let mut chrs = given.chars().collect::<Vec<_>>().into_iter().peekable();
     let mut results = vec![];
     while let Some(chr) = chrs.next() {
-        if chr == &'\\' {
+        if chr == '\\' {
             let esc = match &chrs.peek() {
                 None => Err("Lone backslash".to_string()),
                 Some('n') => {
@@ -153,7 +142,6 @@ fn parse_delimiters(given: &str) -> MyResult<Vec<String>> {
             results.push(chr.to_string());
         }
     }
-
     Ok(results)
 }
 

@@ -101,6 +101,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
     Command::cargo_bin(PRG)?
         .args(args)
         .assert()
+        .success()
         .stdout(predicate::eq(&expected.as_bytes() as &[u8]));
 
     Ok(())
