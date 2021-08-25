@@ -22,18 +22,18 @@ pub fn get_args() -> MyResult<Config> {
         .about("Rust uniq")
         .arg(
             Arg::with_name("in_file")
-                .value_name("FILE")
+                .value_name("IN_FILE")
                 .help("Input file")
-                .default_value("-"),
+                .default_value("-")
+                .required(true),
         )
         .arg(
             Arg::with_name("out_file")
-                .value_name("FILE")
+                .value_name("OUT_FILE")
                 .help("Output file"),
         )
         .arg(
             Arg::with_name("count")
-                .value_name("COUNT")
                 .help("Show counts")
                 .short("c")
                 .long("count")
@@ -42,8 +42,8 @@ pub fn get_args() -> MyResult<Config> {
         .get_matches();
 
     Ok(Config {
-        in_file: matches.value_of("in_file").map(str::to_string).unwrap(),
-        out_file: matches.value_of("out_file").map(String::from),
+        in_file: matches.value_of_lossy("in_file").unwrap().to_string(),
+        out_file: matches.value_of("out_file").map(|v| v.to_string()),
         count: matches.is_present("count"),
     })
 }
@@ -53,16 +53,16 @@ pub fn run(config: Config) -> MyResult<()> {
     let mut file = open(&config.in_file)
         .map_err(|e| format!("{}: {}", config.in_file, e))?;
     let mut out_file: Box<dyn Write> = match &config.out_file {
-        Some(out_name) => Box::new(File::create(&out_name)?),
+        Some(out_name) => Box::new(File::create(out_name)?),
         _ => Box::new(io::stdout()),
     };
 
-    let mut print = |count: &u64, line: &String| -> MyResult<()> {
-        if count > &0 {
+    let mut print = |count: u64, text: &str| -> MyResult<()> {
+        if count > 0 {
             if config.count {
-                write!(out_file, "{:>4} {}", &count, &line)?;
+                write!(out_file, "{:>4} {}", count, text)?;
             } else {
-                write!(out_file, "{}", &line)?;
+                write!(out_file, "{}", text)?;
             }
         };
         Ok(())
@@ -78,7 +78,7 @@ pub fn run(config: Config) -> MyResult<()> {
         }
 
         if line.trim_end() != last.trim_end() {
-            print(&count, &last)?;
+            print(count, &last)?;
             last = line.clone();
             count = 0;
         }
@@ -86,7 +86,7 @@ pub fn run(config: Config) -> MyResult<()> {
         count += 1;
         line.clear();
     }
-    print(&count, &last)?;
+    print(count, &last)?;
 
     Ok(())
 }

@@ -47,7 +47,6 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("insensitive")
-                .value_name("INSENSITIVE")
                 .help("Case-insensitive pattern matching")
                 .takes_value(false)
                 .short("i")

@@ -38,7 +38,6 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("long")
-                .value_name("LONG")
                 .takes_value(false)
                 .help("Long listing")
                 .short("l")
@@ -46,7 +45,6 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("all")
-                .value_name("ALL")
                 .takes_value(false)
                 .help("Show all files")
                 .short("a")

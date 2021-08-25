@@ -33,11 +33,11 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("FILE")
                 .help("Input file(s)")
                 .default_value("-")
+                .required(true)
                 .min_values(1),
         )
         .arg(
             Arg::with_name("words")
-                .value_name("WORDS")
                 .help("Show word count")
                 .takes_value(false)
                 .short("w")
@@ -45,7 +45,6 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("bytes")
-                .value_name("BYTES")
                 .help("Show byte count")
                 .takes_value(false)
                 .short("c")
@@ -53,7 +52,6 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("chars")
-                .value_name("CHARS")
                 .help("Show character count")
                 .takes_value(false)
                 .short("m")
@@ -62,7 +60,6 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("lines")
-                .value_name("LINES")
                 .help("Show line count")
                 .takes_value(false)
                 .short("l")
@@ -109,7 +106,7 @@ pub fn run(config: Config) -> MyResult<()> {
                         format_field(info.num_words, config.words),
                         format_field(info.num_bytes, config.bytes),
                         format_field(info.num_chars, config.chars),
-                        if filename.as_str() == "-" {
+                        if filename == "-" {
                             "".to_string()
                         } else {
                             format!(" {}", &filename)

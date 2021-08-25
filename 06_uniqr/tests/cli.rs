@@ -6,10 +6,10 @@ use tempfile::NamedTempFile;
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
-struct Test<'a> {
-    input: &'a str,
-    out: &'a str,
-    out_count: &'a str,
+struct Test {
+    input: &'static str,
+    out: &'static str,
+    out_count: &'static str,
 }
 
 const PRG: &str = "uniqr";

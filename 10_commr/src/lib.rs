@@ -49,28 +49,24 @@ pub fn get_args() -> MyResult<Config> {
         .arg(
             Arg::with_name("suppress_col1")
                 .short("1")
-                .value_name("COL1")
                 .takes_value(false)
                 .help("Suppress printing of column 1"),
         )
         .arg(
             Arg::with_name("suppress_col2")
                 .short("2")
-                .value_name("COL2")
                 .takes_value(false)
                 .help("Suppress printing of column 2"),
         )
         .arg(
             Arg::with_name("suppress_col3")
                 .short("3")
-                .value_name("COL3")
                 .takes_value(false)
                 .help("Suppress printing of column 3"),
         )
         .arg(
             Arg::with_name("insensitive")
                 .short("i")
-                .value_name("INSENSITIVE")
                 .takes_value(false)
                 .help("Case insensitive comparison of lines"),
         )

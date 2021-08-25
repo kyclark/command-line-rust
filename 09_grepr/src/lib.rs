@@ -40,7 +40,6 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("insensitive")
-                .value_name("INSENSITIVE")
                 .help("Case-insensitive")
                 .short("i")
                 .long("insensitive")
@@ -48,7 +47,6 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("recursive")
-                .value_name("RECURSIVE")
                 .help("Recursive search")
                 .short("r")
                 .long("recursive")
@@ -56,7 +54,6 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("count")
-                .value_name("COUNT")
                 .help("Count occurrences")
                 .short("c")
                 .long("count")
@@ -64,7 +61,6 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("invert")
-                .value_name("INVERT")
                 .help("Invert match")
                 .short("v")
                 .long("invert-match")

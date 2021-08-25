@@ -31,7 +31,7 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("DIR")
                 .help("Search directory")
                 .default_value(".")
-                .min_values(1),
+                .multiple(true),
         )
         .arg(
             Arg::with_name("names")
@@ -75,7 +75,7 @@ pub fn get_args() -> MyResult<Config> {
                 "d" => Some(Dir),
                 "f" => Some(File),
                 "l" => Some(Link),
-                _ => None,
+                _ => unreachable!(),
             })
             .collect()
     });

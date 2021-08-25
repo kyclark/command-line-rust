@@ -25,7 +25,8 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("FILE")
                 .help("Input file(s)")
                 .default_value("-")
-                .min_values(1),
+                .min_values(1)
+                .required(true),
         )
         .arg(
             Arg::with_name("delimiters")
@@ -33,13 +34,13 @@ pub fn get_args() -> MyResult<Config> {
                 .long("delimiter")
                 .value_name("DELIMITER")
                 .help("Delimiter")
+                .default_value("\\t")
                 .takes_value(true),
         )
         .arg(
             Arg::with_name("serial")
                 .short("s")
                 .long("serial")
-                .value_name("SERIAL")
                 .help("Concatenate lines of each file serially")
                 .takes_value(false),
         )
@@ -47,7 +48,6 @@ pub fn get_args() -> MyResult<Config> {
 
     let delimiters = matches
         .value_of("delimiters")
-        .or(Some("\t"))
         .map(parse_delimiters)
         .transpose()?
         .unwrap();
