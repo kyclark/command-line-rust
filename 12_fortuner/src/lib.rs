@@ -34,30 +34,30 @@ pub fn get_args() -> MyResult<Config> {
         .arg(
             Arg::with_name("sources")
                 .value_name("FILE")
-                .help("Input files or directories")
-                .min_values(1)
-                .required(true),
+                .multiple(true)
+                .required(true)
+                .help("Input files or directories"),
         )
         .arg(
             Arg::with_name("pattern")
                 .value_name("PATTERN")
-                .help("Pattern")
                 .short("m")
-                .long("pattern"),
+                .long("pattern")
+                .help("Pattern"),
         )
         .arg(
             Arg::with_name("insensitive")
-                .help("Case-insensitive pattern matching")
-                .takes_value(false)
                 .short("i")
-                .long("insensitive"),
+                .long("insensitive")
+                .help("Case-insensitive pattern matching")
+                .takes_value(false),
         )
         .arg(
             Arg::with_name("seed")
                 .value_name("SEED")
-                .help("Random seed")
                 .short("s")
-                .long("seed"),
+                .long("seed")
+                .help("Random seed"),
         )
         .get_matches();
 

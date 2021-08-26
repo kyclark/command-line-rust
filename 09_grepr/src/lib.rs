@@ -34,36 +34,35 @@ pub fn get_args() -> MyResult<Config> {
             Arg::with_name("files")
                 .value_name("FILE")
                 .help("Input file(s)")
-                .required(true)
-                .default_value("-")
-                .min_values(1),
+                .multiple(true)
+                .default_value("-"),
         )
         .arg(
             Arg::with_name("insensitive")
-                .help("Case-insensitive")
                 .short("i")
                 .long("insensitive")
+                .help("Case-insensitive")
                 .takes_value(false),
         )
         .arg(
             Arg::with_name("recursive")
-                .help("Recursive search")
                 .short("r")
                 .long("recursive")
+                .help("Recursive search")
                 .takes_value(false),
         )
         .arg(
             Arg::with_name("count")
-                .help("Count occurrences")
                 .short("c")
                 .long("count")
+                .help("Count occurrences")
                 .takes_value(false),
         )
         .arg(
             Arg::with_name("invert")
-                .help("Invert match")
                 .short("v")
                 .long("invert-match")
+                .help("Invert match")
                 .takes_value(false),
         )
         .get_matches();

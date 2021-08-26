@@ -59,7 +59,7 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("FILE")
                 .help("Input file(s)")
                 .required(true)
-                .min_values(1),
+                .multiple(true),
         )
         .get_matches();
 

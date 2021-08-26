@@ -1,8 +1,7 @@
 use assert_cmd::Command;
 use predicates::prelude::*;
 use rand::{distributions::Alphanumeric, Rng};
-use std::{fs, path::Path};
-use sys_info::os_type;
+use std::{borrow::Cow, fs};
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -60,17 +59,23 @@ fn dies_bad_type() -> TestResult {
 }
 
 // --------------------------------------------------
-fn run(args: &[&str], expected_file: &str) -> TestResult {
-    let windows_file = format!("{}.windows", expected_file);
-    let expected_file = if os_type().unwrap() == "Windows"
-        && Path::new(&windows_file).is_file()
-    {
-        &windows_file
-    } else {
-        expected_file
-    };
+#[cfg(windows)]
+fn format_file_name(expected_file: &str) -> Cow<str> {
+    // Equivalent to: Cow::Owned(format!("{}.windows", expected_file))
+    format!("{}.windows", expected_file).into()
+}
 
-    let contents = fs::read_to_string(&expected_file)?;
+// --------------------------------------------------
+#[cfg(not(windows))]
+fn format_file_name(expected_file: &str) -> Cow<str> {
+    // Equivalent to: Cow::Borrowed(expected_file)
+    expected_file.into()
+}
+
+// --------------------------------------------------
+fn run(args: &[&str], expected_file: &str) -> TestResult {
+    let file = format_file_name(expected_file);
+    let contents = fs::read_to_string(file.as_ref())?;
     let mut expected: Vec<&str> = contents.split("\n").collect();
     expected.sort();
 

@@ -32,9 +32,8 @@ pub fn get_args() -> MyResult<Config> {
             Arg::with_name("paths")
                 .value_name("PATH")
                 .help("Files and/or directories")
-                .required(true)
                 .default_value(".")
-                .min_values(1),
+                .multiple(true),
         )
         .arg(
             Arg::with_name("long")

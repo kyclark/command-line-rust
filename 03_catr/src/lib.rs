@@ -19,32 +19,31 @@ pub fn get_args() -> MyResult<Config> {
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust cat")
         .arg(
-            Arg::with_name("file")
+            Arg::with_name("files")
                 .value_name("FILE")
                 .help("Input file(s)")
-                .required(true)
-                .default_value("-")
-                .min_values(1),
+                .multiple(true)
+                .default_value("-"),
         )
         .arg(
             Arg::with_name("number")
-                .help("Number lines")
                 .short("n")
                 .long("number")
+                .help("Number lines")
                 .takes_value(false)
                 .conflicts_with("number_nonblank"),
         )
         .arg(
             Arg::with_name("number_nonblank")
-                .help("Number non-blank lines")
                 .short("b")
                 .long("number-nonblank")
+                .help("Number non-blank lines")
                 .takes_value(false),
         )
         .get_matches();
 
     Ok(Config {
-        files: matches.values_of_lossy("file").unwrap(),
+        files: matches.values_of_lossy("files").unwrap(),
         number_lines: matches.is_present("number"),
         number_nonblank_lines: matches.is_present("number_nonblank"),
     })

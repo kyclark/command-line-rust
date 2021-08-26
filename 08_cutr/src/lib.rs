@@ -35,40 +35,39 @@ pub fn get_args() -> MyResult<Config> {
             Arg::with_name("files")
                 .value_name("FILE")
                 .help("Input file(s)")
-                .required(true)
-                .default_value("-")
-                .min_values(1),
+                .multiple(true)
+                .default_value("-"),
         )
         .arg(
             Arg::with_name("delimiter")
                 .value_name("DELIMITER")
-                .help("Field delimiter")
                 .short("d")
                 .long("delim")
+                .help("Field delimiter")
                 .default_value("\t"),
         )
         .arg(
             Arg::with_name("fields")
                 .value_name("FIELDS")
-                .help("Selected fields")
                 .short("f")
                 .long("fields")
+                .help("Selected fields")
                 .conflicts_with_all(&["chars", "bytes"]),
         )
         .arg(
             Arg::with_name("bytes")
                 .value_name("BYTES")
-                .help("Selected bytes")
                 .short("b")
                 .long("bytes")
+                .help("Selected bytes")
                 .conflicts_with_all(&["fields", "chars"]),
         )
         .arg(
             Arg::with_name("chars")
                 .value_name("CHARS")
-                .help("Selected characters")
                 .short("c")
                 .long("chars")
+                .help("Selected characters")
                 .conflicts_with_all(&["fields", "bytes"]),
         )
         .get_matches();

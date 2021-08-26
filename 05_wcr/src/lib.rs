@@ -33,37 +33,36 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("FILE")
                 .help("Input file(s)")
                 .default_value("-")
-                .required(true)
-                .min_values(1),
+                .multiple(true),
         )
         .arg(
             Arg::with_name("words")
-                .help("Show word count")
-                .takes_value(false)
                 .short("w")
-                .long("words"),
+                .long("words")
+                .help("Show word count")
+                .takes_value(false),
         )
         .arg(
             Arg::with_name("bytes")
-                .help("Show byte count")
-                .takes_value(false)
                 .short("c")
-                .long("bytes"),
+                .long("bytes")
+                .help("Show byte count")
+                .takes_value(false),
         )
         .arg(
             Arg::with_name("chars")
-                .help("Show character count")
-                .takes_value(false)
                 .short("m")
                 .long("chars")
+                .help("Show character count")
+                .takes_value(false)
                 .conflicts_with("bytes"),
         )
         .arg(
             Arg::with_name("lines")
-                .help("Show line count")
-                .takes_value(false)
                 .short("l")
-                .long("lines"),
+                .long("lines")
+                .help("Show line count")
+                .takes_value(false),
         )
         .get_matches();
 

@@ -39,9 +39,8 @@ pub fn get_args() -> MyResult<Config> {
             Arg::with_name("files")
                 .value_name("FILE")
                 .help("Input file(s)")
-                .required(true)
-                .default_value("-")
-                .min_values(1),
+                .multiple(true)
+                .default_value("-"),
         )
         .get_matches();
 

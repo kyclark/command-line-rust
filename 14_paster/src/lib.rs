@@ -25,8 +25,7 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("FILE")
                 .help("Input file(s)")
                 .default_value("-")
-                .min_values(1)
-                .required(true),
+                .multiple(true),
         )
         .arg(
             Arg::with_name("delimiters")

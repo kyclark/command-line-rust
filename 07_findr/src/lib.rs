@@ -16,8 +16,8 @@ enum EntryType {
 #[derive(Debug)]
 pub struct Config {
     dirs: Vec<String>,
-    names: Option<Vec<Regex>>,
-    entry_types: Option<Vec<EntryType>>,
+    names: Vec<Regex>,
+    entry_types: Vec<EntryType>,
 }
 
 // --------------------------------------------------
@@ -36,53 +36,55 @@ pub fn get_args() -> MyResult<Config> {
         .arg(
             Arg::with_name("names")
                 .value_name("NAME")
-                .help("Name")
                 .short("n")
                 .long("name")
+                .help("Name")
                 .takes_value(true)
                 .multiple(true),
         )
         .arg(
             Arg::with_name("types")
                 .value_name("TYPE")
-                .help("Entry type")
                 .short("t")
                 .long("type")
+                .help("Entry type")
                 .possible_values(&["f", "d", "l"])
                 .multiple(true)
                 .takes_value(true),
         )
         .get_matches();
 
-    let mut names = vec![];
-    if let Some(vals) = matches.values_of_lossy("names") {
-        for name in vals {
-            match Regex::new(&name) {
-                Ok(re) => names.push(re),
-                _ => {
-                    return Err(From::from(format!(
-                        "Invalid --name \"{}\"",
-                        name
-                    )))
-                }
-            }
-        }
-    }
+    let names = matches
+        .values_of_lossy("names")
+        .map(|vals| {
+            vals.into_iter()
+                .map(|name| {
+                    Regex::new(&name)
+                        .map_err(|_| format!("Invalid --name \"{}\"", name))
+                })
+                .collect::<Result<Vec<_>, _>>()
+        })
+        .transpose()?
+        .unwrap_or_default();
 
-    let entry_types = matches.values_of_lossy("types").map(|vals| {
-        vals.iter()
-            .filter_map(|val| match val.as_str() {
-                "d" => Some(Dir),
-                "f" => Some(File),
-                "l" => Some(Link),
-                _ => unreachable!(),
-            })
-            .collect()
-    });
+    let entry_types = matches
+        .values_of_lossy("types")
+        .map(|vals| {
+            vals.iter()
+                // clap should disallow anything but "d," "f," or "l"
+                .map(|val| match val.as_str() {
+                    "d" => Dir,
+                    "f" => File,
+                    "l" => Link,
+                    _ => unreachable!("Invalid type"),
+                })
+                .collect()
+        })
+        .unwrap_or_default();
 
     Ok(Config {
         dirs: matches.values_of_lossy("dirs").unwrap(),
-        names: if names.is_empty() { None } else { Some(names) },
+        names,
         entry_types,
     })
 }
@@ -91,20 +93,24 @@ pub fn get_args() -> MyResult<Config> {
 pub fn run(config: Config) -> MyResult<()> {
     //println!("{:?}", config);
 
-    let type_filter = |entry: &DirEntry| match &config.entry_types {
-        Some(types) => types.iter().any(|t| match t {
-            Link => entry.path_is_symlink(),
-            Dir => entry.file_type().is_dir(),
-            File => entry.file_type().is_file(),
-        }),
-        _ => true,
+    let type_filter = |entry: &DirEntry| {
+        config.entry_types.is_empty()
+            || config
+                .entry_types
+                .iter()
+                .any(|entry_type| match entry_type {
+                    Link => entry.path_is_symlink(),
+                    Dir => entry.file_type().is_dir(),
+                    File => entry.file_type().is_file(),
+                })
     };
 
-    let name_filter = |entry: &DirEntry| match &config.names {
-        Some(names) => names
-            .iter()
-            .any(|re| re.is_match(&entry.file_name().to_string_lossy())),
-        _ => true,
+    let name_filter = |entry: &DirEntry| {
+        config.names.is_empty()
+            || config
+                .names
+                .iter()
+                .any(|re| re.is_match(&entry.file_name().to_string_lossy()))
     };
 
     for dirname in &config.dirs {

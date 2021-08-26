@@ -34,15 +34,18 @@ pub fn get_args() -> MyResult<Config> {
         )
         .arg(
             Arg::with_name("count")
-                .help("Show counts")
                 .short("c")
                 .long("count")
+                .help("Show counts")
                 .takes_value(false),
         )
         .get_matches();
 
     Ok(Config {
-        in_file: matches.value_of_lossy("in_file").unwrap().to_string(),
+        //in_file: matches.value_of_lossy("in_file").unwrap().to_string(),
+        //in_file: matches.value_of_lossy("in_file").map(String::from).unwrap(),
+        //in_file: matches.value_of_lossy("in_file").map(|v| v.into()).unwrap(),
+        in_file: matches.value_of_lossy("in_file").map(Into::into).unwrap(),
         out_file: matches.value_of("out_file").map(|v| v.to_string()),
         count: matches.is_present("count"),
     })
@@ -52,6 +55,7 @@ pub fn get_args() -> MyResult<Config> {
 pub fn run(config: Config) -> MyResult<()> {
     let mut file = open(&config.in_file)
         .map_err(|e| format!("{}: {}", config.in_file, e))?;
+
     let mut out_file: Box<dyn Write> = match &config.out_file {
         Some(out_name) => Box::new(File::create(out_name)?),
         _ => Box::new(io::stdout()),
@@ -69,7 +73,7 @@ pub fn run(config: Config) -> MyResult<()> {
     };
 
     let mut line = String::new();
-    let mut last = String::new();
+    let mut previous = String::new();
     let mut count: u64 = 0;
     loop {
         let bytes = file.read_line(&mut line)?;
@@ -77,16 +81,16 @@ pub fn run(config: Config) -> MyResult<()> {
             break;
         }
 
-        if line.trim_end() != last.trim_end() {
-            print(count, &last)?;
-            last = line.clone();
+        if line.trim_end() != previous.trim_end() {
+            print(count, &previous)?;
+            previous = line.clone();
             count = 0;
         }
 
         count += 1;
         line.clear();
     }
-    print(count, &last)?;
+    print(count, &previous)?;
 
     Ok(())
 }
