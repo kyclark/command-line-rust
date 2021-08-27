@@ -76,16 +76,17 @@ fn format_file_name(expected_file: &str) -> Cow<str> {
 fn run(args: &[&str], expected_file: &str) -> TestResult {
     let file = format_file_name(expected_file);
     let contents = fs::read_to_string(file.as_ref())?;
-    let mut expected: Vec<&str> = contents.split("\n").collect();
+    let mut expected: Vec<&str> =
+        contents.split("\n").filter(|s| !s.is_empty()).collect();
     expected.sort();
 
     let cmd = Command::cargo_bin(PRG)?.args(args).assert().success();
     let out = cmd.get_output();
     let stdout = String::from_utf8(out.stdout.clone())?;
-    let mut lines: Vec<&str> = stdout.split("\n").collect();
+    let mut lines: Vec<&str> =
+        stdout.split("\n").filter(|s| !s.is_empty()).collect();
     lines.sort();
 
-    //assert_eq!(lines.len(), expected.len());
     assert_eq!(lines, expected);
 
     Ok(())
