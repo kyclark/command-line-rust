@@ -85,7 +85,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
     let mut lines: Vec<&str> = stdout.split("\n").collect();
     lines.sort();
 
-    assert_eq!(lines.len(), expected.len());
+    //assert_eq!(lines.len(), expected.len());
     assert_eq!(lines, expected);
 
     Ok(())
