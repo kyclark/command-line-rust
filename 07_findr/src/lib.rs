@@ -1,12 +1,12 @@
 use crate::EntryType::*;
 use clap::{App, Arg};
 use regex::Regex;
-use std::{error::Error, fs};
+use std::error::Error;
 use walkdir::{DirEntry, WalkDir};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 enum EntryType {
     Dir,
     File,
@@ -67,11 +67,11 @@ pub fn get_args() -> MyResult<Config> {
         .transpose()?
         .unwrap_or_default();
 
+    // clap should disallow anything but "d," "f," or "l"
     let entry_types = matches
         .values_of_lossy("types")
         .map(|vals| {
             vals.iter()
-                // clap should disallow anything but "d," "f," or "l"
                 .map(|val| match val.as_str() {
                     "d" => Dir,
                     "f" => File,
@@ -91,15 +91,13 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    //println!("{:?}", config);
-
     let type_filter = |entry: &DirEntry| {
         config.entry_types.is_empty()
             || config
                 .entry_types
                 .iter()
                 .any(|entry_type| match entry_type {
-                    Link => entry.path_is_symlink(),
+                    Link => entry.file_type().is_symlink(),
                     Dir => entry.file_type().is_dir(),
                     File => entry.file_type().is_file(),
                 })
@@ -114,19 +112,21 @@ pub fn run(config: Config) -> MyResult<()> {
     };
 
     for dirname in &config.dirs {
-        match fs::read_dir(&dirname) {
-            Err(e) => eprintln!("{}: {}", dirname, e),
-            _ => {
-                let entries = WalkDir::new(dirname)
-                    .into_iter()
-                    .filter_map(|e| e.ok())
-                    .filter(type_filter)
-                    .filter(name_filter)
-                    .map(|entry| entry.path().display().to_string())
-                    .collect::<Vec<String>>();
-                println!("{}", entries.join("\n"));
-            }
-        }
+        let entries = WalkDir::new(dirname)
+            .into_iter()
+            .filter_map(|e| match e {
+                Err(e) => {
+                    eprintln!("{}", e);
+                    None
+                }
+                Ok(entry) => Some(entry),
+            })
+            .filter(type_filter)
+            .filter(name_filter)
+            .map(|entry| entry.path().display().to_string())
+            .collect::<Vec<_>>();
+
+        println!("{}", entries.join("\n"));
     }
 
     Ok(())
