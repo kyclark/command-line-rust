@@ -16,8 +16,12 @@ echo "Copying \"tests\" to \"$DEST\""
 cp -r tests "$DEST"
 cd "$DEST"
 
+echo "Creating symlink"
+(cd $DEST/tests/inputs/d && rm -f b.csv && ln -s ../a/b.csv .)
+
 echo "Fixing symlink"
-rm $DEST/tests/inputs/d/b.csv
-ln -s $DEST/tests/inputs/a/b.csv $DEST/tests/inputs/d/b.csv
+UNREADABLE=$DEST/cant-touch-this
+mkdir $UNREADABLE
+chmod 000 $UNREADABLE
 
 echo "Done."
