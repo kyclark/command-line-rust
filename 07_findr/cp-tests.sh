@@ -19,9 +19,4 @@ cd "$DEST"
 echo "Creating symlink"
 (cd $DEST/tests/inputs/d && rm -f b.csv && ln -s ../a/b.csv .)
 
-echo "Fixing symlink"
-UNREADABLE=$DEST/cant-touch-this
-mkdir $UNREADABLE
-chmod 000 $UNREADABLE
-
 echo "Done."

@@ -1,0 +1,17 @@
+tests/inputs/
+tests/inputs/g.csv
+tests/inputs/a
+tests/inputs/a/a.txt
+tests/inputs/a/b
+tests/inputs/a/b/b.csv
+tests/inputs/a/b/c
+tests/inputs/a/b/c/c.mp3
+tests/inputs/f
+tests/inputs/f/f.txt
+tests/inputs/cant-touch-this
+tests/inputs/d
+tests/inputs/d/b.csv
+tests/inputs/d/d.txt
+tests/inputs/d/d.tsv
+tests/inputs/d/e
+tests/inputs/d/e/e.mp3

@@ -1,7 +1,7 @@
 use assert_cmd::Command;
 use predicates::prelude::*;
 use rand::{distributions::Alphanumeric, Rng};
-use std::{borrow::Cow, fs};
+use std::{borrow::Cow, fs, path::Path};
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -76,7 +76,7 @@ fn format_file_name(expected_file: &str) -> Cow<str> {
 fn run(
     args: &[&str],
     expected_file: &str,
-    //expected_stderr: Option<&str>,
+    expected_stderr: Option<&str>,
 ) -> TestResult {
     let file = format_file_name(expected_file);
     let contents = fs::read_to_string(file.as_ref())?;
@@ -93,10 +93,10 @@ fn run(
 
     assert_eq!(lines, expected);
 
-    //if let Some(err) = expected_stderr {
-    //    let stderr = String::from_utf8(out.stderr.clone())?;
-    //    assert!(stderr.contains(err));
-    //}
+    if let Some(err) = expected_stderr {
+        let stderr = String::from_utf8(out.stderr.clone())?;
+        assert!(stderr.contains(err));
+    }
 
     Ok(())
 }
@@ -104,29 +104,25 @@ fn run(
 // --------------------------------------------------
 #[test]
 fn path1() -> TestResult {
-    run(
-        &["tests/inputs"],
-        "tests/expected/path1.txt",
-        //Some("cant-touch-this: Permission denied"),
-    )
+    run(&["tests/inputs"], "tests/expected/path1.txt", None)
 }
 
 // --------------------------------------------------
 #[test]
 fn path_a() -> TestResult {
-    run(&["tests/inputs/a"], "tests/expected/path_a.txt")
+    run(&["tests/inputs/a"], "tests/expected/path_a.txt", None)
 }
 
 // --------------------------------------------------
 #[test]
 fn path_a_b() -> TestResult {
-    run(&["tests/inputs/a/b"], "tests/expected/path_a_b.txt")
+    run(&["tests/inputs/a/b"], "tests/expected/path_a_b.txt", None)
 }
 
 // --------------------------------------------------
 #[test]
 fn path_d() -> TestResult {
-    run(&["tests/inputs/d"], "tests/expected/path_d.txt")
+    run(&["tests/inputs/d"], "tests/expected/path_d.txt", None)
 }
 
 // --------------------------------------------------
@@ -135,13 +131,18 @@ fn path_a_b_d() -> TestResult {
     run(
         &["tests/inputs/a/b", "tests/inputs/d"],
         "tests/expected/path_a_b_d.txt",
+        None,
     )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_f() -> TestResult {
-    run(&["tests/inputs", "-t", "f"], "tests/expected/type_f.txt")
+    run(
+        &["tests/inputs", "-t", "f"],
+        "tests/expected/type_f.txt",
+        None,
+    )
 }
 
 // --------------------------------------------------
@@ -150,6 +151,7 @@ fn type_f_path_a() -> TestResult {
     run(
         &["tests/inputs/a", "-t", "f"],
         "tests/expected/type_f_path_a.txt",
+        None,
     )
 }
 
@@ -159,6 +161,7 @@ fn type_f_path_a_b() -> TestResult {
     run(
         &["tests/inputs/a/b", "--type", "f"],
         "tests/expected/type_f_path_a_b.txt",
+        None,
     )
 }
 
@@ -168,6 +171,7 @@ fn type_f_path_d() -> TestResult {
     run(
         &["tests/inputs/d", "--type", "f"],
         "tests/expected/type_f_path_d.txt",
+        None,
     )
 }
 
@@ -177,13 +181,18 @@ fn type_f_path_a_b_d() -> TestResult {
     run(
         &["tests/inputs/a/b", "tests/inputs/d", "--type", "f"],
         "tests/expected/type_f_path_a_b_d.txt",
+        None,
     )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_d() -> TestResult {
-    run(&["tests/inputs", "-t", "d"], "tests/expected/type_d.txt")
+    run(
+        &["tests/inputs", "-t", "d"],
+        "tests/expected/type_d.txt",
+        None,
+    )
 }
 
 // --------------------------------------------------
@@ -192,6 +201,7 @@ fn type_d_path_a() -> TestResult {
     run(
         &["tests/inputs/a", "-t", "d"],
         "tests/expected/type_d_path_a.txt",
+        None,
     )
 }
 
@@ -201,6 +211,7 @@ fn type_d_path_a_b() -> TestResult {
     run(
         &["tests/inputs/a/b", "--type", "d"],
         "tests/expected/type_d_path_a_b.txt",
+        None,
     )
 }
 
@@ -210,6 +221,7 @@ fn type_d_path_d() -> TestResult {
     run(
         &["tests/inputs/d", "--type", "d"],
         "tests/expected/type_d_path_d.txt",
+        None,
     )
 }
 
@@ -219,13 +231,18 @@ fn type_d_path_a_b_d() -> TestResult {
     run(
         &["tests/inputs/a/b", "tests/inputs/d", "--type", "d"],
         "tests/expected/type_d_path_a_b_d.txt",
+        None,
     )
 }
 
 // --------------------------------------------------
 #[test]
 fn type_l() -> TestResult {
-    run(&["tests/inputs", "-t", "l"], "tests/expected/type_l.txt")
+    run(
+        &["tests/inputs", "-t", "l"],
+        "tests/expected/type_l.txt",
+        None,
+    )
 }
 
 // --------------------------------------------------
@@ -234,6 +251,7 @@ fn type_f_l() -> TestResult {
     run(
         &["tests/inputs", "-t", "l", "f"],
         "tests/expected/type_f_l.txt",
+        None,
     )
 }
 
@@ -243,6 +261,7 @@ fn name_csv() -> TestResult {
     run(
         &["tests/inputs", "-n", ".*[.]csv"],
         "tests/expected/name_csv.txt",
+        None,
     )
 }
 
@@ -252,6 +271,7 @@ fn name_csv_mp3() -> TestResult {
     run(
         &["tests/inputs", "-n", ".*[.]csv", "-n", ".*[.]mp3"],
         "tests/expected/name_csv_mp3.txt",
+        None,
     )
 }
 
@@ -261,13 +281,18 @@ fn name_txt_path_a_d() -> TestResult {
     run(
         &["tests/inputs/a", "tests/inputs/d", "--name", ".*.txt"],
         "tests/expected/name_txt_path_a_d.txt",
+        None,
     )
 }
 
 // --------------------------------------------------
 #[test]
 fn name_a() -> TestResult {
-    run(&["tests/inputs", "-n", "a"], "tests/expected/name_a.txt")
+    run(
+        &["tests/inputs", "-n", "a"],
+        "tests/expected/name_a.txt",
+        None,
+    )
 }
 
 // --------------------------------------------------
@@ -276,6 +301,7 @@ fn type_f_name_a() -> TestResult {
     run(
         &["tests/inputs", "-t", "f", "-n", "a"],
         "tests/expected/type_f_name_a.txt",
+        None,
     )
 }
 
@@ -285,11 +311,49 @@ fn type_d_name_a() -> TestResult {
     run(
         &["tests/inputs", "--type", "d", "--name", "a"],
         "tests/expected/type_d_name_a.txt",
+        None,
     )
 }
 
 // --------------------------------------------------
 #[test]
 fn path_g() -> TestResult {
-    run(&["tests/inputs/g.csv"], "tests/expected/path_g.txt")
+    run(&["tests/inputs/g.csv"], "tests/expected/path_g.txt", None)
+}
+
+// --------------------------------------------------
+#[test]
+#[cfg(not(windows))]
+fn unreadable_dir() -> TestResult {
+    let dirname = "tests/inputs/cant-touch-this";
+
+    if !Path::new(dirname).exists() {
+        fs::create_dir(dirname)?;
+    }
+
+    //let metadata = fs::metadata(dirname)?;
+    //let mut permissions = metadata.permissions();
+    //permissions.set_mode(0o000);
+
+    std::process::Command::new("chmod")
+        .args(&["000", dirname])
+        .status()
+        .expect("failed");
+
+    let cmd = Command::cargo_bin(PRG)?
+        .arg("tests/inputs")
+        .assert()
+        .success();
+    fs::remove_dir(dirname)?;
+
+    let out = cmd.get_output();
+    let stdout = String::from_utf8(out.stdout.clone())?;
+    let lines: Vec<&str> =
+        stdout.split("\n").filter(|s| !s.is_empty()).collect();
+
+    assert_eq!(lines.len(), 17);
+
+    let stderr = String::from_utf8(out.stderr.clone())?;
+    assert!(stderr.contains("cant-touch-this: Permission denied"));
+    Ok(())
 }
