@@ -5,4 +5,3 @@ tests/inputs/a/b/c
 tests/inputs/d
 tests/inputs/d/e
 tests/inputs/f
-tests/inputs/cant-touch-this
