@@ -69,13 +69,12 @@ pub fn get_args() -> MyResult<Config> {
     let mut lines = matches.is_present("lines");
     let mut words = matches.is_present("words");
     let mut bytes = matches.is_present("bytes");
-    let mut chars = matches.is_present("chars");
+    let chars = matches.is_present("chars");
 
     if [words, bytes, chars, lines].iter().all(|v| v == &false) {
         lines = true;
         words = true;
         bytes = true;
-        chars = false;
     }
 
     Ok(Config {

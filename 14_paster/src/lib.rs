@@ -95,7 +95,7 @@ pub fn run(config: Config) -> MyResult<()> {
             if lines.join("").is_empty() {
                 break;
             }
-            println!("{}", lines.join(&delim));
+            println!("{}", lines.join(delim));
         }
     }
 

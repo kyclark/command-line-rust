@@ -150,15 +150,20 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
 
 // --------------------------------------------------
 fn parse_pos(range: &str) -> MyResult<PositionList> {
-    let mut fields: Vec<usize> = vec![];
-    let range_re = Regex::new(r"(\d+)?-(\d+)?").unwrap();
+    let mut fields = vec![];
+    let range_re = Regex::new(r"^(\d+)-(\d+)$").unwrap();
+    let check_pos = |val: usize| match val == 0 {
+        true => Err(format!("illegal list value: \"{}\"", val)),
+        _ => Ok(val),
+    };
+
     for val in range.split(',') {
         if let Some(cap) = range_re.captures(val) {
-            let n1: &usize = &cap[1].parse()?;
-            let n2: &usize = &cap[2].parse()?;
+            let n1: usize = check_pos(cap[1].parse()?)?;
+            let n2: usize = check_pos(cap[2].parse()?)?;
 
             if n1 < n2 {
-                for n in *n1..=*n2 {
+                for n in n1..=n2 {
                     fields.push(n);
                 }
             } else {
@@ -172,10 +177,9 @@ fn parse_pos(range: &str) -> MyResult<PositionList> {
             match val.parse() {
                 Ok(n) if n > 0 => fields.push(n),
                 _ => {
-                    return Err(From::from(format!(
-                        "illegal list value: \"{}\"",
-                        val
-                    )))
+                    return Err(
+                        format!("illegal list value: \"{}\"", val).into()
+                    )
                 }
             }
         }
@@ -199,7 +203,7 @@ fn extract_bytes(line: &str, byte_pos: &[usize]) -> String {
     let selected: Vec<_> = byte_pos
         .iter()
         .filter_map(|i| bytes.get(*i))
-        .cloned()
+        .copied()
         .collect();
     String::from_utf8_lossy(&selected).into_owned()
 }
@@ -224,6 +228,15 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"0\"",);
 
+        let res = parse_pos("0-1");
+        assert!(res.is_err());
+
+        let res = parse_pos("1-a");
+        assert!(res.is_err());
+
+        let res = parse_pos("a-1");
+        assert!(res.is_err());
+
         let res = parse_pos("a");
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"a\"",);
@@ -239,6 +252,13 @@ mod tests {
             "First number in range (2) must be lower than second number (1)"
         );
 
+        let res = parse_pos("1-1");
+        assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "First number in range (1) must be lower than second number (1)"
+        );
+
         let res = parse_pos("1");
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![0]);
@@ -250,6 +270,10 @@ mod tests {
         let res = parse_pos("1-3");
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![0, 1, 2]);
+
+        let res = parse_pos("13-15");
+        assert!(res.is_ok());
+        assert_eq!(res.unwrap(), vec![12, 13, 14]);
 
         let res = parse_pos("1,7,3-5");
         assert!(res.is_ok());
