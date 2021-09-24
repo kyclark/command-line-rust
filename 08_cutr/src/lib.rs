@@ -6,10 +6,12 @@ use std::{
     error::Error,
     fs::File,
     io::{self, BufRead, BufReader},
+    num::NonZeroUsize,
+    ops::Range,
 };
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
-type PositionList = Vec<usize>;
+type PositionList = Vec<Range<usize>>;
 
 #[derive(Debug)]
 pub enum Extract {
@@ -72,9 +74,9 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let delimiter = matches.value_of("delimiter").unwrap_or("\t");
+    let delimiter = matches.value_of("delimiter").unwrap();
     let delim_bytes = delimiter.as_bytes();
-    if delim_bytes.len() > 1 {
+    if delim_bytes.len() != 1 {
         return Err(From::from(format!(
             "--delim \"{}\" must be a single byte",
             delimiter
@@ -97,7 +99,7 @@ pub fn get_args() -> MyResult<Config> {
 
     Ok(Config {
         files: matches.values_of_lossy("files").unwrap(),
-        delimiter: delim_bytes[0],
+        delimiter: *delim_bytes.first().unwrap(),
         extract,
     })
 }
@@ -149,94 +151,127 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
 }
 
 // --------------------------------------------------
+// Parse an index from a string representation of an integer.
+// Ensures the number is non-zero.
+// Ensures the number does not start with '+'.
+// Returns an index, which is a non-negative integer that is
+// one less than the number represented by the original input.
+fn parse_index(input: &str) -> Result<usize, String> {
+    let value_error = || format!("illegal list value: \"{}\"", input);
+    input
+        .starts_with('+')
+        .then(|| Err(value_error()))
+        .unwrap_or_else(|| {
+            input
+                .parse::<NonZeroUsize>()
+                .map(|n| usize::from(n) - 1)
+                .map_err(|_| value_error())
+        })
+}
+
+// --------------------------------------------------
 fn parse_pos(range: &str) -> MyResult<PositionList> {
-    let mut fields = vec![];
     let range_re = Regex::new(r"^(\d+)-(\d+)$").unwrap();
-    let check_pos = |val: usize| match val == 0 {
-        true => Err(format!("illegal list value: \"{}\"", val)),
-        _ => Ok(val),
-    };
-
-    for val in range.split(',') {
-        if let Some(cap) = range_re.captures(val) {
-            let n1: usize = check_pos(cap[1].parse()?)?;
-            let n2: usize = check_pos(cap[2].parse()?)?;
-
-            if n1 < n2 {
-                for n in n1..=n2 {
-                    fields.push(n);
-                }
-            } else {
-                return Err(From::from(format!(
-                    "First number in range ({}) \
-                    must be lower than second number ({})",
-                    n1, n2
-                )));
-            }
-        } else {
-            match val.parse() {
-                Ok(n) if n > 0 => fields.push(n),
-                _ => {
-                    return Err(
-                        format!("illegal list value: \"{}\"", val).into()
-                    )
-                }
-            }
-        }
-    }
-
-    // Subtract one for field indexes
-    Ok(fields.into_iter().map(|i| i - 1).collect())
+    range
+        .split(',')
+        .into_iter()
+        .map(|val| {
+            parse_index(val).map(|n| n..n + 1).or_else(|e| {
+                range_re.captures(val).ok_or(e).and_then(|captures| {
+                    let n1 = parse_index(&captures[1])?;
+                    let n2 = parse_index(&captures[2])?;
+                    if n1 >= n2 {
+                        return Err(format!(
+                            "First number in range ({}) \
+                            must be lower than second number ({})",
+                            n1 + 1,
+                            n2 + 1
+                        ));
+                    }
+                    Ok(n1..n2 + 1)
+                })
+            })
+        })
+        .collect::<Result<_, _>>()
+        .map_err(From::from)
 }
 
 // --------------------------------------------------
 fn extract_fields<'a>(
     record: &'a StringRecord,
-    field_pos: &'a [usize],
+    field_pos: &[Range<usize>],
 ) -> Vec<&'a str> {
-    field_pos.iter().filter_map(|i| record.get(*i)).collect()
+    field_pos
+        .iter()
+        .cloned()
+        .flat_map(|range| range.filter_map(|i| record.get(i)))
+        .collect()
 }
 
 // --------------------------------------------------
-fn extract_bytes(line: &str, byte_pos: &[usize]) -> String {
+fn extract_bytes(line: &str, byte_pos: &[Range<usize>]) -> String {
     let bytes = line.as_bytes();
     let selected: Vec<_> = byte_pos
         .iter()
-        .filter_map(|i| bytes.get(*i))
-        .copied()
+        .cloned()
+        .flat_map(|range| range.filter_map(|i| bytes.get(i)).copied())
         .collect();
     String::from_utf8_lossy(&selected).into_owned()
 }
 
 // --------------------------------------------------
-fn extract_chars(line: &str, char_pos: &[usize]) -> String {
+fn extract_chars(line: &str, char_pos: &[Range<usize>]) -> String {
     let chars: Vec<_> = line.chars().collect();
-    char_pos.iter().filter_map(|i| chars.get(*i)).collect()
+    char_pos
+        .iter()
+        .cloned()
+        .flat_map(|range| range.filter_map(|i| chars.get(i)))
+        .collect()
 }
 
 // --------------------------------------------------
 #[cfg(test)]
-mod tests {
+mod unit_tests {
     use super::{extract_bytes, extract_chars, extract_fields, parse_pos};
     use csv::StringRecord;
 
     #[test]
     fn test_parse_pos() {
+        // The empty string is an error
         assert!(parse_pos("").is_err());
 
+        // Zero is an error
         let res = parse_pos("0");
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"0\"",);
 
         let res = parse_pos("0-1");
         assert!(res.is_err());
+        assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"0\"",);
 
-        let res = parse_pos("1-a");
+        // A leading "+" is an error
+        let res = parse_pos("+1");
         assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "illegal list value: \"+1\"",
+        );
 
-        let res = parse_pos("a-1");
+        let res = parse_pos("+1-2");
         assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "illegal list value: \"+1-2\"",
+        );
 
+        let res = parse_pos("1-+2");
+        assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "illegal list value: \"1-+2\"",
+        );
+
+        // Any non-number is an error
         let res = parse_pos("a");
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"a\"",);
@@ -245,13 +280,40 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"a\"",);
 
-        let res = parse_pos("2-1");
+        let res = parse_pos("1-a");
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "First number in range (2) must be lower than second number (1)"
+            "illegal list value: \"1-a\"",
         );
 
+        let res = parse_pos("a-1");
+        assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "illegal list value: \"a-1\"",
+        );
+
+        // Wonky ranges
+        let res = parse_pos("-");
+        assert!(res.is_err());
+
+        let res = parse_pos(",");
+        assert!(res.is_err());
+
+        let res = parse_pos("1,");
+        assert!(res.is_err());
+
+        let res = parse_pos("1-");
+        assert!(res.is_err());
+
+        let res = parse_pos("1-1-1");
+        assert!(res.is_err());
+
+        let res = parse_pos("1-1-a");
+        assert!(res.is_err());
+
+        // First number must be less than second
         let res = parse_pos("1-1");
         assert!(res.is_err());
         assert_eq!(
@@ -259,54 +321,80 @@ mod tests {
             "First number in range (1) must be lower than second number (1)"
         );
 
+        let res = parse_pos("2-1");
+        assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            "First number in range (2) must be lower than second number (1)"
+        );
+
+        // All the following are acceptable
         let res = parse_pos("1");
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), vec![0]);
+        assert_eq!(res.unwrap(), vec![0..1]);
+
+        let res = parse_pos("01");
+        assert!(res.is_ok());
+        assert_eq!(res.unwrap(), vec![0..1]);
 
         let res = parse_pos("1,3");
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), vec![0, 2]);
+        assert_eq!(res.unwrap(), vec![0..1, 2..3]);
+
+        let res = parse_pos("001,0003");
+        assert!(res.is_ok());
+        assert_eq!(res.unwrap(), vec![0..1, 2..3]);
 
         let res = parse_pos("1-3");
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), vec![0, 1, 2]);
+        assert_eq!(res.unwrap(), vec![0..3]);
 
-        let res = parse_pos("13-15");
+        let res = parse_pos("0001-03");
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), vec![12, 13, 14]);
+        assert_eq!(res.unwrap(), vec![0..3]);
 
         let res = parse_pos("1,7,3-5");
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), vec![0, 6, 2, 3, 4]);
+        assert_eq!(res.unwrap(), vec![0..1, 6..7, 2..5]);
+
+        let res = parse_pos("15,19-20");
+        assert!(res.is_ok());
+        assert_eq!(res.unwrap(), vec![14..15, 18..20]);
     }
 
     #[test]
     fn test_extract_fields() {
         let rec = StringRecord::from(vec!["Captain", "Sham", "12345"]);
-        assert_eq!(extract_fields(&rec, &[0]), &["Captain"]);
-        assert_eq!(extract_fields(&rec, &[1]), &["Sham"]);
-        assert_eq!(extract_fields(&rec, &[0, 2]), &["Captain", "12345"]);
-        assert_eq!(extract_fields(&rec, &[0, 3]), &["Captain"]);
-        assert_eq!(extract_fields(&rec, &[1, 0]), &["Sham", "Captain"]);
+        assert_eq!(extract_fields(&rec, &[0..1]), &["Captain"]);
+        assert_eq!(extract_fields(&rec, &[1..2]), &["Sham"]);
+        assert_eq!(
+            extract_fields(&rec, &[0..1, 2..3]),
+            &["Captain", "12345"]
+        );
+        assert_eq!(extract_fields(&rec, &[0..1, 3..4]), &["Captain"]);
+        assert_eq!(extract_fields(&rec, &[1..2, 0..1]), &["Sham", "Captain"]);
     }
 
     #[test]
     fn test_extract_chars() {
-        assert_eq!(extract_chars("", &[0]), "".to_string());
-        assert_eq!(extract_chars("ábc", &[0]), "á".to_string());
-        assert_eq!(extract_chars("ábc", &[0, 2]), "ác".to_string());
-        assert_eq!(extract_chars("ábc", &[0, 1, 2]), "ábc".to_string());
-        assert_eq!(extract_chars("ábc", &[2, 1]), "cb".to_string());
-        assert_eq!(extract_chars("ábc", &[0, 1, 4]), "áb".to_string());
+        assert_eq!(extract_chars("", &[0..1]), "".to_string());
+        assert_eq!(extract_chars("ábc", &[0..1]), "á".to_string());
+        assert_eq!(extract_chars("ábc", &[0..1, 2..3]), "ác".to_string());
+        assert_eq!(extract_chars("ábc", &[0..3]), "ábc".to_string());
+        assert_eq!(extract_chars("ábc", &[2..3, 1..2]), "cb".to_string());
+        assert_eq!(
+            extract_chars("ábc", &[0..1, 1..2, 4..5]),
+            "áb".to_string()
+        );
     }
 
     #[test]
     fn test_extract_bytes() {
-        assert_eq!(extract_bytes("ábc", &[0]), "�".to_string());
-        assert_eq!(extract_bytes("ábc", &[0, 1]), "á".to_string());
-        assert_eq!(extract_bytes("ábc", &[0, 1, 2]), "áb".to_string());
-        assert_eq!(extract_bytes("ábc", &[0, 1, 2, 3]), "ábc".to_string());
-        assert_eq!(extract_bytes("ábc", &[3, 2]), "cb".to_string());
-        assert_eq!(extract_bytes("ábc", &[0, 1, 5]), "á".to_string());
+        assert_eq!(extract_bytes("ábc", &[0..1]), "�".to_string());
+        assert_eq!(extract_bytes("ábc", &[0..2]), "á".to_string());
+        assert_eq!(extract_bytes("ábc", &[0..3]), "áb".to_string());
+        assert_eq!(extract_bytes("ábc", &[0..4]), "ábc".to_string());
+        assert_eq!(extract_bytes("ábc", &[3..4, 2..3]), "cb".to_string());
+        assert_eq!(extract_bytes("ábc", &[0..2, 5..6]), "á".to_string());
     }
 }

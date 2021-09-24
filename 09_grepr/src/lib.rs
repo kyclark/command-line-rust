@@ -4,6 +4,7 @@ use std::{
     error::Error,
     fs::{self, File},
     io::{self, BufRead, BufReader},
+    mem,
 };
 use walkdir::WalkDir;
 
@@ -112,7 +113,7 @@ pub fn run(config: Config) -> MyResult<()> {
                             if config.count {
                                 print(
                                     &filename,
-                                    &format!("{}\n", &matches.len()),
+                                    &format!("{}\n", matches.len()),
                                 );
                             } else {
                                 for line in &matches {
@@ -150,10 +151,8 @@ fn find_lines<T: BufRead>(
         if bytes == 0 {
             break;
         }
-        if (pattern.is_match(&line) && !invert_match)
-            || (!pattern.is_match(&line) && invert_match)
-        {
-            matches.push(line.clone());
+        if pattern.is_match(&line) ^ invert_match {
+            matches.push(mem::take(&mut line));
         }
         line.clear();
     }
@@ -162,19 +161,19 @@ fn find_lines<T: BufRead>(
 }
 
 // --------------------------------------------------
-fn find_files(files: &[String], recursive: bool) -> Vec<MyResult<String>> {
+fn find_files(paths: &[String], recursive: bool) -> Vec<MyResult<String>> {
     let mut results = vec![];
 
-    for path in files {
+    for path in paths {
         match path.as_str() {
             "-" => results.push(Ok(path.to_string())),
-            _ => match fs::metadata(&path) {
+            _ => match fs::metadata(path) {
                 Ok(metadata) => {
                     if metadata.is_dir() {
                         if recursive {
                             for entry in WalkDir::new(path)
                                 .into_iter()
-                                .filter_map(|e| e.ok())
+                                .flatten()
                                 .filter(|e| e.file_type().is_file())
                             {
                                 results.push(Ok(entry
@@ -254,10 +253,7 @@ mod tests {
         let files = find_files(&["./tests/inputs".to_string()], false);
         assert_eq!(files.len(), 1);
         if let Err(e) = &files[0] {
-            assert_eq!(
-                e.to_string(),
-                "./tests/inputs is a directory".to_string()
-            );
+            assert_eq!(e.to_string(), "./tests/inputs is a directory");
         }
 
         // Verify the function recurses to find four files in the directory

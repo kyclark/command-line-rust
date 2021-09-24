@@ -7,6 +7,7 @@ const PRG: &str = "commr";
 const EMPTY: &str = "tests/inputs/empty.txt";
 const FILE1: &str = "tests/inputs/file1.txt";
 const FILE2: &str = "tests/inputs/file2.txt";
+const BLANK: &str = "tests/inputs/blank.txt";
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -260,3 +261,87 @@ fn stdin_file2() -> TestResult {
         "tests/expected/file1_file2.123.i.out",
     )
 }
+
+// --------------------------------------------------
+#[test]
+fn file1_file2_delim() -> TestResult {
+    run(
+        &[FILE1, FILE2, "-d", ":"],
+        "tests/expected/file1_file2.delim.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn file1_file2_1_delim() -> TestResult {
+    run(
+        &[FILE1, FILE2, "-1", "-d", ":"],
+        "tests/expected/file1_file2.1.delim.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn file1_file2_2_delim() -> TestResult {
+    run(
+        &[FILE1, FILE2, "-2", "-d", ":"],
+        "tests/expected/file1_file2.2.delim.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn file1_file2_3_delim() -> TestResult {
+    run(
+        &[FILE1, FILE2, "-3", "-d", ":"],
+        "tests/expected/file1_file2.3.delim.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn file1_file2_12_delim() -> TestResult {
+    run(
+        &[FILE1, FILE2, "-12", "-d", ":"],
+        "tests/expected/file1_file2.12.delim.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn file1_file2_23_delim() -> TestResult {
+    run(
+        &[FILE1, FILE2, "-23", "-d", ":"],
+        "tests/expected/file1_file2.23.delim.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn file1_file2_13_delim() -> TestResult {
+    run(
+        &[FILE1, FILE2, "-13", "-d", ":"],
+        "tests/expected/file1_file2.13.delim.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn file1_file2_123_delim() -> TestResult {
+    run(
+        &[FILE1, FILE2, "-123", "-d", ":"],
+        "tests/expected/file1_file2.123.delim.out",
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn blank_file1() -> TestResult {
+    run(&[BLANK, FILE1], "tests/expected/blank_file1.out")
+}
+
+//// --------------------------------------------------
+//#[test]
+//fn file1_blanks() -> TestResult {
+//    run(&[FILE1, BLANKS], "tests/expected/file1_blanks.out")
+//}

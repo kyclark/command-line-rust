@@ -8,6 +8,7 @@ type TestResult = Result<(), Box<dyn std::error::Error>>;
 const PRG: &str = "cutr";
 const CSV: &str = "tests/inputs/movies1.csv";
 const TSV: &str = "tests/inputs/movies1.tsv";
+const BOOKS: &str = "tests/inputs/books.csv";
 
 // --------------------------------------------------
 fn random_string() -> String {
@@ -84,6 +85,15 @@ fn dies_bad_digit_chars() -> TestResult {
     dies(
         &[CSV, "-c", &bad],
         &format!("illegal list value: \"{}\"", &bad),
+    )
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_empty_delimiter() -> TestResult {
+    dies(
+        &[CSV, "-f", "1", "-d", ""],
+        "--delim \"\" must be a single byte",
     )
 }
 
@@ -319,4 +329,13 @@ fn tsv_c2_3() -> TestResult {
 #[test]
 fn tsv_c1_8() -> TestResult {
     run(&[TSV, "-c", "1-8"], "tests/expected/movies1.tsv.c1-8.out")
+}
+
+// --------------------------------------------------
+#[test]
+fn books() -> TestResult {
+    run(
+        &[BOOKS, "-d", ",", "-f", "1,3"],
+        "tests/inputs/books.f1-3.out",
+    )
 }

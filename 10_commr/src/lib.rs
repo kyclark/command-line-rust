@@ -9,10 +9,11 @@ use std::{
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
-enum Column {
-    Col1(String),
-    Col2(String),
-    Col3(String),
+#[derive(Debug)]
+enum Column<'a> {
+    Col1(&'a str),
+    Col2(&'a str),
+    Col3(&'a str),
 }
 
 #[derive(Debug)]
@@ -23,7 +24,7 @@ pub struct Config {
     suppress_col2: bool,
     suppress_col3: bool,
     insensitive: bool,
-    delimiter: String,
+    delim: String,
 }
 
 // --------------------------------------------------
@@ -76,6 +77,7 @@ pub fn get_args() -> MyResult<Config> {
                 .long("output-delimiter")
                 .value_name("DELIM")
                 .help("Output delimiter")
+                .default_value("\t")
                 .takes_value(true),
         )
         .get_matches();
@@ -87,17 +89,16 @@ pub fn get_args() -> MyResult<Config> {
         suppress_col2: matches.is_present("suppress_col2"),
         suppress_col3: matches.is_present("suppress_col3"),
         insensitive: matches.is_present("insensitive"),
-        delimiter: matches.value_of("delimiter").unwrap_or("\t").to_string(),
+        delim: matches.value_of("delimiter").unwrap().to_string(),
     })
 }
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    //println!("{:?}", config);
-    let filename1 = &config.file1;
-    let filename2 = &config.file2;
+    let file1 = &config.file1;
+    let file2 = &config.file2;
 
-    if filename1.as_str() == "-" && filename2.as_str() == "-" {
+    if file1 == "-" && file2 == "-" {
         return Err(From::from("Both input files cannot be STDIN (\"-\")"));
     }
 
@@ -109,80 +110,99 @@ pub fn run(config: Config) -> MyResult<()> {
         }
     };
 
-    let mut lines1 =
-        open(filename1)?.lines().filter_map(Result::ok).map(case);
+    let mut lines1 = open(file1)?.lines().filter_map(Result::ok).map(case);
+    let mut lines2 = open(file2)?.lines().filter_map(Result::ok).map(case);
 
-    let mut lines2 =
-        open(filename2)?.lines().filter_map(Result::ok).map(case);
+    //let default_col1 = config.suppress_col1.then(|| "");
+    //let default_col2 = config.suppress_col2.then(|| "");
+    //let default_col3 = config.suppress_col3.then(|| "");
 
-    let default_col1 = if config.suppress_col1 {
-        ""
-    } else {
-        &config.delimiter
-    };
+    //let print = |col: Column| {
+    //    let mut columns = ["", "", ""];
+    //    match col {
+    //        Col1(val) => {
+    //            columns[0] = default_col1.unwrap_or(val);
+    //        }
+    //        Col2(val) => {
+    //            // columns[0] = default_col1.unwrap();
+    //            columns[1] = default_col2.unwrap_or(val);
+    //        }
+    //        Col3(val) => {
+    //            //columns[0] = default_col1.unwrap();
+    //            //columns[1] = default_col2.unwrap();
+    //            columns[2] = default_col3.unwrap_or(val);
+    //        }
+    //    };
 
-    let default_col2 = if config.suppress_col2 {
-        ""
-    } else {
-        &config.delimiter
-    };
+    //    if !columns.iter().copied().map(str::trim).all(str::is_empty) {
+    //        // println!("{}{}{}", columns[0], columns[1], columns[2]);
+    //        println!("{}", columns.join(&config.delim));
+    //    }
+    //};
 
-    let printer = |col: Column| {
-        let out = match col {
+    let print = |col: Column| {
+        let mut columns = vec![];
+        match col {
             Col1(val) => {
-                if config.suppress_col1 {
-                    "".to_string()
-                } else {
-                    val
+                if !config.suppress_col1 {
+                    columns.push(val);
                 }
             }
-            Col2(val) => format!(
-                "{}{}",
-                default_col1,
-                if config.suppress_col2 { "" } else { &val },
-            ),
-            Col3(val) => format!(
-                "{}{}{}",
-                default_col1,
-                default_col2,
-                if config.suppress_col3 { "" } else { &val },
-            ),
+            Col2(val) => {
+                if !config.suppress_col2 {
+                    if !config.suppress_col1 {
+                        columns.push("");
+                    }
+                    columns.push(val);
+                }
+            }
+            Col3(val) => {
+                if !config.suppress_col3 {
+                    if !config.suppress_col1 {
+                        columns.push("");
+                    }
+                    if !config.suppress_col2 {
+                        columns.push("");
+                    }
+                    columns.push(val);
+                }
+            }
         };
 
-        if !out.trim().is_empty() {
-            println!("{}", out);
+        if !columns.is_empty() {
+            println!("{}", columns.join(&config.delim));
         }
     };
 
     let mut line1 = lines1.next();
     let mut line2 = lines2.next();
 
-    loop {
+    while line1.is_some() || line2.is_some() {
         match (&line1, &line2) {
             (Some(val1), Some(val2)) => match val1.cmp(val2) {
                 Equal => {
-                    printer(Col3(val1.to_string()));
+                    print(Col3(val1));
                     line1 = lines1.next();
                     line2 = lines2.next();
                 }
                 Less => {
-                    printer(Col1(val1.to_string()));
+                    print(Col1(val1));
                     line1 = lines1.next();
                 }
-                _ => {
-                    printer(Col2(val2.to_string()));
+                Greater => {
+                    print(Col2(val2));
                     line2 = lines2.next();
                 }
             },
             (Some(val1), None) => {
-                printer(Col1(val1.to_string()));
+                print(Col1(val1));
                 line1 = lines1.next();
             }
             (None, Some(val2)) => {
-                printer(Col2(val2.to_string()));
+                print(Col2(val2));
                 line2 = lines2.next();
             }
-            (None, None) => break,
+            _ => (),
         }
     }
 
