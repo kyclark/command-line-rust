@@ -20,9 +20,9 @@ enum Column<'a> {
 pub struct Config {
     file1: String,
     file2: String,
-    suppress_col1: bool,
-    suppress_col2: bool,
-    suppress_col3: bool,
+    show_col1: bool,
+    show_col2: bool,
+    show_col3: bool,
     insensitive: bool,
     delimiter: String,
 }
@@ -85,9 +85,9 @@ pub fn get_args() -> MyResult<Config> {
     Ok(Config {
         file1: matches.value_of("file1").unwrap().to_string(),
         file2: matches.value_of("file2").unwrap().to_string(),
-        suppress_col1: matches.is_present("suppress_col1"),
-        suppress_col2: matches.is_present("suppress_col2"),
-        suppress_col3: matches.is_present("suppress_col3"),
+        show_col1: !matches.is_present("suppress_col1"),
+        show_col2: !matches.is_present("suppress_col2"),
+        show_col3: !matches.is_present("suppress_col3"),
         insensitive: matches.is_present("insensitive"),
         delimiter: matches.value_of("delimiter").unwrap().to_string(),
     })
@@ -117,24 +117,24 @@ pub fn run(config: Config) -> MyResult<()> {
         let mut columns = vec![];
         match col {
             Col1(val) => {
-                if !config.suppress_col1 {
+                if config.show_col1 {
                     columns.push(val);
                 }
             }
             Col2(val) => {
-                if !config.suppress_col2 {
-                    if !config.suppress_col1 {
+                if config.show_col2 {
+                    if config.show_col1 {
                         columns.push("");
                     }
                     columns.push(val);
                 }
             }
             Col3(val) => {
-                if !config.suppress_col3 {
-                    if !config.suppress_col1 {
+                if config.show_col3 {
+                    if config.show_col1 {
                         columns.push("");
                     }
-                    if !config.suppress_col2 {
+                    if config.show_col2 {
                         columns.push("");
                     }
                     columns.push(val);
