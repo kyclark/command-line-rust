@@ -24,7 +24,7 @@ pub struct Config {
     suppress_col2: bool,
     suppress_col3: bool,
     insensitive: bool,
-    delim: String,
+    delimiter: String,
 }
 
 // --------------------------------------------------
@@ -89,7 +89,7 @@ pub fn get_args() -> MyResult<Config> {
         suppress_col2: matches.is_present("suppress_col2"),
         suppress_col3: matches.is_present("suppress_col3"),
         insensitive: matches.is_present("insensitive"),
-        delim: matches.value_of("delimiter").unwrap().to_string(),
+        delimiter: matches.value_of("delimiter").unwrap().to_string(),
     })
 }
 
@@ -112,33 +112,6 @@ pub fn run(config: Config) -> MyResult<()> {
 
     let mut lines1 = open(file1)?.lines().filter_map(Result::ok).map(case);
     let mut lines2 = open(file2)?.lines().filter_map(Result::ok).map(case);
-
-    //let default_col1 = config.suppress_col1.then(|| "");
-    //let default_col2 = config.suppress_col2.then(|| "");
-    //let default_col3 = config.suppress_col3.then(|| "");
-
-    //let print = |col: Column| {
-    //    let mut columns = ["", "", ""];
-    //    match col {
-    //        Col1(val) => {
-    //            columns[0] = default_col1.unwrap_or(val);
-    //        }
-    //        Col2(val) => {
-    //            // columns[0] = default_col1.unwrap();
-    //            columns[1] = default_col2.unwrap_or(val);
-    //        }
-    //        Col3(val) => {
-    //            //columns[0] = default_col1.unwrap();
-    //            //columns[1] = default_col2.unwrap();
-    //            columns[2] = default_col3.unwrap_or(val);
-    //        }
-    //    };
-
-    //    if !columns.iter().copied().map(str::trim).all(str::is_empty) {
-    //        // println!("{}{}{}", columns[0], columns[1], columns[2]);
-    //        println!("{}", columns.join(&config.delim));
-    //    }
-    //};
 
     let print = |col: Column| {
         let mut columns = vec![];
@@ -170,7 +143,7 @@ pub fn run(config: Config) -> MyResult<()> {
         };
 
         if !columns.is_empty() {
-            println!("{}", columns.join(&config.delim));
+            println!("{}", columns.join(&config.delimiter));
         }
     };
 

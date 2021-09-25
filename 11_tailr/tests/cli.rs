@@ -122,6 +122,11 @@ fn empty() -> TestResult {
 }
 
 #[test]
+fn empty_n0() -> TestResult {
+    run(&[EMPTY, "-n", "0"], "tests/expected/empty.txt.n0.out")
+}
+
+#[test]
 fn empty_n1() -> TestResult {
     run(&[EMPTY, "-n", "1"], "tests/expected/empty.txt.n1.out")
 }
@@ -147,8 +152,23 @@ fn empty_n4() -> TestResult {
 }
 
 #[test]
+fn empty_n200() -> TestResult {
+    run(&[EMPTY, "-n", "200"], "tests/expected/empty.txt.n200.out")
+}
+
+#[test]
+fn empty_n_minus_200() -> TestResult {
+    run(&[EMPTY, "-n=-200"], "tests/expected/empty.txt.n200.out")
+}
+
+#[test]
 fn empty_n_minus_4() -> TestResult {
     run(&[EMPTY, "-n=-4"], "tests/expected/empty.txt.n4.out")
+}
+
+#[test]
+fn empty_n_plus_0() -> TestResult {
+    run(&[EMPTY, "-n", "+0"], "tests/expected/empty.txt.n+0.out")
 }
 
 #[test]
@@ -192,6 +212,21 @@ fn empty_c_minus_12() -> TestResult {
 }
 
 #[test]
+fn empty_c200() -> TestResult {
+    run(&[EMPTY, "-c", "200"], "tests/expected/empty.txt.c200.out")
+}
+
+#[test]
+fn empty_c_minus_200() -> TestResult {
+    run(&[EMPTY, "-c=-200"], "tests/expected/empty.txt.c200.out")
+}
+
+#[test]
+fn empty_c_plus_0() -> TestResult {
+    run(&[EMPTY, "-c", "+0"], "tests/expected/empty.txt.c+0.out")
+}
+
+#[test]
 fn empty_c_plus_1() -> TestResult {
     run(&[EMPTY, "-c", "+1"], "tests/expected/empty.txt.c+1.out")
 }
@@ -205,6 +240,11 @@ fn empty_c_plus_2() -> TestResult {
 #[test]
 fn one() -> TestResult {
     run(&[ONE], "tests/expected/one.txt.out")
+}
+
+#[test]
+fn one_n0() -> TestResult {
+    run(&[ONE, "-n", "0"], "tests/expected/one.txt.n0.out")
 }
 
 #[test]
@@ -235,6 +275,21 @@ fn one_n4() -> TestResult {
 #[test]
 fn one_n_minus_4() -> TestResult {
     run(&[ONE, "-n=-4"], "tests/expected/one.txt.n4.out")
+}
+
+#[test]
+fn one_n200() -> TestResult {
+    run(&[ONE, "-n", "200"], "tests/expected/one.txt.n200.out")
+}
+
+#[test]
+fn one_n_minus_200() -> TestResult {
+    run(&[ONE, "-n=-200"], "tests/expected/one.txt.n200.out")
+}
+
+#[test]
+fn one_n_plus_0() -> TestResult {
+    run(&[ONE, "-n", "+0"], "tests/expected/one.txt.n+0.out")
 }
 
 #[test]
@@ -278,6 +333,21 @@ fn one_c_minus_12() -> TestResult {
 }
 
 #[test]
+fn one_c200() -> TestResult {
+    run(&[ONE, "-c", "200"], "tests/expected/one.txt.c200.out")
+}
+
+#[test]
+fn one_c_minus_200() -> TestResult {
+    run(&[ONE, "-c=-200"], "tests/expected/one.txt.c200.out")
+}
+
+#[test]
+fn one_c_plus_0() -> TestResult {
+    run(&[ONE, "-c", "+0"], "tests/expected/one.txt.c+0.out")
+}
+
+#[test]
 fn one_c_plus_1() -> TestResult {
     run(&[ONE, "-c", "+1"], "tests/expected/one.txt.c+1.out")
 }
@@ -291,6 +361,11 @@ fn one_c_plus_2() -> TestResult {
 #[test]
 fn two() -> TestResult {
     run(&[TWO], "tests/expected/two.txt.out")
+}
+
+#[test]
+fn two_n0() -> TestResult {
+    run(&[TWO, "-n", "0"], "tests/expected/two.txt.n0.out")
 }
 
 #[test]
@@ -321,6 +396,21 @@ fn two_n4() -> TestResult {
 #[test]
 fn two_n_minus_4() -> TestResult {
     run(&[TWO, "-n=-4"], "tests/expected/two.txt.n4.out")
+}
+
+#[test]
+fn two_n200() -> TestResult {
+    run(&[TWO, "-n", "200"], "tests/expected/two.txt.n200.out")
+}
+
+#[test]
+fn two_n_minus_200() -> TestResult {
+    run(&[TWO, "-n=-200"], "tests/expected/two.txt.n200.out")
+}
+
+#[test]
+fn two_n_plus_0() -> TestResult {
+    run(&[TWO, "-n", "+0"], "tests/expected/two.txt.n+0.out")
 }
 
 #[test]
@@ -364,6 +454,21 @@ fn two_c_minus_12() -> TestResult {
 }
 
 #[test]
+fn two_c200() -> TestResult {
+    run(&[TWO, "-c", "200"], "tests/expected/two.txt.c200.out")
+}
+
+#[test]
+fn two_c_minus_200() -> TestResult {
+    run(&[TWO, "-c=-200"], "tests/expected/two.txt.c200.out")
+}
+
+#[test]
+fn two_c_plus_0() -> TestResult {
+    run(&[TWO, "-c", "+0"], "tests/expected/two.txt.c+0.out")
+}
+
+#[test]
 fn two_c_plus_1() -> TestResult {
     run(&[TWO, "-c", "+1"], "tests/expected/two.txt.c+1.out")
 }
@@ -377,6 +482,11 @@ fn two_c_plus_2() -> TestResult {
 #[test]
 fn three() -> TestResult {
     run(&[THREE], "tests/expected/three.txt.out")
+}
+
+#[test]
+fn three_n0() -> TestResult {
+    run(&[THREE, "-n", "0"], "tests/expected/three.txt.n0.out")
 }
 
 #[test]
@@ -407,6 +517,21 @@ fn three_n4() -> TestResult {
 #[test]
 fn three_n_minus_4() -> TestResult {
     run(&[THREE, "-n=-4"], "tests/expected/three.txt.n4.out")
+}
+
+#[test]
+fn three_n200() -> TestResult {
+    run(&[THREE, "-n", "200"], "tests/expected/three.txt.n200.out")
+}
+
+#[test]
+fn three_n_minus_200() -> TestResult {
+    run(&[THREE, "-n=-200"], "tests/expected/three.txt.n200.out")
+}
+
+#[test]
+fn three_n_plus_0() -> TestResult {
+    run(&[THREE, "-n", "+0"], "tests/expected/three.txt.n+0.out")
 }
 
 #[test]
@@ -450,6 +575,21 @@ fn three_c_minus_12() -> TestResult {
 }
 
 #[test]
+fn three_c200() -> TestResult {
+    run(&[THREE, "-c", "200"], "tests/expected/three.txt.c200.out")
+}
+
+#[test]
+fn three_c_minus_200() -> TestResult {
+    run(&[THREE, "-c=-200"], "tests/expected/three.txt.c200.out")
+}
+
+#[test]
+fn three_c_plus_0() -> TestResult {
+    run(&[THREE, "-c", "+0"], "tests/expected/three.txt.c+0.out")
+}
+
+#[test]
 fn three_c_plus_1() -> TestResult {
     run(&[THREE, "-c", "+1"], "tests/expected/three.txt.c+1.out")
 }
@@ -463,6 +603,11 @@ fn three_c_plus_2() -> TestResult {
 #[test]
 fn ten() -> TestResult {
     run(&[TEN], "tests/expected/ten.txt.out")
+}
+
+#[test]
+fn ten_n0() -> TestResult {
+    run(&[TEN, "-n", "0"], "tests/expected/ten.txt.n0.out")
 }
 
 #[test]
@@ -496,6 +641,16 @@ fn ten_n_minus_4() -> TestResult {
 }
 
 #[test]
+fn ten_n200() -> TestResult {
+    run(&[TEN, "-n", "200"], "tests/expected/ten.txt.n200.out")
+}
+
+#[test]
+fn ten_n_minus_200() -> TestResult {
+    run(&[TEN, "-n=-200"], "tests/expected/ten.txt.n200.out")
+}
+
+#[test]
 fn ten_c3() -> TestResult {
     run(&[TEN, "-c", "3"], "tests/expected/ten.txt.c3.out")
 }
@@ -526,6 +681,21 @@ fn ten_c_minus_12() -> TestResult {
 }
 
 #[test]
+fn ten_c200() -> TestResult {
+    run(&[TEN, "-c", "200"], "tests/expected/ten.txt.c200.out")
+}
+
+#[test]
+fn ten_c_minus_200() -> TestResult {
+    run(&[TEN, "-c=-200"], "tests/expected/ten.txt.c200.out")
+}
+
+#[test]
+fn ten_n_plus_0() -> TestResult {
+    run(&[TEN, "-n", "+0"], "tests/expected/ten.txt.n+0.out")
+}
+
+#[test]
 fn ten_n_plus_1() -> TestResult {
     run(&[TEN, "-n", "+1"], "tests/expected/ten.txt.n+1.out")
 }
@@ -533,6 +703,11 @@ fn ten_n_plus_1() -> TestResult {
 #[test]
 fn ten_n_plus_2() -> TestResult {
     run(&[TEN, "-n", "+2"], "tests/expected/ten.txt.n+2.out")
+}
+
+#[test]
+fn ten_c_plus_0() -> TestResult {
+    run(&[TEN, "-c", "+0"], "tests/expected/ten.txt.c+0.out")
 }
 
 #[test]
@@ -556,6 +731,22 @@ fn multiple_files_n1() -> TestResult {
     run(
         &["-n", "1", TEN, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.n1.out",
+    )
+}
+
+#[test]
+fn multiple_files_n1_q() -> TestResult {
+    run(
+        &["-n", "1", "-q", TEN, EMPTY, ONE, THREE, TWO],
+        "tests/expected/all.n1.q.out",
+    )
+}
+
+#[test]
+fn multiple_files_n1_quiet() -> TestResult {
+    run(
+        &["-n", "1", "--quiet", TEN, EMPTY, ONE, THREE, TWO],
+        "tests/expected/all.n1.q.out",
     )
 }
 
