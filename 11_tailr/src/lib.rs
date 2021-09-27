@@ -1,6 +1,6 @@
 use crate::TakeValue::*;
 use clap::{App, Arg};
-use lazy_static::lazy_static;
+use once_cell::sync::OnceCell;
 use regex::Regex;
 use std::{
     error::Error,
@@ -16,9 +16,7 @@ enum TakeValue {
     TakeNum(i64),
 }
 
-lazy_static! {
-    static ref NUM_RE: Regex = Regex::new(r"^([+-])?(\d+)$").unwrap();
-}
+static NUM_RE: OnceCell<Regex> = OnceCell::new();
 
 #[derive(Debug)]
 pub struct Config {
@@ -116,7 +114,10 @@ pub fn run(config: Config) -> MyResult<()> {
 
 // --------------------------------------------------
 fn parse_num(val: &str) -> MyResult<TakeValue> {
-    match NUM_RE.captures(val) {
+    let num_re =
+        NUM_RE.get_or_init(|| Regex::new(r"^([+-])?(\d+)$").unwrap());
+
+    match num_re.captures(val) {
         Some(caps) => {
             let sign = caps.get(1).map_or("-", |m| m.as_str());
             let num = format!("{}{}", sign, caps.get(2).unwrap().as_str());
