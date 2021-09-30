@@ -727,6 +727,14 @@ fn multiple_files() -> TestResult {
 }
 
 #[test]
+fn multiple_files_n0() -> TestResult {
+    run(
+        &["-n", "0", TEN, EMPTY, ONE, THREE, TWO],
+        "tests/expected/all.n0.out",
+    )
+}
+
+#[test]
 fn multiple_files_n1() -> TestResult {
     run(
         &["-n", "1", TEN, EMPTY, ONE, THREE, TWO],
@@ -787,6 +795,14 @@ fn multiple_files_n_plus_3() -> TestResult {
     run(
         &["-n", "+3", TEN, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.n+3.out",
+    )
+}
+
+#[test]
+fn multiple_files_c0() -> TestResult {
+    run(
+        &["-c", "0", TEN, EMPTY, ONE, THREE, TWO],
+        "tests/expected/all.c0.out",
     )
 }
 

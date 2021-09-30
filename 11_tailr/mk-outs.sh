@@ -31,9 +31,11 @@ done
 ALL="$ROOT/ten.txt $ROOT/empty.txt $ROOT/one.txt $ROOT/three.txt $ROOT/two.txt"
 
 tail         $ALL > $OUT_DIR/all.out
+tail -n 0    $ALL > $OUT_DIR/all.n0.out
 tail -n 1    $ALL > $OUT_DIR/all.n1.out
 tail -n 1 -q $ALL > $OUT_DIR/all.n1.q.out
 tail -n 3    $ALL > $OUT_DIR/all.n3.out
+tail -c 0    $ALL > $OUT_DIR/all.c0.out
 tail -c 3    $ALL > $OUT_DIR/all.c3.out
 tail -c 8    $ALL > $OUT_DIR/all.c8.out
 tail -c 12   $ALL > $OUT_DIR/all.c12.out

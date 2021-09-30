@@ -169,12 +169,12 @@ fn count_lines_bytes(filename: &str) -> MyResult<(i64, i64)> {
     let mut num_bytes = 0;
     let mut buf = Vec::new();
     loop {
-        let bytes = file.read_until(b'\n', &mut buf)?;
-        if bytes == 0 {
+        let bytes_read = file.read_until(b'\n', &mut buf)?;
+        if bytes_read == 0 {
             break;
         }
         num_lines += 1;
-        num_bytes += bytes as i64;
+        num_bytes += bytes_read as i64;
         buf.clear();
     }
     Ok((num_lines, num_bytes))
@@ -208,8 +208,8 @@ fn print_lines(
         let mut line_num = 0;
         let mut buf = Vec::new();
         loop {
-            let bytes = file.read_until(b'\n', &mut buf)?;
-            if bytes == 0 {
+            let bytes_read = file.read_until(b'\n', &mut buf)?;
+            if bytes_read == 0 {
                 break;
             }
             if line_num >= start {
@@ -267,7 +267,7 @@ mod tests {
         // +0 from an empty file (0 lines/bytes) returns None
         assert_eq!(get_start_index(&PlusZero, 0), None);
 
-        // +0 from a nonempty file returns start that
+        // +0 from a nonempty file returns an index that
         // is one less than the number of lines/bytes
         assert_eq!(get_start_index(&PlusZero, 1), Some(0));
 
