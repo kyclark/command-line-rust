@@ -85,7 +85,6 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    //println!("{:#?}", config);
     let num_files = config.files.len();
     for (file_num, filename) in config.files.iter().enumerate() {
         match File::open(filename) {
@@ -167,7 +166,7 @@ fn parse_num(val: &str) -> MyResult<TakeValue> {
 fn count_lines_bytes(filename: &str) -> MyResult<(i64, i64)> {
     let mut file = BufReader::new(File::open(filename)?);
     let mut num_lines = 0;
-    let mut num_bytes: i64 = 0;
+    let mut num_bytes = 0;
     let mut buf = Vec::new();
     loop {
         let bytes = file.read_until(b'\n', &mut buf)?;
@@ -188,7 +187,7 @@ fn print_bytes<T: Read + Seek>(
     total_bytes: i64,
 ) -> MyResult<()> {
     if let Some(start) = get_start_index(num_bytes, total_bytes) {
-        file.seek(SeekFrom::Start(start as u64))?;
+        file.seek(SeekFrom::Start(start))?;
         let mut buffer = Vec::new();
         file.read_to_end(&mut buffer)?;
         if !buffer.is_empty() {
@@ -225,7 +224,7 @@ fn print_lines(
 }
 
 // --------------------------------------------------
-fn get_start_index(take_val: &TakeValue, total: i64) -> Option<i64> {
+fn get_start_index(take_val: &TakeValue, total: i64) -> Option<u64> {
     match take_val {
         PlusZero => {
             if total > 0 {
@@ -239,7 +238,7 @@ fn get_start_index(take_val: &TakeValue, total: i64) -> Option<i64> {
                 None
             } else {
                 let start = if num < &0 { total + num } else { num - 1 };
-                Some(if start < 0 { 0 } else { start })
+                Some(if start < 0 { 0 } else { start as u64 })
             }
         }
     }
