@@ -24,8 +24,7 @@ pub fn get_args() -> MyResult<Config> {
             Arg::with_name("in_file")
                 .value_name("IN_FILE")
                 .help("Input file")
-                .default_value("-")
-                .required(true),
+                .default_value("-"),
         )
         .arg(
             Arg::with_name("out_file")
