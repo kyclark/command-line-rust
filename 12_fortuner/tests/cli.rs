@@ -7,8 +7,9 @@ type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 const PRG: &str = "fortuner";
 const FORTUNE_DIR: &str = "./tests/inputs";
-const HUMORISTS: &str = "./tests/inputs/humorists";
-const FORTUNES: &str = "./tests/inputs/fortunes";
+const JOKES: &str = "./tests/inputs/jokes";
+const LITERATURE: &str = "./tests/inputs/literature";
+const QUOTES: &str = "./tests/inputs/quotes";
 
 // --------------------------------------------------
 fn random_string() -> String {
@@ -35,7 +36,7 @@ fn dies_bad_file() -> TestResult {
     let bad = gen_bad_file();
     let expected = format!("{}: .* [(]os error 2[)]", bad);
     Command::cargo_bin(PRG)?
-        .args(&[FORTUNES, &bad])
+        .args(&[LITERATURE, &bad])
         .assert()
         .failure()
         .stderr(predicate::str::is_match(expected)?);
@@ -48,7 +49,7 @@ fn dies_bad_seed() -> TestResult {
     let bad = random_string();
     let expected = format!("\"{}\" not a valid integer", &bad);
     Command::cargo_bin(PRG)?
-        .args(&[FORTUNES, "--seed", &bad])
+        .args(&[LITERATURE, "--seed", &bad])
         .assert()
         .failure()
         .stderr(predicate::str::contains(expected));
@@ -67,34 +68,29 @@ fn run(args: &[&str], expected: &'static str) -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn fortunes_seed_5() -> TestResult {
+fn quotes_seed_1() -> TestResult {
     run(
-        &[FORTUNES, "-s", "5"],
-        concat!(
-            "Rivers know this: There is no hurry. We shall get there.\n",
-            "-- A. A. Milne\n"
-        ),
+        &[QUOTES, "-s", "1"],
+        "You can observe a lot just by watching.\n-- Yogi Berra\n",
     )
 }
 
 //// --------------------------------------------------
 #[test]
-fn humorists_seed_31() -> TestResult {
+fn jokes_seed_1() -> TestResult {
     run(
-        &[HUMORISTS, "-s", "31"],
-        concat!(
-            "I bought some used paint. It was in the shape of a house.\n",
-            "		-- Steven Wright\n"
-        ),
+        &[JOKES, "-s", "1"],
+        "Q: What happens when frogs park illegally?\nA: They get toad.\n",
     )
 }
 
 // --------------------------------------------------
 #[test]
-fn dir_seed_51() -> TestResult {
+fn dir_seed_10() -> TestResult {
     run(
-        &[FORTUNE_DIR, "-s", "51"],
-        "Friendship is love with understanding.\n",
+        &[FORTUNE_DIR, "-s", "10"],
+        "Q: Why did the fungus and the alga marry?\n\
+        A: Because they took a lichen to each other!\n",
     )
 }
 
@@ -123,11 +119,11 @@ fn yogi_berra_cap() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn will_rogers_cap() -> TestResult {
+fn mark_twain_cap() -> TestResult {
     run_outfiles(
-        &["-m", "Will Rogers", FORTUNE_DIR],
-        "tests/expected/rogers_cap.out",
-        "tests/expected/rogers_cap.err",
+        &["-m", "Mark Twain", FORTUNE_DIR],
+        "tests/expected/twain_cap.out",
+        "tests/expected/twain_cap.err",
     )
 }
 
@@ -143,11 +139,11 @@ fn yogi_berra_lower() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn will_rogers_lower() -> TestResult {
+fn mark_twain_lower() -> TestResult {
     run_outfiles(
-        &["-m", "will rogers", FORTUNE_DIR],
-        "tests/expected/rogers_lower.out",
-        "tests/expected/rogers_lower.err",
+        &["-m", "will twain", FORTUNE_DIR],
+        "tests/expected/twain_lower.out",
+        "tests/expected/twain_lower.err",
     )
 }
 
@@ -163,10 +159,10 @@ fn yogi_berra_lower_i() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn will_rogers_lower_i() -> TestResult {
+fn mark_twain_lower_i() -> TestResult {
     run_outfiles(
-        &["-i", "-m", "will rogers", FORTUNE_DIR],
-        "tests/expected/rogers_lower_i.out",
-        "tests/expected/rogers_lower_i.err",
+        &["-i", "-m", "mark twain", FORTUNE_DIR],
+        "tests/expected/twain_lower_i.out",
+        "tests/expected/twain_lower_i.err",
     )
 }

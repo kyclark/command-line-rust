@@ -1,5 +1,7 @@
 use clap::{App, Arg};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use itertools::Itertools;
+use rand::prelude::SliceRandom;
+use rand::{rngs::StdRng, SeedableRng};
 use regex::{Regex, RegexBuilder};
 use std::{
     error::Error,
@@ -81,25 +83,25 @@ pub fn get_args() -> MyResult<Config> {
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
     let files = find_files(&config.sources)?;
-    let fortunes = read_fortunes(&files, &config.pattern)?;
+    let fortunes = read_fortunes(&files)?;
 
-    match config.pattern.is_some() {
-        true => {
-            let mut last_source: Option<String> = None;
-            for fortune in fortunes {
-                if last_source.map_or(true, |s| s != fortune.source) {
-                    eprintln!("({})\n%", fortune.source);
-                }
-                println!("{}\n%", fortune.text);
-                last_source = Some(fortune.source.clone());
+    if let Some(pattern) = config.pattern {
+        let mut last_source: Option<String> = None;
+        for fortune in fortunes
+            .iter()
+            .filter(|fortune| pattern.is_match(&fortune.text))
+        {
+            if last_source.map_or(true, |s| s != fortune.source) {
+                eprintln!("({})\n%", fortune.source);
             }
+            println!("{}\n%", fortune.text);
+            last_source = Some(fortune.source.clone());
         }
-        _ => {
-            if let Some(fortune) = pick_fortune(&fortunes, &config.seed) {
-                println!("{}", fortune);
-            }
+    } else {
+        if let Some(fortune) = pick_fortune(&fortunes, &config.seed) {
+            println!("{}", fortune);
         }
-    };
+    }
 
     Ok(())
 }
@@ -112,19 +114,17 @@ fn parse_u64(val: &str) -> MyResult<u64> {
 }
 
 // --------------------------------------------------
-fn read_fortunes(
-    paths: &[PathBuf],
-    pattern: &Option<Regex>,
-) -> MyResult<Vec<Fortune>> {
+fn read_fortunes(paths: &[PathBuf]) -> MyResult<Vec<Fortune>> {
     let mut fortunes = vec![];
     let mut buffer = vec![];
 
-    let is_match =
-        |text: &str| pattern.as_ref().map_or(true, |re| re.is_match(text));
-
     for path in paths {
         let source = path.file_name().unwrap().to_string_lossy().into_owned();
-        for line in BufReader::new(File::open(path)?)
+        let file = File::open(path).map_err(|e| {
+            format!("{}: {}", path.to_string_lossy().into_owned(), e)
+        })?;
+
+        for line in BufReader::new(file)
             .lines()
             .filter_map(Result::ok)
             .map(|line| line.trim_end().to_owned())
@@ -132,61 +132,61 @@ fn read_fortunes(
             if line == "%" {
                 if !buffer.is_empty() {
                     let text = buffer.join("\n");
+                    fortunes.push(Fortune {
+                        source: source.clone(),
+                        text,
+                    });
                     buffer.clear();
-
-                    if is_match(&text) {
-                        fortunes.push(Fortune {
-                            source: source.clone(),
-                            text,
-                        });
-                    }
                 }
             } else {
                 buffer.push(line.to_string());
             }
         }
     }
+
     Ok(fortunes)
 }
 
 // --------------------------------------------------
-fn find_files(sources: &[String]) -> MyResult<Vec<PathBuf>> {
+fn find_files(paths: &[String]) -> MyResult<Vec<PathBuf>> {
     let dat = OsStr::new("dat");
-    let mut results: Vec<PathBuf> = vec![];
+    let mut files = vec![];
 
-    for source in sources {
-        fs::metadata(source).map_err(|e| format!("{}: {}", source, e))?;
-        results.extend(
-            WalkDir::new(source)
-                .into_iter()
-                .filter_map(|e| e.ok())
-                .filter(|e| {
-                    e.file_type().is_file()
-                        && e.path().extension() != Some(dat)
-                })
-                .map(|e| Into::into(e.path())),
-            //.map(|e| PathBuf::from(e.path())),
-            //.map(|e| e.path().into()),
-        );
+    for path in paths {
+        match fs::metadata(path) {
+            Err(e) => return Err(format!("{}: {}", path, e).into()),
+            Ok(_) => files.extend(
+                WalkDir::new(path)
+                    .into_iter()
+                    .filter_map(|e| e.ok())
+                    .filter(|e| {
+                        e.file_type().is_file()
+                            && e.path().extension() != Some(dat)
+                    })
+                    //.map(|e| Into::into(e.path())),
+                    //.map(|e| PathBuf::from(e.path())),
+                    .map(|e| e.path().into()),
+            ),
+        }
     }
-    results.sort();
 
-    Ok(results)
+    files.sort();
+    Ok(files.into_iter().unique().collect())
 }
 
 // --------------------------------------------------
 fn pick_fortune(fortunes: &[Fortune], seed: &Option<u64>) -> Option<String> {
-    match fortunes.is_empty() {
-        true => None,
-        _ => {
-            let range = 0..fortunes.len();
-            let i: usize = match &seed {
-                Some(seed) => StdRng::seed_from_u64(*seed).gen_range(range),
-                _ => rand::thread_rng().gen_range(range),
-            };
-            fortunes.get(i).map(|fortune| fortune.text.to_string())
-        }
+    //let fortune: Option<&Fortune> = match seed {
+    //    Some(val) => fortunes.choose(&mut StdRng::seed_from_u64(*val)),
+    //    _ => fortunes.choose(&mut rand::thread_rng()),
+    //};
+    //fortune.map(|f| f.text.to_string())
+
+    match seed {
+        Some(val) => fortunes.choose(&mut StdRng::seed_from_u64(*val)),
+        _ => fortunes.choose(&mut rand::thread_rng()),
     }
+    .map(|f| f.text.to_string())
 }
 
 // --------------------------------------------------
@@ -195,7 +195,6 @@ mod tests {
     use super::{
         find_files, parse_u64, pick_fortune, read_fortunes, Fortune,
     };
-    use regex::Regex;
     use std::path::PathBuf;
 
     #[test]
@@ -216,14 +215,14 @@ mod tests {
     #[test]
     fn test_find_files() {
         // Verify that the function finds a file known to exist
-        let res = find_files(&["./tests/inputs/fortunes".to_string()]);
+        let res = find_files(&["./tests/inputs/jokes".to_string()]);
         assert!(res.is_ok());
 
         let files = res.unwrap();
         assert_eq!(files.len(), 1);
         assert_eq!(
             files.get(0).unwrap().to_string_lossy(),
-            "./tests/inputs/fortunes"
+            "./tests/inputs/jokes"
         );
 
         // Fails to find a bad file
@@ -236,49 +235,62 @@ mod tests {
 
         // Check number and order of files
         let files = res.unwrap();
-        assert_eq!(files.len(), 5);
+        assert_eq!(files.len(), 4);
         let first = files.get(0).unwrap().display().to_string();
         assert!(first.contains("ascii-art"));
         let last = files.last().unwrap().display().to_string();
-        assert!(last.contains("startrek"));
+        assert!(last.contains("quotes"));
+
+        // Test for multiple sources, path must be unique and sorted
+        let res = find_files(&[
+            "./tests/inputs/jokes".to_string(),
+            "./tests/inputs/ascii-art".to_string(),
+            "./tests/inputs/jokes".to_string(),
+        ]);
+        assert!(res.is_ok());
+        let files = res.unwrap();
+        assert_eq!(files.len(), 2);
+        if let Some(filename) = files.first().unwrap().file_name() {
+            assert_eq!(filename.to_string_lossy(), "ascii-art".to_string())
+        }
+        if let Some(filename) = files.last().unwrap().file_name() {
+            assert_eq!(filename.to_string_lossy(), "jokes".to_string())
+        }
     }
 
     #[test]
     fn test_read_fortunes() {
         // Parses all the fortunes without a filter
-        let res =
-            read_fortunes(&[PathBuf::from("./tests/inputs/fortunes")], &None);
+        let res = read_fortunes(&[PathBuf::from("./tests/inputs/jokes")]);
         assert!(res.is_ok());
 
         if let Ok(fortunes) = res {
             // Correct number and sorting
-            assert_eq!(fortunes.len(), 5433);
+            assert_eq!(fortunes.len(), 6);
             assert_eq!(
-                fortunes.iter().nth(0).unwrap().text,
-                "You cannot achieve the impossible without \
-                attempting the absurd."
+                fortunes.first().unwrap().text,
+                "Q. What do you call a head of lettuce in a shirt and tie?\n\
+                A. Collared greens."
             );
             assert_eq!(
                 fortunes.last().unwrap().text,
-                "There is no material safety data sheet for \
-                astatine. If there were, it would just be the word \
-                \"NO\" scrawled over and over in charred blood.\n\
-                -- Randall Munroe, \"What If?\""
+                "Q: What do you call a deer wearing an eye patch?\n\
+                A: A bad idea (bad-eye deer)."
             );
         }
 
         // Filters for matching text
-        let res = read_fortunes(
-            &[PathBuf::from("./tests/inputs/fortunes")],
-            &Some(Regex::new("Yogi Berra").unwrap()),
-        );
+        let res = read_fortunes(&[
+            PathBuf::from("./tests/inputs/jokes"),
+            PathBuf::from("./tests/inputs/quotes"),
+        ]);
         assert!(res.is_ok());
-        assert_eq!(res.unwrap().len(), 2);
+        assert_eq!(res.unwrap().len(), 11);
     }
 
     #[test]
     fn test_pick_fortune() {
-        // Create a vector of fortunes
+        // Create a slice of fortunes
         let fortunes = &[
             Fortune {
                 source: "fortunes".to_string(),

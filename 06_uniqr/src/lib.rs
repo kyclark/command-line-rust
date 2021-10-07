@@ -60,7 +60,7 @@ pub fn run(config: Config) -> MyResult<()> {
         _ => Box::new(io::stdout()),
     };
 
-    let mut print = |count: u64, text: &str| -> MyResult<()> {
+    let print = |count: u64, text: &str| -> MyResult<()> {
         if count > 0 {
             if config.count {
                 write!(out_file, "{:>4} {}", count, text)?;
