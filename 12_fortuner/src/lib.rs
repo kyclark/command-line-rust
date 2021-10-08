@@ -1,7 +1,7 @@
 use clap::{App, Arg};
 use itertools::Itertools;
 use rand::prelude::SliceRandom;
-use rand::{rngs::StdRng, SeedableRng};
+use rand::{rngs::StdRng, RngCore, SeedableRng};
 use regex::{Regex, RegexBuilder};
 use std::{
     error::Error,
@@ -86,21 +86,24 @@ pub fn run(config: Config) -> MyResult<()> {
     let fortunes = read_fortunes(&files)?;
 
     if let Some(pattern) = config.pattern {
-        let mut last_source: Option<String> = None;
+        let mut prev_source: Option<String> = None;
         for fortune in fortunes
             .iter()
             .filter(|fortune| pattern.is_match(&fortune.text))
         {
-            if last_source.map_or(true, |s| s != fortune.source) {
+            if prev_source.map_or(true, |s| s != fortune.source) {
                 eprintln!("({})\n%", fortune.source);
             }
             println!("{}\n%", fortune.text);
-            last_source = Some(fortune.source.clone());
+            prev_source = Some(fortune.source.clone());
         }
     } else {
-        if let Some(fortune) = pick_fortune(&fortunes, &config.seed) {
-            println!("{}", fortune);
-        }
+        println!(
+            "{}",
+            pick_fortune(&fortunes, &config.seed)
+                .or_else(|| Some("No fortunes found".to_string()))
+                .unwrap()
+        );
     }
 
     Ok(())
@@ -108,9 +111,33 @@ pub fn run(config: Config) -> MyResult<()> {
 
 // --------------------------------------------------
 fn parse_u64(val: &str) -> MyResult<u64> {
-    val.trim()
-        .parse()
+    val.parse()
         .map_err(|_| format!("\"{}\" not a valid integer", val).into())
+}
+
+// --------------------------------------------------
+fn find_files(paths: &[String]) -> MyResult<Vec<PathBuf>> {
+    let dat = OsStr::new("dat");
+    let mut files = vec![];
+
+    for path in paths {
+        match fs::metadata(path) {
+            Err(e) => return Err(format!("{}: {}", path, e).into()),
+            Ok(_) => files.extend(
+                WalkDir::new(path)
+                    .into_iter()
+                    .filter_map(|e| e.ok())
+                    .filter(|e| {
+                        e.file_type().is_file()
+                            && e.path().extension() != Some(dat)
+                    })
+                    .map(|e| e.path().into()),
+            ),
+        }
+    }
+
+    files.sort();
+    Ok(files.into_iter().unique().collect())
 }
 
 // --------------------------------------------------
@@ -124,11 +151,7 @@ fn read_fortunes(paths: &[PathBuf]) -> MyResult<Vec<Fortune>> {
             format!("{}: {}", path.to_string_lossy().into_owned(), e)
         })?;
 
-        for line in BufReader::new(file)
-            .lines()
-            .filter_map(Result::ok)
-            .map(|line| line.trim_end().to_owned())
-        {
+        for line in BufReader::new(file).lines().filter_map(Result::ok) {
             if line == "%" {
                 if !buffer.is_empty() {
                     let text = buffer.join("\n");
@@ -148,45 +171,13 @@ fn read_fortunes(paths: &[PathBuf]) -> MyResult<Vec<Fortune>> {
 }
 
 // --------------------------------------------------
-fn find_files(paths: &[String]) -> MyResult<Vec<PathBuf>> {
-    let dat = OsStr::new("dat");
-    let mut files = vec![];
-
-    for path in paths {
-        match fs::metadata(path) {
-            Err(e) => return Err(format!("{}: {}", path, e).into()),
-            Ok(_) => files.extend(
-                WalkDir::new(path)
-                    .into_iter()
-                    .filter_map(|e| e.ok())
-                    .filter(|e| {
-                        e.file_type().is_file()
-                            && e.path().extension() != Some(dat)
-                    })
-                    //.map(|e| Into::into(e.path())),
-                    //.map(|e| PathBuf::from(e.path())),
-                    .map(|e| e.path().into()),
-            ),
-        }
-    }
-
-    files.sort();
-    Ok(files.into_iter().unique().collect())
-}
-
-// --------------------------------------------------
 fn pick_fortune(fortunes: &[Fortune], seed: &Option<u64>) -> Option<String> {
-    //let fortune: Option<&Fortune> = match seed {
-    //    Some(val) => fortunes.choose(&mut StdRng::seed_from_u64(*val)),
-    //    _ => fortunes.choose(&mut rand::thread_rng()),
-    //};
-    //fortune.map(|f| f.text.to_string())
-
-    match seed {
-        Some(val) => fortunes.choose(&mut StdRng::seed_from_u64(*val)),
-        _ => fortunes.choose(&mut rand::thread_rng()),
-    }
-    .map(|f| f.text.to_string())
+    let mut rng: Box<dyn RngCore> = if let Some(val) = seed {
+        Box::new(StdRng::seed_from_u64(*val))
+    } else {
+        Box::new(rand::thread_rng())
+    };
+    fortunes.choose(&mut rng).map(|f| f.text.to_string())
 }
 
 // --------------------------------------------------
@@ -235,7 +226,7 @@ mod tests {
 
         // Check number and order of files
         let files = res.unwrap();
-        assert_eq!(files.len(), 4);
+        assert_eq!(files.len(), 5);
         let first = files.get(0).unwrap().display().to_string();
         assert!(first.contains("ascii-art"));
         let last = files.last().unwrap().display().to_string();

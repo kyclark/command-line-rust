@@ -7,6 +7,7 @@ type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 const PRG: &str = "fortuner";
 const FORTUNE_DIR: &str = "./tests/inputs";
+const EMPTY_DIR: &str = "./tests/inputs/empty";
 const JOKES: &str = "./tests/inputs/jokes";
 const LITERATURE: &str = "./tests/inputs/literature";
 const QUOTES: &str = "./tests/inputs/quotes";
@@ -68,6 +69,12 @@ fn run(args: &[&str], expected: &'static str) -> TestResult {
 
 // --------------------------------------------------
 #[test]
+fn no_fortunes_found() -> TestResult {
+    run(&[EMPTY_DIR], "No fortunes found\n")
+}
+
+// --------------------------------------------------
+#[test]
 fn quotes_seed_1() -> TestResult {
     run(
         &[QUOTES, "-s", "1"],
@@ -75,7 +82,7 @@ fn quotes_seed_1() -> TestResult {
     )
 }
 
-//// --------------------------------------------------
+// --------------------------------------------------
 #[test]
 fn jokes_seed_1() -> TestResult {
     run(
