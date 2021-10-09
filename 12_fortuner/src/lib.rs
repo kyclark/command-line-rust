@@ -86,7 +86,7 @@ pub fn run(config: Config) -> MyResult<()> {
     let fortunes = read_fortunes(&files)?;
 
     if let Some(pattern) = config.pattern {
-        let mut prev_source: Option<String> = None;
+        let mut prev_source = None;
         for fortune in fortunes
             .iter()
             .filter(|fortune| pattern.is_match(&fortune.text))
@@ -146,7 +146,8 @@ fn read_fortunes(paths: &[PathBuf]) -> MyResult<Vec<Fortune>> {
     let mut buffer = vec![];
 
     for path in paths {
-        let source = path.file_name().unwrap().to_string_lossy().into_owned();
+        let basename =
+            path.file_name().unwrap().to_string_lossy().into_owned();
         let file = File::open(path).map_err(|e| {
             format!("{}: {}", path.to_string_lossy().into_owned(), e)
         })?;
@@ -154,10 +155,9 @@ fn read_fortunes(paths: &[PathBuf]) -> MyResult<Vec<Fortune>> {
         for line in BufReader::new(file).lines().filter_map(Result::ok) {
             if line == "%" {
                 if !buffer.is_empty() {
-                    let text = buffer.join("\n");
                     fortunes.push(Fortune {
-                        source: source.clone(),
-                        text,
+                        source: basename.clone(),
+                        text: buffer.join("\n"),
                     });
                     buffer.clear();
                 }
