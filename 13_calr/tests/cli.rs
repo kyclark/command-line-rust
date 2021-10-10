@@ -1,4 +1,5 @@
 use assert_cmd::Command;
+use predicates::prelude::*;
 use std::{error::Error, fs};
 
 type TestResult = Result<(), Box<dyn Error>>;
@@ -68,6 +69,18 @@ fn dies_invalid_month() -> TestResult {
         .assert()
         .failure()
         .stderr("Invalid month \"foo\"\n");
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_y_and_year() -> TestResult {
+    let expected = "The argument '<YEAR>' cannot be used with '--year'";
+    Command::cargo_bin(PRG)?
+        .args(&["-y", "2000"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(expected));
     Ok(())
 }
 
