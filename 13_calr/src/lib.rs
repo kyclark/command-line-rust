@@ -8,6 +8,7 @@ use std::{error::Error, str::FromStr};
 pub struct Config {
     month: Option<u32>,
     year: i32,
+    today: NaiveDate,
 }
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
@@ -47,7 +48,7 @@ pub fn get_args() -> MyResult<Config> {
                 .short("y")
                 .long("year")
                 .help("Show whole current year")
-                .conflicts_with("year")
+                .conflicts_with_all(&["month", "year"])
                 .takes_value(false),
         )
         .arg(
@@ -57,21 +58,18 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let mut month = matches.value_of("month").map(parse_month).transpose()?;
+    let month = matches.value_of("month").map(parse_month).transpose()?;
     let mut year = matches.value_of("year").map(parse_year).transpose()?;
 
     let today = Local::today();
     if matches.is_present("show_current_year") {
-        month = None;
-        year = Some(today.year());
-    } else if month.is_none() && year.is_none() {
-        month = Some(today.month());
         year = Some(today.year());
     }
 
     Ok(Config {
         month,
         year: year.unwrap_or_else(|| today.year()),
+        today: today.naive_local(),
     })
 }
 
@@ -79,24 +77,22 @@ pub fn get_args() -> MyResult<Config> {
 pub fn run(config: Config) -> MyResult<()> {
     let month_nums = match config.month {
         Some(m) => vec![m],
-        _ => (1..=12).collect(),
+        None => (1..=12).collect(),
     };
-    let today = Local::today().naive_local();
 
     if month_nums.len() == 1 {
-        let month = format_month(
-            config.year,
-            *month_nums.get(0).unwrap(),
-            true,
-            today,
-        );
-        print!("{}", month.join("\n"));
+        let month =
+            format_month(config.year, month_nums[0], true, config.today);
+        println!("{}", month.join("\n"));
     } else {
         println!("{:32}", config.year);
-        let months: Vec<Vec<String>> = month_nums
+        let months: Vec<_> = month_nums
             .iter()
-            .map(|month| format_month(config.year, *month, false, today))
+            .map(|month| {
+                format_month(config.year, *month, false, config.today)
+            })
             .collect();
+
         for (i, chunk) in months.chunks(3).enumerate() {
             if let [m1, m2, m3] = chunk {
                 for lines in izip!(m1, m2, m3) {
@@ -108,32 +104,6 @@ pub fn run(config: Config) -> MyResult<()> {
             }
         }
     }
-
-    //let show_year = month_nums.len() == 1;
-    //let today = Local::today().naive_local();
-    //let months: Vec<Vec<String>> = month_nums
-    //    .iter()
-    //    .map(|month| format_month(config.year, *month, show_year, today))
-    //    .collect();
-
-    //if !show_year {
-    //    println!("{:32}", config.year);
-    //}
-
-    //for (i, chunk) in months.chunks(3).enumerate() {
-    //    match chunk {
-    //        [m1] => println!("{}", m1.join("\n")),
-    //        [m1, m2, m3] => {
-    //            for lines in izip!(m1, m2, m3) {
-    //                println!("{}{}{}", lines.0, lines.1, lines.2);
-    //            }
-    //            if i < 3 {
-    //                println!();
-    //            }
-    //        }
-    //        _ => {}
-    //    };
-    //}
 
     Ok(())
 }
@@ -197,6 +167,7 @@ fn last_day_in_month(year: i32, month: u32) -> NaiveDate {
     } else {
         (year, month + 1)
     };
+    // ...is preceded by the last day of the original month
     NaiveDate::from_ymd(y, m, 1).pred()
 }
 
@@ -213,39 +184,39 @@ fn format_month(
         .map(|_| "  ".to_string()) // two spaces
         .collect();
 
-    let is_today = |day: &u32| {
-        year == today.year() && month == today.month() && *day == today.day()
+    let is_today = |day: u32| {
+        year == today.year() && month == today.month() && day == today.day()
     };
 
     let last = last_day_in_month(year, month);
     days.extend((first.day()..=last.day()).into_iter().map(|num| {
         let fmt = format!("{:>2}", num);
-        if is_today(&num) {
+        if is_today(num) {
             Style::new().reverse().paint(fmt).to_string()
         } else {
             fmt
         }
     }));
 
+    let month_name = MONTH_NAMES[month as usize - 1];
     let mut lines = vec![];
-    if let Some(month_name) = MONTH_NAMES.iter().nth(month as usize - 1) {
-        lines.push(format!(
-            "{:^20}  ",
-            if print_year {
-                format!("{} {}", month_name, year)
-            } else {
-                month_name.to_string()
-            }
-        ));
-        lines.push("Su Mo Tu We Th Fr Sa  ".to_string());
-
-        for week in days.chunks(7) {
-            lines.push(format!(
-                "{:width$}  ",
-                week.join(" "),
-                width = LINE_WIDTH - 2
-            ));
+    lines.push(format!(
+        "{:^20}  ", // two trailing spaces
+        if print_year {
+            format!("{} {}", month_name, year)
+        } else {
+            month_name.to_string()
         }
+    ));
+
+    lines.push("Su Mo Tu We Th Fr Sa  ".to_string()); // two trailing spaces
+
+    for week in days.chunks(7) {
+        lines.push(format!(
+            "{:width$}  ", // two trailing spaces
+            week.join(" "),
+            width = LINE_WIDTH - 2
+        ));
     }
 
     while lines.len() < 8 {

@@ -74,6 +74,18 @@ fn dies_invalid_month() -> TestResult {
 
 // --------------------------------------------------
 #[test]
+fn dies_y_and_month() -> TestResult {
+    let expected = "The argument '-m <MONTH>' cannot be used with '--year'";
+    Command::cargo_bin(PRG)?
+        .args(&["-m", "1", "-y"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(expected));
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
 fn dies_y_and_year() -> TestResult {
     let expected = "The argument '<YEAR>' cannot be used with '--year'";
     Command::cargo_bin(PRG)?
@@ -148,6 +160,12 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
         .success()
         .stdout(expected);
     Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn test_2_2020_leap_year() -> TestResult {
+    run(&["-m", "2", "2020"], "tests/expected/2-2020.txt")
 }
 
 // --------------------------------------------------
