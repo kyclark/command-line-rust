@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 set -u
-
 DIR=${1:-$PWD}
 
 if [[ $DIR == "-h" ]] || [[ $DIR == "--help" ]]; then

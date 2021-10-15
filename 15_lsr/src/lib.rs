@@ -3,12 +3,7 @@ mod owner;
 use chrono::{DateTime, Local};
 use clap::{App, Arg};
 use owner::Owner;
-use std::{
-    error::Error,
-    fs,
-    os::unix::fs::{MetadataExt, PermissionsExt},
-    path::PathBuf,
-};
+use std::{error::Error, fs, os::unix::fs::MetadataExt, path::PathBuf};
 use tabular::{Row, Table};
 use users::{get_group_by_gid, get_user_by_uid};
 
@@ -119,7 +114,7 @@ fn format_output(paths: &[PathBuf]) -> MyResult<String> {
             .unwrap_or(format!("{}", gid));
 
         let file_type = if path.is_dir() { "d" } else { "-" };
-        let perms = format_mode(metadata.permissions().mode() as u16);
+        let perms = format_mode(metadata.mode());
         let modified: DateTime<Local> = DateTime::from(metadata.modified()?);
 
         table.add_row(
@@ -141,7 +136,7 @@ fn format_output(paths: &[PathBuf]) -> MyResult<String> {
 // --------------------------------------------------
 /// Given a file mode in octal format like 0o751,
 /// return a string like "rwxr-x--x"
-pub fn format_mode(mode: u16) -> String {
+fn format_mode(mode: u32) -> String {
     format!(
         "{}{}{}",
         mk_triple(mode, Owner::User),
@@ -153,7 +148,7 @@ pub fn format_mode(mode: u16) -> String {
 // --------------------------------------------------
 /// Given an octal number like 0o500 and an `Owner`,
 /// return a string like "r-x"
-pub fn mk_triple(mode: u16, owner: Owner) -> String {
+pub fn mk_triple(mode: u32, owner: Owner) -> String {
     let [read, write, execute] = owner.masks();
     format!(
         "{}{}{}",
@@ -171,6 +166,7 @@ mod test {
 
     #[test]
     fn test_find_files() {
+        // Find all non-hidden entries in a directory
         let res = find_files(&["tests/inputs".to_string()], false);
         assert!(res.is_ok());
         let mut filenames: Vec<_> = res
@@ -188,10 +184,41 @@ mod test {
                 "tests/inputs/fox.txt",
             ]
         );
+
+        // Any existing file should be found even if hidden
+        let res = find_files(&["tests/inputs/.hidden".to_string()], false);
+        assert!(res.is_ok());
+        let filenames: Vec<_> = res
+            .unwrap()
+            .iter()
+            .map(|entry| entry.display().to_string())
+            .collect();
+        assert_eq!(filenames, ["tests/inputs/.hidden"]);
+
+        // Test multiple path arguments
+        let res = find_files(
+            &[
+                "tests/inputs/bustle.txt".to_string(),
+                "tests/inputs/dir".to_string(),
+            ],
+            false,
+        );
+        assert!(res.is_ok());
+        let mut filenames: Vec<_> = res
+            .unwrap()
+            .iter()
+            .map(|entry| entry.display().to_string())
+            .collect();
+        filenames.sort();
+        assert_eq!(
+            filenames,
+            ["tests/inputs/bustle.txt", "tests/inputs/dir/spiders.txt"]
+        );
     }
 
     #[test]
     fn test_find_files_hidden() {
+        // Find all entries in a directory including hidden
         let res = find_files(&["tests/inputs".to_string()], true);
         assert!(res.is_ok());
         let mut filenames: Vec<_> = res
@@ -214,22 +241,31 @@ mod test {
 
     fn long_match(
         line: &str,
-        path: &str,
-        permissions: &str,
-        size: Option<&str>,
+        expected_name: &str,
+        expected_perms: &str,
+        expected_size: Option<&str>,
     ) {
         let parts: Vec<_> = line.split_whitespace().collect();
+        assert!(parts.len() > 0);
 
-        if let Some(file_path) = &parts.last() {
-            assert_eq!(file_path, &&path);
+        let file_perm = parts.get(0);
+        assert!(file_perm.is_some());
+        if let Some(perms) = file_perm {
+            assert_eq!(perms, &expected_perms);
         }
-        if let Some(file_perm) = &parts.get(0) {
-            assert_eq!(file_perm, &&permissions);
-        }
-        if let Some(size) = size {
-            if let Some(file_size) = &parts.get(4) {
-                assert_eq!(file_size, &&size);
+
+        if let Some(size) = expected_size {
+            let file_size = parts.get(4);
+            assert!(file_size.is_some());
+            if let Some(s) = file_size {
+                assert_eq!(s, &size);
             }
+        }
+
+        let display_name = parts.last();
+        assert!(display_name.is_some());
+        if let Some(name) = display_name {
+            assert_eq!(name, &expected_name);
         }
     }
 

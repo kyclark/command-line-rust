@@ -6,7 +6,7 @@ pub enum Owner {
 }
 
 impl Owner {
-    pub fn masks(self) -> [u16; 3] {
+    pub fn masks(self) -> [u32; 3] {
         match self {
             Self::User => [0o400, 0o200, 0o100],
             Self::Group => [0o040, 0o020, 0o010],
