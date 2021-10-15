@@ -173,18 +173,19 @@ mod test {
     fn test_find_files() {
         let res = find_files(&["tests/inputs".to_string()], false);
         assert!(res.is_ok());
-        let filenames: Vec<_> = res
+        let mut filenames: Vec<_> = res
             .unwrap()
             .iter()
             .map(|entry| entry.display().to_string())
             .collect();
+        filenames.sort();
         assert_eq!(
             filenames,
             [
-                "tests/inputs/empty.txt",
                 "tests/inputs/bustle.txt",
-                "tests/inputs/fox.txt",
                 "tests/inputs/dir",
+                "tests/inputs/empty.txt",
+                "tests/inputs/fox.txt",
             ]
         );
     }
@@ -193,19 +194,20 @@ mod test {
     fn test_find_files_hidden() {
         let res = find_files(&["tests/inputs".to_string()], true);
         assert!(res.is_ok());
-        let filenames: Vec<_> = res
+        let mut filenames: Vec<_> = res
             .unwrap()
             .iter()
             .map(|entry| entry.display().to_string())
             .collect();
+        filenames.sort();
         assert_eq!(
             filenames,
             [
                 "tests/inputs/.hidden",
-                "tests/inputs/empty.txt",
                 "tests/inputs/bustle.txt",
-                "tests/inputs/fox.txt",
                 "tests/inputs/dir",
+                "tests/inputs/empty.txt",
+                "tests/inputs/fox.txt",
             ]
         );
     }
