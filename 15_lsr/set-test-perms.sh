@@ -2,12 +2,12 @@
 
 set -u
 
-if [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
+DIR=${1:-$PWD}
+
+if [[ $DIR == "-h" ]] || [[ $DIR == "--help" ]]; then
     printf "Usage: %s DIR\n" $(basename "$0")
     exit 0
 fi
-
-DIR=${1:-$PWD}
 
 chmod 755 ${DIR}/tests/inputs/dir
 chmod 600 ${DIR}/tests/inputs/fox.txt

@@ -11,7 +11,6 @@ use std::{
 };
 use tabular::{Row, Table};
 use users::{get_group_by_gid, get_user_by_uid};
-use walkdir::WalkDir;
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
@@ -75,14 +74,12 @@ pub fn run(config: Config) -> MyResult<()> {
 // --------------------------------------------------
 fn find_files(paths: &[String], show_hidden: bool) -> MyResult<Vec<PathBuf>> {
     let mut results = vec![];
-    for filename in paths {
-        match fs::metadata(filename) {
-            Err(e) => eprintln!("{}: {}", filename, e),
+    for name in paths {
+        match fs::metadata(name) {
+            Err(e) => eprintln!("{}: {}", name, e),
             Ok(meta) => {
                 if meta.is_dir() {
-                    for entry in
-                        WalkDir::new(filename).min_depth(1).max_depth(1)
-                    {
+                    for entry in fs::read_dir(name)? {
                         let entry = entry?;
                         let path = entry.path();
                         let is_hidden =
@@ -94,7 +91,7 @@ fn find_files(paths: &[String], show_hidden: bool) -> MyResult<Vec<PathBuf>> {
                         }
                     }
                 } else {
-                    results.push(PathBuf::from(filename));
+                    results.push(PathBuf::from(name));
                 }
             }
         }
@@ -170,55 +167,47 @@ pub fn mk_triple(mode: u16, owner: Owner) -> String {
 #[cfg(test)]
 mod test {
     use super::{find_files, format_mode, format_output, mk_triple, Owner};
-    use std::{collections::HashSet, path::PathBuf};
+    use std::path::PathBuf;
 
     #[test]
     fn test_find_files() {
         let res = find_files(&["tests/inputs".to_string()], false);
         assert!(res.is_ok());
-
-        let paths = res.unwrap();
-        assert_eq!(paths.len(), 4);
-
-        let filenames: HashSet<String> = paths
+        let filenames: Vec<_> = res
+            .unwrap()
             .iter()
-            .map(|path| path.display().to_string())
+            .map(|entry| entry.display().to_string())
             .collect();
-        let expected: HashSet<String> = [
-            "tests/inputs/bustle.txt",
-            "tests/inputs/dir",
-            "tests/inputs/empty.txt",
-            "tests/inputs/fox.txt",
-        ]
-        .iter()
-        .map(|v| v.to_string())
-        .collect();
-        assert_eq!(filenames, expected);
+        assert_eq!(
+            filenames,
+            [
+                "tests/inputs/empty.txt",
+                "tests/inputs/bustle.txt",
+                "tests/inputs/fox.txt",
+                "tests/inputs/dir",
+            ]
+        );
     }
 
     #[test]
     fn test_find_files_hidden() {
         let res = find_files(&["tests/inputs".to_string()], true);
         assert!(res.is_ok());
-
-        let paths = res.unwrap();
-        assert_eq!(paths.len(), 5);
-
-        let filenames: HashSet<String> = paths
+        let filenames: Vec<_> = res
+            .unwrap()
             .iter()
-            .map(|path| path.display().to_string())
+            .map(|entry| entry.display().to_string())
             .collect();
-        let expected: HashSet<String> = [
-            "tests/inputs/.hidden",
-            "tests/inputs/bustle.txt",
-            "tests/inputs/dir",
-            "tests/inputs/empty.txt",
-            "tests/inputs/fox.txt",
-        ]
-        .iter()
-        .map(|v| v.to_string())
-        .collect();
-        assert_eq!(filenames, expected);
+        assert_eq!(
+            filenames,
+            [
+                "tests/inputs/.hidden",
+                "tests/inputs/empty.txt",
+                "tests/inputs/bustle.txt",
+                "tests/inputs/fox.txt",
+                "tests/inputs/dir",
+            ]
+        );
     }
 
     fn long_match(

@@ -33,8 +33,7 @@ pub fn get_args() -> MyResult<Config> {
                 .long("delimiter")
                 .value_name("DELIMITER")
                 .help("Delimiter")
-                .default_value("\\t")
-                .takes_value(true),
+                .default_value("\\t"),
         )
         .arg(
             Arg::with_name("serial")
@@ -67,20 +66,18 @@ pub fn run(config: Config) -> MyResult<()> {
         match open(&filename) {
             Err(err) => eprintln!("{}: {}", filename, err),
             Ok(file) => {
-                let lines = file.lines().filter_map(|line| line.ok());
+                let lines = file.lines().filter_map(|line| line.ok()).fuse();
                 files.push(lines);
             }
         }
     }
 
     if config.serial {
-        let delims = &mut config.delimiters.into_iter().cycle();
-        for file in files {
-            let mut out = String::new();
-            for (i, line) in file.enumerate() {
-                if i > 0 {
-                    out += &delims.next().unwrap();
-                }
+        let delims = config.delimiters.into_iter().cycle();
+        for mut file in files {
+            let mut out = file.next().unwrap_or_default();
+            for (delim, line) in delims.clone().zip(file) {
+                out += &delim;
                 out += &line;
             }
             println!("{}", out);
@@ -112,28 +109,16 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
 
 // --------------------------------------------------
 fn parse_delimiters(given: &str) -> MyResult<Vec<String>> {
-    let mut chrs = given.chars().collect::<Vec<_>>().into_iter().peekable();
+    let mut chrs = given.chars();
     let mut results = vec![];
     while let Some(chr) = chrs.next() {
         if chr == '\\' {
-            let esc = match &chrs.peek() {
+            let esc = match chrs.next() {
                 None => Err("Lone backslash".to_string()),
-                Some('n') => {
-                    chrs.next();
-                    Ok("\n".to_string())
-                }
-                Some('t') => {
-                    chrs.next();
-                    Ok("\t".to_string())
-                }
-                Some('\\') => {
-                    chrs.next();
-                    Ok("\\".to_string())
-                }
-                Some('0') => {
-                    chrs.next();
-                    Ok("".to_string())
-                }
+                Some('n') => Ok("\n".to_string()),
+                Some('t') => Ok("\t".to_string()),
+                Some('\\') => Ok("\\".to_string()),
+                Some('0') => Ok("".to_string()),
                 Some(c) => Err(format!("Unknown escape \"\\{}\"", c)),
             }?;
             results.push(esc);
