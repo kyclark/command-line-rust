@@ -185,7 +185,7 @@ fn dir_long(args: &[&str], expected: &[(&str, &str, &str)]) -> TestResult {
         let parts: Vec<_> = line.split_whitespace().collect();
         let path = parts.last().unwrap().clone();
         let permissions = parts.get(0).unwrap().clone();
-        let size = match permissions.chars().collect::<Vec<_>>().get(0) {
+        let size = match permissions.chars().next() {
             Some('d') => "",
             _ => parts.get(4).unwrap().clone(),
         };

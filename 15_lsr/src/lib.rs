@@ -78,8 +78,8 @@ fn find_files(paths: &[String], show_hidden: bool) -> MyResult<Vec<PathBuf>> {
                         let entry = entry?;
                         let path = entry.path();
                         let is_hidden =
-                            path.file_name().map_or(false, |name| {
-                                name.to_string_lossy().starts_with('.')
+                            path.file_name().map_or(false, |file_name| {
+                                file_name.to_string_lossy().starts_with('.')
                             });
                         if !is_hidden || show_hidden {
                             results.push(PathBuf::from(entry.path()));
@@ -111,7 +111,7 @@ fn format_output(paths: &[PathBuf]) -> MyResult<String> {
         let gid = metadata.gid();
         let group = get_group_by_gid(gid)
             .map(|g| g.name().to_string_lossy().into_owned())
-            .unwrap_or(format!("{}", gid));
+            .unwrap_or_else(|| gid.to_string());
 
         let file_type = if path.is_dir() { "d" } else { "-" };
         let perms = format_mode(metadata.mode());
@@ -148,7 +148,7 @@ fn format_mode(mode: u32) -> String {
 // --------------------------------------------------
 /// Given an octal number like 0o500 and an `Owner`,
 /// return a string like "r-x"
-pub fn mk_triple(mode: u32, owner: Owner) -> String {
+fn mk_triple(mode: u32, owner: Owner) -> String {
     let [read, write, execute] = owner.masks();
     format!(
         "{}{}{}",
@@ -246,27 +246,18 @@ mod test {
         expected_size: Option<&str>,
     ) {
         let parts: Vec<_> = line.split_whitespace().collect();
-        assert!(parts.len() > 0);
+        assert!(parts.len() > 0 && parts.len() <= 10);
 
-        let file_perm = parts.get(0);
-        assert!(file_perm.is_some());
-        if let Some(perms) = file_perm {
-            assert_eq!(perms, &expected_perms);
-        }
+        let perms = parts.get(0).unwrap();
+        assert_eq!(perms, &expected_perms);
 
         if let Some(size) = expected_size {
-            let file_size = parts.get(4);
-            assert!(file_size.is_some());
-            if let Some(s) = file_size {
-                assert_eq!(s, &size);
-            }
+            let file_size = parts.get(4).unwrap();
+            assert_eq!(file_size, &size);
         }
 
-        let display_name = parts.last();
-        assert!(display_name.is_some());
-        if let Some(name) = display_name {
-            assert_eq!(name, &expected_name);
-        }
+        let display_name = parts.last().unwrap();
+        assert_eq!(display_name, &expected_name);
     }
 
     #[test]
