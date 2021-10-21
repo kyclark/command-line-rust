@@ -291,6 +291,10 @@ mod tests {
         assert_eq!(get_start_index(&TakeNum(-1), 10), Some(9));
         assert_eq!(get_start_index(&TakeNum(-2), 10), Some(8));
         assert_eq!(get_start_index(&TakeNum(-3), 10), Some(7));
+
+        // When the starting line/byte is negative and more than the total,
+        // return 0 to print the whole file
+        assert_eq!(get_start_index(&TakeNum(-20), 10), Some(0));
     }
 
     #[test]

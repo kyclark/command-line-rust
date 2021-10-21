@@ -1,7 +1,6 @@
 use clap::{App, Arg};
-use itertools::Itertools;
 use rand::prelude::SliceRandom;
-use rand::{rngs::StdRng, RngCore, SeedableRng};
+use rand::{rngs::StdRng, SeedableRng};
 use regex::{Regex, RegexBuilder};
 use std::{
     error::Error,
@@ -91,16 +90,16 @@ pub fn run(config: Config) -> MyResult<()> {
             .iter()
             .filter(|fortune| pattern.is_match(&fortune.text))
         {
-            if prev_source.map_or(true, |s| s != fortune.source) {
+            if prev_source.as_ref().map_or(true, |s| s != &fortune.source) {
                 eprintln!("({})\n%", fortune.source);
+                prev_source = Some(fortune.source.clone());
             }
             println!("{}\n%", fortune.text);
-            prev_source = Some(fortune.source.clone());
         }
     } else {
         println!(
             "{}",
-            pick_fortune(&fortunes, &config.seed)
+            pick_fortune(&fortunes, config.seed)
                 .or_else(|| Some("No fortunes found".to_string()))
                 .unwrap()
         );
@@ -126,7 +125,7 @@ fn find_files(paths: &[String]) -> MyResult<Vec<PathBuf>> {
             Ok(_) => files.extend(
                 WalkDir::new(path)
                     .into_iter()
-                    .filter_map(|e| e.ok())
+                    .filter_map(Result::ok)
                     .filter(|e| {
                         e.file_type().is_file()
                             && e.path().extension() != Some(dat)
@@ -137,7 +136,8 @@ fn find_files(paths: &[String]) -> MyResult<Vec<PathBuf>> {
     }
 
     files.sort();
-    Ok(files.into_iter().unique().collect())
+    files.dedup();
+    Ok(files)
 }
 
 // --------------------------------------------------
@@ -171,13 +171,14 @@ fn read_fortunes(paths: &[PathBuf]) -> MyResult<Vec<Fortune>> {
 }
 
 // --------------------------------------------------
-fn pick_fortune(fortunes: &[Fortune], seed: &Option<u64>) -> Option<String> {
-    let mut rng: Box<dyn RngCore> = if let Some(val) = seed {
-        Box::new(StdRng::seed_from_u64(*val))
+fn pick_fortune(fortunes: &[Fortune], seed: Option<u64>) -> Option<String> {
+    if let Some(val) = seed {
+        let mut rng = StdRng::seed_from_u64(val);
+        fortunes.choose(&mut rng).map(|f| f.text.to_string())
     } else {
-        Box::new(rand::thread_rng())
-    };
-    fortunes.choose(&mut rng).map(|f| f.text.to_string())
+        let mut rng = rand::thread_rng();
+        fortunes.choose(&mut rng).map(|f| f.text.to_string())
+    }
 }
 
 // --------------------------------------------------
@@ -302,7 +303,7 @@ mod tests {
 
         // Pick a fortune with a seed
         assert_eq!(
-            pick_fortune(fortunes, &Some(1)).unwrap(),
+            pick_fortune(fortunes, Some(1)).unwrap(),
             "Neckties strangle clear thinking.".to_string()
         );
     }

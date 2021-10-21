@@ -1,14 +1,13 @@
 [package]
 name = "fortuner"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 clap = "2.33"
 rand = "0.8"
 walkdir = "2"
 regex = "1"
-itertools = "0.10"
 
 [dev-dependencies]
 assert_cmd = "1"

@@ -5,8 +5,10 @@ cd $DIR
 rm -f *.dat
 
 for FILE in *; do
-    echo $FILE
-    strfile -c % $FILE $FILE.dat > /dev/null
+    if [[ -f $FILE ]]; then
+        echo $FILE
+        strfile -c % $FILE $FILE.dat > /dev/null
+    fi
 done
 
 echo "Done."
