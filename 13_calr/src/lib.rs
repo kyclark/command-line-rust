@@ -120,7 +120,8 @@ fn parse_year(year: &str) -> MyResult<i32> {
         if (1..=9999).contains(&num) {
             Ok(num)
         } else {
-            Err(format!("year \"{}\" not in the range 1..9999", year).into())
+            Err(format!("year \"{}\" not in the range 1 through 9999", year)
+                .into())
         }
     })
 }
@@ -132,8 +133,11 @@ fn parse_month(month: &str) -> MyResult<u32> {
             if (1..=12).contains(&num) {
                 Ok(num)
             } else {
-                Err(format!("month \"{}\" not in the range 1..12", month)
-                    .into())
+                Err(format!(
+                    "month \"{}\" not in the range 1 through 12",
+                    month
+                )
+                .into())
             }
         }
         _ => {
@@ -199,7 +203,7 @@ fn format_month(
     }));
 
     let month_name = MONTH_NAMES[month as usize - 1];
-    let mut lines = vec![];
+    let mut lines = Vec::with_capacity(8);
     lines.push(format!(
         "{:^20}  ", // two trailing spaces
         if print_year {
@@ -266,14 +270,14 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "year \"0\" not in the range 1..9999"
+            "year \"0\" not in the range 1 through 9999"
         );
 
         let res = parse_year("10000");
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "year \"10000\" not in the range 1..9999"
+            "year \"10000\" not in the range 1 through 9999"
         );
 
         let res = parse_year("foo");
@@ -299,14 +303,14 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "month \"0\" not in the range 1..12"
+            "month \"0\" not in the range 1 through 12"
         );
 
         let res = parse_month("13");
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "month \"13\" not in the range 1..12"
+            "month \"13\" not in the range 1 through 12"
         );
 
         let res = parse_month("foo");

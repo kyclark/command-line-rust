@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-ROOT="./tests/inputs"
+INPUTS="./tests/inputs"
 OUT_DIR="./tests/expected"
 
 [[ ! -d "$OUT_DIR" ]] && mkdir -p "$OUT_DIR"
 
-for FILE in $ROOT/*.txt; do
+for FILE in $INPUTS/*.txt; do
     BASENAME=$(basename "$FILE")
     head      $FILE > ${OUT_DIR}/${BASENAME}.out
     head -n 2 $FILE > ${OUT_DIR}/${BASENAME}.n2.out
@@ -15,7 +15,8 @@ for FILE in $ROOT/*.txt; do
     head -c 4 $FILE > ${OUT_DIR}/${BASENAME}.c4.out
 done
 
-ALL="$ROOT/empty.txt $ROOT/one.txt $ROOT/two.txt $ROOT/three.txt"
+ALL="$INPUTS/empty.txt $INPUTS/one.txt $INPUTS/two.txt $INPUTS/three.txt \
+    $INPUTS/ten.txt"
 head      $ALL > $OUT_DIR/all.out
 head -n 2 $ALL > $OUT_DIR/all.n2.out
 head -n 4 $ALL > $OUT_DIR/all.n4.out

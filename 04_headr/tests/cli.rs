@@ -14,6 +14,7 @@ const EMPTY: &str = "./tests/inputs/empty.txt";
 const ONE: &str = "./tests/inputs/one.txt";
 const TWO: &str = "./tests/inputs/two.txt";
 const THREE: &str = "./tests/inputs/three.txt";
+const TEN: &str = "./tests/inputs/ten.txt";
 
 // --------------------------------------------------
 fn random_string() -> String {
@@ -324,14 +325,65 @@ fn three_c4_stdin() -> TestResult {
 
 // --------------------------------------------------
 #[test]
+fn ten() -> TestResult {
+    run(&[TEN], "tests/expected/ten.txt.out")
+}
+
+#[test]
+fn ten_n2() -> TestResult {
+    run(&[TEN, "-n", "2"], "tests/expected/ten.txt.n2.out")
+}
+
+#[test]
+fn ten_n4() -> TestResult {
+    run(&[TEN, "-n", "4"], "tests/expected/ten.txt.n4.out")
+}
+
+#[test]
+fn ten_c2() -> TestResult {
+    run(&[TEN, "-c", "2"], "tests/expected/ten.txt.c2.out")
+}
+
+#[test]
+fn ten_c4() -> TestResult {
+    run(&[TEN, "-c", "4"], "tests/expected/ten.txt.c4.out")
+}
+
+#[test]
+fn ten_stdin() -> TestResult {
+    run_stdin(&[], TEN, "tests/expected/ten.txt.out")
+}
+
+#[test]
+fn ten_n2_stdin() -> TestResult {
+    run_stdin(&["-n", "2"], TEN, "tests/expected/ten.txt.n2.out")
+}
+
+#[test]
+fn ten_n4_stdin() -> TestResult {
+    run_stdin(&["-n", "4"], TEN, "tests/expected/ten.txt.n4.out")
+}
+
+#[test]
+fn ten_c2_stdin() -> TestResult {
+    run_stdin(&["-c", "2"], TEN, "tests/expected/ten.txt.c2.out")
+}
+
+#[test]
+fn ten_c4_stdin() -> TestResult {
+    run_stdin(&["-c", "4"], TEN, "tests/expected/ten.txt.c4.out")
+}
+
+// --------------------------------------------------
+#[test]
 fn multiple_files() -> TestResult {
-    run(&[EMPTY, ONE, TWO, THREE], "tests/expected/all.out")
+    run(&[EMPTY, ONE, TWO, THREE, TEN], "tests/expected/all.out")
 }
 
 #[test]
 fn multiple_files_n2() -> TestResult {
     run(
-        &[EMPTY, ONE, TWO, THREE, "-n", "2"],
+        &[EMPTY, ONE, TWO, THREE, TEN, "-n", "2"],
         "tests/expected/all.n2.out",
     )
 }
@@ -339,7 +391,7 @@ fn multiple_files_n2() -> TestResult {
 #[test]
 fn multiple_files_n4() -> TestResult {
     run(
-        &["-n", "4", EMPTY, ONE, TWO, THREE],
+        &["-n", "4", EMPTY, ONE, TWO, THREE, TEN],
         "tests/expected/all.n4.out",
     )
 }
@@ -347,7 +399,7 @@ fn multiple_files_n4() -> TestResult {
 #[test]
 fn multiple_files_c1() -> TestResult {
     run(
-        &[EMPTY, ONE, TWO, THREE, "-c", "1"],
+        &[EMPTY, ONE, TWO, THREE, TEN, "-c", "1"],
         "tests/expected/all.c1.out",
     )
 }
@@ -355,7 +407,7 @@ fn multiple_files_c1() -> TestResult {
 #[test]
 fn multiple_files_c2() -> TestResult {
     run(
-        &[EMPTY, ONE, TWO, THREE, "-c", "2"],
+        &[EMPTY, ONE, TWO, THREE, TEN, "-c", "2"],
         "tests/expected/all.c2.out",
     )
 }
@@ -363,7 +415,7 @@ fn multiple_files_c2() -> TestResult {
 #[test]
 fn multiple_files_c4() -> TestResult {
     run(
-        &["-c", "4", EMPTY, ONE, TWO, THREE],
+        &["-c", "4", EMPTY, ONE, TWO, THREE, TEN],
         "tests/expected/all.c4.out",
     )
 }

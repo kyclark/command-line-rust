@@ -10,3 +10,7 @@ Four words.
 ==> ./tests/inputs/three.txt <==
 Three
 lines,
+
+==> ./tests/inputs/ten.txt <==
+one
+two

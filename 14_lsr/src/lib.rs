@@ -146,7 +146,7 @@ fn format_mode(mode: u32) -> String {
 }
 
 // --------------------------------------------------
-/// Given an octal number like 0o500 and an `Owner`,
+/// Given an octal number like 0o500 and an [`Owner`],
 /// return a string like "r-x"
 fn mk_triple(mode: u32, owner: Owner) -> String {
     let [read, write, execute] = owner.masks();

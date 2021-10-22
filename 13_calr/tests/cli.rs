@@ -13,7 +13,7 @@ fn dies_year_0() -> TestResult {
         .arg("0")
         .assert()
         .failure()
-        .stderr("year \"0\" not in the range 1..9999\n");
+        .stderr("year \"0\" not in the range 1 through 9999\n");
     Ok(())
 }
 
@@ -24,7 +24,7 @@ fn dies_year_13() -> TestResult {
         .arg("10000")
         .assert()
         .failure()
-        .stderr("year \"10000\" not in the range 1..9999\n");
+        .stderr("year \"10000\" not in the range 1 through 9999\n");
     Ok(())
 }
 
@@ -46,7 +46,7 @@ fn dies_month_0() -> TestResult {
         .args(&["-m", "0"])
         .assert()
         .failure()
-        .stderr("month \"0\" not in the range 1..12\n");
+        .stderr("month \"0\" not in the range 1 through 12\n");
     Ok(())
 }
 
@@ -57,7 +57,7 @@ fn dies_month_13() -> TestResult {
         .args(&["-m", "13"])
         .assert()
         .failure()
-        .stderr("month \"13\" not in the range 1..12\n");
+        .stderr("month \"13\" not in the range 1 through 12\n");
     Ok(())
 }
 
