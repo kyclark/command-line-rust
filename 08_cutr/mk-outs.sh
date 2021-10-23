@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
+set -u
+
 CSV="tests/inputs/movies1.csv"
 TSV="tests/inputs/movies1.tsv"
+BOOKS="tests/inputs/books.tsv"
 OUT_DIR="tests/expected"
 
 [[ ! -d "$OUT_DIR" ]] && mkdir -p "$OUT_DIR"
@@ -21,3 +24,5 @@ for POS in 1 2 8 1-2 2-3 1-8; do
     cut -c $POS $TSV > "$OUT_DIR/$(basename $TSV).c${POS}.out"
     cut -c $POS $CSV > "$OUT_DIR/$(basename $CSV).c${POS}.out"
 done
+
+echo -e "AA\nÉÉ\nSS\nJJ" > "$OUT_DIR/books.c1,1.out"

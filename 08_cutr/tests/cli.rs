@@ -8,7 +8,7 @@ type TestResult = Result<(), Box<dyn std::error::Error>>;
 const PRG: &str = "cutr";
 const CSV: &str = "tests/inputs/movies1.csv";
 const TSV: &str = "tests/inputs/movies1.tsv";
-const BOOKS: &str = "tests/inputs/books.csv";
+const BOOKS: &str = "tests/inputs/books.tsv";
 
 // --------------------------------------------------
 fn random_string() -> String {
@@ -148,6 +148,7 @@ fn dies_chars_bytes() -> TestResult {
 
 // --------------------------------------------------
 fn run(args: &[&str], expected_file: &str) -> TestResult {
+    println!("expected {}", &expected_file);
     let expected = fs::read_to_string(expected_file)?;
     Command::cargo_bin(PRG)?
         .args(args)
@@ -333,9 +334,6 @@ fn tsv_c1_8() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn books() -> TestResult {
-    run(
-        &[BOOKS, "-d", ",", "-f", "1,3"],
-        "tests/inputs/books.f1-3.out",
-    )
+fn repeated_value() -> TestResult {
+    run(&[BOOKS, "-c", "1,1"], "tests/expected/books.c1,1.out")
 }

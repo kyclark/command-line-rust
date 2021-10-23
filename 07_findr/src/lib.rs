@@ -15,7 +15,7 @@ enum EntryType {
 
 #[derive(Debug)]
 pub struct Config {
-    dirs: Vec<String>,
+    paths: Vec<String>,
     names: Vec<Regex>,
     entry_types: Vec<EntryType>,
 }
@@ -27,9 +27,9 @@ pub fn get_args() -> MyResult<Config> {
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust find")
         .arg(
-            Arg::with_name("dirs")
-                .value_name("DIR")
-                .help("Search directory")
+            Arg::with_name("paths")
+                .value_name("PATH")
+                .help("Search paths")
                 .default_value(".")
                 .multiple(true),
         )
@@ -83,7 +83,7 @@ pub fn get_args() -> MyResult<Config> {
         .unwrap_or_default();
 
     Ok(Config {
-        dirs: matches.values_of_lossy("dirs").unwrap(),
+        paths: matches.values_of_lossy("paths").unwrap(),
         names,
         entry_types,
     })
@@ -111,8 +111,8 @@ pub fn run(config: Config) -> MyResult<()> {
                 .any(|re| re.is_match(&entry.file_name().to_string_lossy()))
     };
 
-    for dirname in &config.dirs {
-        let entries = WalkDir::new(dirname)
+    for path in &config.paths {
+        let entries = WalkDir::new(path)
             .into_iter()
             .filter_map(|e| match e {
                 Err(e) => {
