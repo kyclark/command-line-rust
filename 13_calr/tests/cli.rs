@@ -164,6 +164,18 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
 
 // --------------------------------------------------
 #[test]
+fn default_one_month() -> TestResult {
+    let cmd = Command::cargo_bin(PRG)?.assert().success();
+    let out = cmd.get_output();
+    let stdout = String::from_utf8(out.stdout.clone())?;
+    let lines: Vec<_> = stdout.split("\n").collect();
+    assert_eq!(lines.len(), 9);
+    assert_eq!(lines[0].len(), 22);
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
 fn test_2_2020_leap_year() -> TestResult {
     run(&["-m", "2", "2020"], "tests/expected/2-2020.txt")
 }

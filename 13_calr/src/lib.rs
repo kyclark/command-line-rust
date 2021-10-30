@@ -58,11 +58,15 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let month = matches.value_of("month").map(parse_month).transpose()?;
+    let mut month = matches.value_of("month").map(parse_month).transpose()?;
     let mut year = matches.value_of("year").map(parse_year).transpose()?;
 
     let today = Local::today();
     if matches.is_present("show_current_year") {
+        month = None;
+        year = Some(today.year());
+    } else if month.is_none() && year.is_none() {
+        month = Some(today.month());
         year = Some(today.year());
     }
 
@@ -75,35 +79,36 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
-    let month_nums = match config.month {
-        Some(m) => vec![m],
-        None => (1..=12).collect(),
-    };
+    println!("{:?}", config);
+    //let month_nums = match config.month {
+    //    Some(m) => vec![m],
+    //    None => (1..=12).collect(),
+    //};
 
-    if month_nums.len() == 1 {
-        let month =
-            format_month(config.year, month_nums[0], true, config.today);
-        println!("{}", month.join("\n"));
-    } else {
-        println!("{:32}", config.year);
-        let months: Vec<_> = month_nums
-            .iter()
-            .map(|month| {
-                format_month(config.year, *month, false, config.today)
-            })
-            .collect();
+    //if month_nums.len() == 1 {
+    //    let month =
+    //        format_month(config.year, month_nums[0], true, config.today);
+    //    println!("{}", month.join("\n"));
+    //} else {
+    //    println!("{:32}", config.year);
+    //    let months: Vec<_> = month_nums
+    //        .iter()
+    //        .map(|month| {
+    //            format_month(config.year, *month, false, config.today)
+    //        })
+    //        .collect();
 
-        for (i, chunk) in months.chunks(3).enumerate() {
-            if let [m1, m2, m3] = chunk {
-                for lines in izip!(m1, m2, m3) {
-                    println!("{}{}{}", lines.0, lines.1, lines.2);
-                }
-                if i < 3 {
-                    println!();
-                }
-            }
-        }
-    }
+    //    for (i, chunk) in months.chunks(3).enumerate() {
+    //        if let [m1, m2, m3] = chunk {
+    //            for lines in izip!(m1, m2, m3) {
+    //                println!("{}{}{}", lines.0, lines.1, lines.2);
+    //            }
+    //            if i < 3 {
+    //                println!();
+    //            }
+    //        }
+    //    }
+    //}
 
     Ok(())
 }

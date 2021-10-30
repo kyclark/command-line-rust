@@ -5,3 +5,6 @@ edition = "2021"
 
 [dependencies]
 transpose = "0.2"
+
+[dev-dependencies]
+assert_cmd = "1"
