@@ -1,6 +1,6 @@
-# Systems Programming with Rust: A Project-Based Primer
+# Command-Line Rust: A Project-Based Primer for Writing Rust CLIs
 
-This is the code repository for the O'Reilly book [_Systems Programming with Rust_](https://learning.oreilly.com/library/view/hands-on-systems-programming/9781098109424/) (ISBN 9781098109417) by Ken Youens-Clark.
+This is the code repository for the O'Reilly book [_Command-Line Rust_](https://learning.oreilly.com/library/view/command-line-rust/9781098109424/) (ISBN 9781098109417) by Ken Youens-Clark.
 
 For several consecutive years, Rust has been voted "most loved programming language" in Stack Overflow's annual developer survey. This open source systems programming language is now used for everything from game engines and operating systems to browser components and virtual reality simulation engines. But Rust is also an incredibly complex language with a notoriously difficult learning curve.
 
@@ -8,10 +8,10 @@ Rather than focus on the language as a whole, this guide teaches Rust using a si
 
 Discover how to:
 
-* Use Rust's standard libraries and data types such as strings, vectors, dictionaries, and sets to create systems programs
+* Use Rust's standard libraries and data types to create command-line programs
 * Write and test Rust programs and functions
 * Read and write files, including stdin, stdout, and stderr
 * Document and validate command-line arguments
 * Write programs that fail gracefully
-* Parse raw and delimited text as well as Excel data
+* Parse raw and delimited text
 * Use and control randomness
