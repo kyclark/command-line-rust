@@ -10,6 +10,6 @@ users = "0.11"
 tabular = "0.1.4"
 
 [dev-dependencies]
-assert_cmd = "1"
-predicates = "1"
+assert_cmd = "2"
+predicates = "2"
 rand = "0.8"

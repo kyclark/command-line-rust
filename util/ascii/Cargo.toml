@@ -7,4 +7,4 @@ edition = "2021"
 transpose = "0.2"
 
 [dev-dependencies]
-assert_cmd = "1"
+assert_cmd = "2"
