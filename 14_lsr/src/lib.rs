@@ -185,26 +185,6 @@ mod test {
             ]
         );
 
-        // Find all entries in a directory
-        let res = find_files(&["tests/inputs".to_string()], true);
-        assert!(res.is_ok());
-        let mut filenames: Vec<_> = res
-            .unwrap()
-            .iter()
-            .map(|entry| entry.display().to_string())
-            .collect();
-        filenames.sort();
-        assert_eq!(
-            filenames,
-            [
-                "tests/inputs/.hidden",
-                "tests/inputs/bustle.txt",
-                "tests/inputs/dir",
-                "tests/inputs/empty.txt",
-                "tests/inputs/fox.txt",
-            ]
-        );
-
         // Any existing file should be found even if hidden
         let res = find_files(&["tests/inputs/.hidden".to_string()], false);
         assert!(res.is_ok());
