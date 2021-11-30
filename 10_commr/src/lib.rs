@@ -69,7 +69,7 @@ pub fn get_args() -> MyResult<Config> {
             Arg::with_name("insensitive")
                 .short("i")
                 .takes_value(false)
-                .help("Case insensitive comparison of lines"),
+                .help("Case-insensitive comparison of lines"),
         )
         .arg(
             Arg::with_name("delimiter")
