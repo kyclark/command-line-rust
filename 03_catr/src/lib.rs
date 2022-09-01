@@ -51,15 +51,16 @@ pub fn get_args() -> MyResult<Config> {
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
+    let mut last_num = 0;
     for filename in config.files {
         match open(&filename) {
             Err(e) => eprintln!("{}: {}", filename, e),
             Ok(file) => {
-                let mut last_num = 0;
-                for (line_num, line_result) in file.lines().enumerate() {
+                for line_result in file.lines() {
                     let line = line_result?;
                     if config.number_lines {
-                        println!("{:6}\t{}", line_num + 1, line);
+                        last_num += 1;
+                        println!("{:6}\t{}", last_num, line);
                     } else if config.number_nonblank_lines {
                         if !line.is_empty() {
                             last_num += 1;
