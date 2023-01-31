@@ -60,7 +60,7 @@ pub fn get_args() -> MyResult<Config> {
 pub fn run(config: Config) -> MyResult<()> {
     for filename in config.files {
         match open(&filename) {
-            Err(e) => eprintln!("{}: {}", filename, e),
+            Err(e) => eprintln!("{filename}: {e}"),
             Ok(file) => {
                 let mut last_num = 0;
                 for (line_num, line_result) in file.lines().enumerate() {
@@ -70,12 +70,12 @@ pub fn run(config: Config) -> MyResult<()> {
                     } else if config.number_nonblank_lines {
                         if !line.is_empty() {
                             last_num += 1;
-                            println!("{:6}\t{}", last_num, line);
+                            println!("{last_num:6}\t{line}");
                         } else {
                             println!();
                         }
                     } else {
-                        println!("{}", line);
+                        println!("{line}");
                     }
                 }
             }
