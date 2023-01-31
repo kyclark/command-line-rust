@@ -72,7 +72,7 @@ pub fn get_args() -> MyResult<Config> {
     let pattern = RegexBuilder::new(&pattern)
         .case_insensitive(matches.get_one("insensitive").copied().unwrap())
         .build()
-        .map_err(|_| format!("Invalid pattern \"{}\"", pattern))?;
+        .map_err(|_| format!("Invalid pattern \"{pattern}\""))?;
 
     Ok(Config {
         pattern,
@@ -95,24 +95,24 @@ pub fn run(config: Config) -> MyResult<()> {
     let num_files = entries.len();
     let print = |fname: &str, val: &str| {
         if num_files > 1 {
-            print!("{}:{}", fname, val);
+            print!("{fname}:{val}");
         } else {
-            print!("{}", val);
+            print!("{val}");
         }
     };
 
     for entry in entries {
         match entry {
-            Err(e) => eprintln!("{}", e),
+            Err(e) => eprintln!("{e}"),
             Ok(filename) => match open(&filename) {
-                Err(e) => eprintln!("{}: {}", filename, e),
+                Err(e) => eprintln!("{filename}: {e}"),
                 Ok(file) => {
                     match find_lines(
                         file,
                         &config.pattern,
                         config.invert_match,
                     ) {
-                        Err(e) => eprintln!("{}", e),
+                        Err(e) => eprintln!("{e}"),
                         Ok(matches) => {
                             if config.count {
                                 print(
@@ -187,8 +187,7 @@ fn find_files(paths: &[String], recursive: bool) -> Vec<MyResult<String>> {
                             }
                         } else {
                             results.push(Err(From::from(format!(
-                                "{} is a directory",
-                                path
+                                "{path} is a directory"
                             ))));
                         }
                     } else if metadata.is_file() {
@@ -196,7 +195,7 @@ fn find_files(paths: &[String], recursive: bool) -> Vec<MyResult<String>> {
                     }
                 }
                 Err(e) => {
-                    results.push(Err(From::from(format!("{}: {}", path, e))))
+                    results.push(Err(From::from(format!("{path}: {e}"))))
                 }
             },
         }
@@ -264,7 +263,7 @@ mod tests {
         let res = find_files(&["./tests/inputs".to_string()], true);
         let mut files: Vec<String> = res
             .iter()
-            .map(|r| r.as_ref().unwrap().replace("\\", "/"))
+            .map(|r| r.as_ref().unwrap().replace('\\', "/"))
             .collect();
         files.sort();
         assert_eq!(files.len(), 4);

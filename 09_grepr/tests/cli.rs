@@ -42,7 +42,7 @@ fn dies_no_args() -> TestResult {
 #[test]
 fn dies_bad_pattern() -> TestResult {
     Command::cargo_bin(PRG)?
-        .args(&["*foo", FOX])
+        .args(["*foo", FOX])
         .assert()
         .failure()
         .stderr(predicate::str::contains("Invalid pattern \"*foo\""));
@@ -53,9 +53,9 @@ fn dies_bad_pattern() -> TestResult {
 #[test]
 fn warns_bad_file() -> TestResult {
     let bad = gen_bad_file();
-    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    let expected = format!("{bad}: .* [(]os error 2[)]");
     Command::cargo_bin(PRG)?
-        .args(&["foo", &bad])
+        .args(["foo", &bad])
         .assert()
         .stderr(predicate::str::is_match(expected)?);
     Ok(())
@@ -63,7 +63,7 @@ fn warns_bad_file() -> TestResult {
 
 // --------------------------------------------------
 fn run(args: &[&str], expected_file: &str) -> TestResult {
-    let windows_file = format!("{}.windows", expected_file);
+    let windows_file = format!("{expected_file}.windows");
     let expected_file = if os_type().unwrap() == "Windows"
         && Path::new(&windows_file).is_file()
     {
@@ -72,7 +72,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
         expected_file
     };
 
-    let expected = fs::read_to_string(&expected_file)?;
+    let expected = fs::read_to_string(expected_file)?;
 
     Command::cargo_bin(PRG)?
         .args(args)
@@ -234,7 +234,7 @@ fn warns_dir_not_recursive() -> TestResult {
     let stdout = "tests/inputs/fox.txt:\
         The quick brown fox jumps over the lazy dog.";
     Command::cargo_bin(PRG)?
-        .args(&["fox", INPUTS_DIR, FOX])
+        .args(["fox", INPUTS_DIR, FOX])
         .assert()
         .stderr(predicate::str::contains("tests/inputs is a directory"))
         .stdout(predicate::str::contains(stdout));
@@ -271,7 +271,7 @@ fn stdin_insensitive_count() -> TestResult {
     let expected = fs::read_to_string(expected_file)?;
 
     Command::cargo_bin(PRG)?
-        .args(&["-ci", "the", "-"])
+        .args(["-ci", "the", "-"])
         .write_stdin(input)
         .assert()
         .stdout(expected);
