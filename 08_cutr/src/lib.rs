@@ -55,7 +55,7 @@ pub fn get_args() -> MyResult<Config> {
                 .short('f')
                 .long("fields")
                 .help("Selected fields")
-                .conflicts_with_all(&["chars", "bytes"]),
+                .conflicts_with_all(["chars", "bytes"]),
         )
         .arg(
             Arg::new("bytes")
@@ -63,7 +63,7 @@ pub fn get_args() -> MyResult<Config> {
                 .short('b')
                 .long("bytes")
                 .help("Selected bytes")
-                .conflicts_with_all(&["fields", "chars"]),
+                .conflicts_with_all(["fields", "chars"]),
         )
         .arg(
             Arg::new("chars")
@@ -71,7 +71,7 @@ pub fn get_args() -> MyResult<Config> {
                 .short('c')
                 .long("chars")
                 .help("Selected characters")
-                .conflicts_with_all(&["fields", "bytes"]),
+                .conflicts_with_all(["fields", "bytes"]),
         )
         .get_matches();
 
@@ -79,8 +79,7 @@ pub fn get_args() -> MyResult<Config> {
     let delim_bytes = delimiter.as_bytes();
     if delim_bytes.len() != 1 {
         return Err(From::from(format!(
-            "--delim \"{}\" must be a single byte",
-            delimiter
+            "--delim \"{delimiter}\" must be a single byte"
         )));
     }
 
@@ -127,7 +126,7 @@ pub fn get_args() -> MyResult<Config> {
 pub fn run(config: Config) -> MyResult<()> {
     for filename in &config.files {
         match open(filename) {
-            Err(err) => eprintln!("{}: {}", filename, err),
+            Err(err) => eprintln!("{filename}: {err}"),
             Ok(file) => match &config.extract {
                 Fields(field_pos) => {
                     let mut reader = ReaderBuilder::new()
@@ -176,7 +175,7 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
 // Returns an index, which is a non-negative integer that is
 // one less than the number represented by the original input.
 fn parse_index(input: &str) -> Result<usize, String> {
-    let value_error = || format!("illegal list value: \"{}\"", input);
+    let value_error = || format!("illegal list value: \"{input}\"");
     input
         .starts_with('+')
         .then(|| Err(value_error()))

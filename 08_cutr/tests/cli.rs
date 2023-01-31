@@ -33,9 +33,9 @@ fn gen_bad_file() -> String {
 #[test]
 fn skips_bad_file() -> TestResult {
     let bad = gen_bad_file();
-    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    let expected = format!("{bad}: .* [(]os error 2[)]");
     Command::cargo_bin(PRG)?
-        .args(&["-f", "1", CSV, &bad, TSV])
+        .args(["-f", "1", CSV, &bad, TSV])
         .assert()
         .success()
         .stderr(predicate::str::is_match(expected)?);
@@ -110,7 +110,7 @@ fn dies_bad_delimiter() -> TestResult {
 #[test]
 fn dies_chars_bytes_fields() -> TestResult {
     Command::cargo_bin(PRG)?
-        .args(&[CSV, "-c", "1", "-f", "1", "-b", "1"])
+        .args([CSV, "-c", "1", "-f", "1", "-b", "1"])
         .assert()
         .failure();
     Ok(())
@@ -120,7 +120,7 @@ fn dies_chars_bytes_fields() -> TestResult {
 #[test]
 fn dies_bytes_fields() -> TestResult {
     Command::cargo_bin(PRG)?
-        .args(&[CSV, "-f", "1", "-b", "1"])
+        .args([CSV, "-f", "1", "-b", "1"])
         .assert()
         .failure();
     Ok(())
@@ -130,7 +130,7 @@ fn dies_bytes_fields() -> TestResult {
 #[test]
 fn dies_chars_fields() -> TestResult {
     Command::cargo_bin(PRG)?
-        .args(&[CSV, "-c", "1", "-f", "1"])
+        .args([CSV, "-c", "1", "-f", "1"])
         .assert()
         .failure();
     Ok(())
@@ -140,7 +140,7 @@ fn dies_chars_fields() -> TestResult {
 #[test]
 fn dies_chars_bytes() -> TestResult {
     Command::cargo_bin(PRG)?
-        .args(&[CSV, "-c", "1", "-b", "1"])
+        .args([CSV, "-c", "1", "-b", "1"])
         .assert()
         .failure();
     Ok(())
