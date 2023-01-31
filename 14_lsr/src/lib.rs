@@ -75,7 +75,7 @@ fn find_files(paths: &[String], show_hidden: bool) -> MyResult<Vec<PathBuf>> {
     let mut results = vec![];
     for name in paths {
         match fs::metadata(name) {
-            Err(e) => eprintln!("{}: {}", name, e),
+            Err(e) => eprintln!("{name}: {e}"),
             Ok(meta) => {
                 if meta.is_dir() {
                     for entry in fs::read_dir(name)? {
@@ -134,7 +134,7 @@ fn format_output(paths: &[PathBuf]) -> MyResult<String> {
         );
     }
 
-    Ok(format!("{}", table))
+    Ok(format!("{table}"))
 }
 
 // --------------------------------------------------
@@ -250,9 +250,9 @@ mod test {
         expected_size: Option<&str>,
     ) {
         let parts: Vec<_> = line.split_whitespace().collect();
-        assert!(parts.len() > 0 && parts.len() <= 10);
+        assert!(!parts.is_empty() && parts.len() <= 10);
 
-        let perms = parts.get(0).unwrap();
+        let perms = parts.first().unwrap();
         assert_eq!(perms, &expected_perms);
 
         if let Some(size) = expected_size {
@@ -274,11 +274,11 @@ mod test {
 
         let out = res.unwrap();
         let lines: Vec<&str> =
-            out.split("\n").filter(|s| !s.is_empty()).collect();
+            out.split('\n').filter(|s| !s.is_empty()).collect();
         assert_eq!(lines.len(), 1);
 
         let line1 = lines.first().unwrap();
-        long_match(&line1, bustle_path, "-rw-r--r--", Some("193"));
+        long_match(line1, bustle_path, "-rw-r--r--", Some("193"));
     }
 
     #[test]
@@ -291,20 +291,20 @@ mod test {
 
         let out = res.unwrap();
         let mut lines: Vec<&str> =
-            out.split("\n").filter(|s| !s.is_empty()).collect();
+            out.split('\n').filter(|s| !s.is_empty()).collect();
         lines.sort();
         assert_eq!(lines.len(), 2);
 
         let empty_line = lines.remove(0);
         long_match(
-            &empty_line,
+            empty_line,
             "tests/inputs/empty.txt",
             "-rw-r--r--",
             Some("0"),
         );
 
         let dir_line = lines.remove(0);
-        long_match(&dir_line, "tests/inputs/dir", "drwxr-xr-x", None);
+        long_match(dir_line, "tests/inputs/dir", "drwxr-xr-x", None);
     }
 
     #[test]

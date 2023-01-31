@@ -57,19 +57,19 @@ fn run_short(arg: &str) -> TestResult {
         .arg(arg)
         .assert()
         .success()
-        .stdout(format!("{}\n", arg));
+        .stdout(format!("{arg}\n"));
     Ok(())
 }
 
 // --------------------------------------------------
 fn run_long(filename: &str, permissions: &str, size: &str) -> TestResult {
     let cmd = Command::cargo_bin(PRG)?
-        .args(&["--long", filename])
+        .args(["--long", filename])
         .assert()
         .success();
     let stdout = String::from_utf8(cmd.get_output().stdout.clone())?;
     let parts: Vec<_> = stdout.split_whitespace().collect();
-    assert_eq!(parts.get(0).unwrap(), &permissions);
+    assert_eq!(parts.first().unwrap(), &permissions);
     assert_eq!(parts.get(4).unwrap(), &size);
     assert_eq!(parts.last().unwrap(), &filename);
     Ok(())
@@ -124,10 +124,10 @@ fn dir_short(args: &[&str], expected: &[&str]) -> TestResult {
     let cmd = Command::cargo_bin(PRG)?.args(args).assert().success();
     let stdout = String::from_utf8(cmd.get_output().stdout.clone())?;
     let lines: Vec<&str> =
-        stdout.split("\n").filter(|s| !s.is_empty()).collect();
+        stdout.split('\n').filter(|s| !s.is_empty()).collect();
     assert_eq!(lines.len(), expected.len());
     for filename in expected {
-        assert!(lines.contains(&filename));
+        assert!(lines.contains(filename));
     }
     Ok(())
 }
@@ -177,14 +177,14 @@ fn dir_long(args: &[&str], expected: &[(&str, &str, &str)]) -> TestResult {
     let cmd = Command::cargo_bin(PRG)?.args(args).assert().success();
     let stdout = String::from_utf8(cmd.get_output().stdout.clone())?;
     let lines: Vec<&str> =
-        stdout.split("\n").filter(|s| !s.is_empty()).collect();
+        stdout.split('\n').filter(|s| !s.is_empty()).collect();
     assert_eq!(lines.len(), expected.len());
 
     let mut check = vec![];
     for line in lines {
         let parts: Vec<_> = line.split_whitespace().collect();
         let path = parts.last().unwrap().clone();
-        let permissions = parts.get(0).unwrap().clone();
+        let permissions = parts.first().unwrap().clone();
         let size = match permissions.chars().next() {
             Some('d') => "",
             _ => parts.get(4).unwrap().clone(),
