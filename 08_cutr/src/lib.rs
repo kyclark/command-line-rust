@@ -1,5 +1,5 @@
 use crate::Extract::*;
-use clap::{App, Arg};
+use clap::{Arg, Command};
 use csv::{ReaderBuilder, StringRecord, WriterBuilder};
 use regex::Regex;
 use std::{
@@ -29,52 +29,53 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("cutr")
+    let matches = Command::new("cutr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust cut")
         .arg(
-            Arg::with_name("files")
+            Arg::new("files")
                 .value_name("FILE")
                 .help("Input file(s)")
-                .multiple(true)
+                .num_args(1..)
+                .required(true)
                 .default_value("-"),
         )
         .arg(
-            Arg::with_name("delimiter")
+            Arg::new("delimiter")
                 .value_name("DELIMITER")
-                .short("d")
+                .short('d')
                 .long("delim")
                 .help("Field delimiter")
                 .default_value("\t"),
         )
         .arg(
-            Arg::with_name("fields")
+            Arg::new("fields")
                 .value_name("FIELDS")
-                .short("f")
+                .short('f')
                 .long("fields")
                 .help("Selected fields")
                 .conflicts_with_all(&["chars", "bytes"]),
         )
         .arg(
-            Arg::with_name("bytes")
+            Arg::new("bytes")
                 .value_name("BYTES")
-                .short("b")
+                .short('b')
                 .long("bytes")
                 .help("Selected bytes")
                 .conflicts_with_all(&["fields", "chars"]),
         )
         .arg(
-            Arg::with_name("chars")
+            Arg::new("chars")
                 .value_name("CHARS")
-                .short("c")
+                .short('c')
                 .long("chars")
                 .help("Selected characters")
                 .conflicts_with_all(&["fields", "bytes"]),
         )
         .get_matches();
 
-    let delimiter = matches.value_of("delimiter").unwrap();
+    let delimiter: String = matches.get_one("delimiter").cloned().unwrap();
     let delim_bytes = delimiter.as_bytes();
     if delim_bytes.len() != 1 {
         return Err(From::from(format!(
@@ -83,9 +84,23 @@ pub fn get_args() -> MyResult<Config> {
         )));
     }
 
-    let fields = matches.value_of("fields").map(parse_pos).transpose()?;
-    let bytes = matches.value_of("bytes").map(parse_pos).transpose()?;
-    let chars = matches.value_of("chars").map(parse_pos).transpose()?;
+    let fields = matches
+        .get_one("fields")
+        .cloned()
+        .map(|v: String| parse_pos(v.as_str()))
+        .transpose()?;
+
+    let bytes = matches
+        .get_one("bytes")
+        .cloned()
+        .map(|v: String| parse_pos(v.as_str()))
+        .transpose()?;
+
+    let chars = matches
+        .get_one("chars")
+        .cloned()
+        .map(|v: String| parse_pos(v.as_str()))
+        .transpose()?;
 
     let extract = if let Some(field_pos) = fields {
         Fields(field_pos)
@@ -98,7 +113,11 @@ pub fn get_args() -> MyResult<Config> {
     };
 
     Ok(Config {
-        files: matches.values_of_lossy("files").unwrap(),
+        files: matches
+            .get_many("files")
+            .expect("files required")
+            .cloned()
+            .collect(),
         delimiter: *delim_bytes.first().unwrap(),
         extract,
     })

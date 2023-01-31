@@ -75,7 +75,7 @@ fn dies_invalid_month() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dies_y_and_month() -> TestResult {
-    let expected = "The argument '-m <MONTH>' cannot be used with '--year'";
+    let expected = "the argument '-m <MONTH>' cannot be used with '--year'";
     Command::cargo_bin(PRG)?
         .args(&["-m", "1", "-y"])
         .assert()
@@ -87,7 +87,7 @@ fn dies_y_and_month() -> TestResult {
 // --------------------------------------------------
 #[test]
 fn dies_y_and_year() -> TestResult {
-    let expected = "The argument '<YEAR>' cannot be used with '--year'";
+    let expected = "the argument '--year' cannot be used with '[YEAR]'";
     Command::cargo_bin(PRG)?
         .args(&["-y", "2000"])
         .assert()

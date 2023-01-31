@@ -1,6 +1,6 @@
 use ansi_term::Style;
 use chrono::{Datelike, Local, NaiveDate};
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use itertools::izip;
 use std::{error::Error, str::FromStr};
 
@@ -31,38 +31,41 @@ const MONTH_NAMES: [&str; 12] = [
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("calr")
+    let matches = Command::new("calr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust cal")
         .arg(
-            Arg::with_name("month")
+            Arg::new("month")
                 .value_name("MONTH")
-                .short("m")
-                .help("Month name or number (1-12)")
-                .takes_value(true),
+                .short('m')
+                .help("Month name or number (1-12)"),
         )
         .arg(
-            Arg::with_name("show_current_year")
+            Arg::new("show_current_year")
                 .value_name("SHOW_YEAR")
-                .short("y")
+                .short('y')
                 .long("year")
                 .help("Show whole current year")
                 .conflicts_with_all(&["month", "year"])
-                .takes_value(false),
+                .action(ArgAction::SetTrue),
         )
-        .arg(
-            Arg::with_name("year")
-                .value_name("YEAR")
-                .help("Year (1-9999)"),
-        )
+        .arg(Arg::new("year").value_name("YEAR").help("Year (1-9999)"))
         .get_matches();
 
-    let mut month = matches.value_of("month").map(parse_month).transpose()?;
-    let mut year = matches.value_of("year").map(parse_year).transpose()?;
+    let mut month = matches
+        .get_one("month")
+        .cloned()
+        .map(|v: String| parse_month(v.as_str()))
+        .transpose()?;
+    let mut year = matches
+        .get_one("year")
+        .cloned()
+        .map(|v: String| parse_year(v.as_str()))
+        .transpose()?;
 
     let today = Local::today();
-    if matches.is_present("show_current_year") {
+    if let Some(true) = matches.get_one("show_current_year").copied() {
         month = None;
         year = Some(today.year());
     } else if month.is_none() && year.is_none() {

@@ -1,4 +1,4 @@
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
@@ -14,38 +14,45 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("catr")
+    let matches = Command::new("catr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust cat")
         .arg(
-            Arg::with_name("files")
+            Arg::new("files")
                 .value_name("FILE")
                 .help("Input file(s)")
-                .multiple(true)
+                .num_args(1..)
                 .default_value("-"),
         )
         .arg(
-            Arg::with_name("number")
-                .short("n")
+            Arg::new("number")
+                .short('n')
                 .long("number")
                 .help("Number lines")
-                .takes_value(false)
+                .action(ArgAction::SetTrue)
                 .conflicts_with("number_nonblank"),
         )
         .arg(
-            Arg::with_name("number_nonblank")
-                .short("b")
+            Arg::new("number_nonblank")
+                .short('b')
                 .long("number-nonblank")
                 .help("Number non-blank lines")
-                .takes_value(false),
+                .action(ArgAction::SetTrue),
         )
         .get_matches();
 
     Ok(Config {
-        files: matches.values_of_lossy("files").unwrap(),
-        number_lines: matches.is_present("number"),
-        number_nonblank_lines: matches.is_present("number_nonblank"),
+        files: matches
+            .get_many("files")
+            .expect("files required")
+            .cloned()
+            .collect(),
+        number_lines: matches.get_one("number").copied().unwrap(),
+        number_nonblank_lines: matches
+            .get_one("number_nonblank")
+            .copied()
+            .unwrap(),
     })
 }
 

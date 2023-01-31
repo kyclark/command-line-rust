@@ -1,4 +1,4 @@
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use rand::prelude::SliceRandom;
 use rand::{rngs::StdRng, SeedableRng};
 use regex::{Regex, RegexBuilder};
@@ -28,53 +28,64 @@ pub struct Fortune {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("fortuner")
+    let matches = Command::new("fortuner")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust fortune")
         .arg(
-            Arg::with_name("sources")
+            Arg::new("sources")
                 .value_name("FILE")
-                .multiple(true)
+                .num_args(1..)
                 .required(true)
                 .help("Input files or directories"),
         )
         .arg(
-            Arg::with_name("pattern")
+            Arg::new("pattern")
                 .value_name("PATTERN")
-                .short("m")
+                .short('m')
                 .long("pattern")
                 .help("Pattern"),
         )
         .arg(
-            Arg::with_name("insensitive")
-                .short("i")
+            Arg::new("insensitive")
+                .short('i')
                 .long("insensitive")
                 .help("Case-insensitive pattern matching")
-                .takes_value(false),
+                .action(ArgAction::SetTrue),
         )
         .arg(
-            Arg::with_name("seed")
+            Arg::new("seed")
                 .value_name("SEED")
-                .short("s")
+                .short('s')
                 .long("seed")
                 .help("Random seed"),
         )
         .get_matches();
 
     let pattern = matches
-        .value_of("pattern")
-        .map(|val| {
-            RegexBuilder::new(val)
-                .case_insensitive(matches.is_present("insensitive"))
+        .get_one("pattern")
+        .cloned()
+        .map(|val: String| {
+            RegexBuilder::new(val.as_str())
+                .case_insensitive(
+                    matches.get_one("insensitive").copied().unwrap(),
+                )
                 .build()
                 .map_err(|_| format!("Invalid --pattern \"{}\"", val))
         })
         .transpose()?;
 
     Ok(Config {
-        sources: matches.values_of_lossy("sources").unwrap(),
-        seed: matches.value_of("seed").map(parse_u64).transpose()?,
+        sources: matches
+            .get_many("sources")
+            .expect("sources required")
+            .cloned()
+            .collect(),
+        seed: matches
+            .get_one("seed")
+            .cloned()
+            .map(|v: String| parse_u64(v.as_str()))
+            .transpose()?,
         pattern,
     })
 }

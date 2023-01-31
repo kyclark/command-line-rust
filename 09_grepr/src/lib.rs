@@ -1,4 +1,4 @@
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use regex::{Regex, RegexBuilder};
 use std::{
     error::Error,
@@ -21,54 +21,54 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("grepr")
+    let matches = Command::new("grepr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust grep")
         .arg(
-            Arg::with_name("pattern")
+            Arg::new("pattern")
                 .value_name("PATTERN")
                 .help("Search pattern")
                 .required(true),
         )
         .arg(
-            Arg::with_name("files")
+            Arg::new("files")
                 .value_name("FILE")
                 .help("Input file(s)")
                 .multiple(true)
                 .default_value("-"),
         )
         .arg(
-            Arg::with_name("insensitive")
-                .short("i")
+            Arg::new("insensitive")
+                .short('i')
                 .long("insensitive")
                 .help("Case-insensitive")
-                .takes_value(false),
+                .action(ArgAction::SetTrue),
         )
         .arg(
-            Arg::with_name("recursive")
-                .short("r")
+            Arg::new("recursive")
+                .short('r')
                 .long("recursive")
                 .help("Recursive search")
-                .takes_value(false),
+                .action(ArgAction::SetTrue),
         )
         .arg(
-            Arg::with_name("count")
-                .short("c")
+            Arg::new("count")
+                .short('c')
                 .long("count")
                 .help("Count occurrences")
-                .takes_value(false),
+                .action(ArgAction::SetTrue),
         )
         .arg(
-            Arg::with_name("invert")
-                .short("v")
+            Arg::new("invert")
+                .short('v')
                 .long("invert-match")
                 .help("Invert match")
-                .takes_value(false),
+                .action(ArgAction::SetTrue),
         )
         .get_matches();
 
-    let pattern = matches.value_of("pattern").unwrap();
+    let pattern = matches.get_one("pattern").cloned().unwrap();
     let pattern = RegexBuilder::new(pattern)
         .case_insensitive(matches.is_present("insensitive"))
         .build()
@@ -76,10 +76,14 @@ pub fn get_args() -> MyResult<Config> {
 
     Ok(Config {
         pattern,
-        files: matches.values_of_lossy("files").unwrap(),
-        recursive: matches.is_present("recursive"),
-        count: matches.is_present("count"),
-        invert_match: matches.is_present("invert"),
+        files: matches
+            .get_many("files")
+            .expect("files required")
+            .cloned()
+            .unwrap(),
+        recursive: matches.get_one("recursive").copied().unwrap(),
+        count: matches.get_one("count").copied().unwrap(),
+        invert_match: matches.get_one("invert").copied().unwrap(),
     })
 }
 

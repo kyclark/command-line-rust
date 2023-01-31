@@ -1,5 +1,5 @@
 use crate::TakeValue::*;
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use once_cell::sync::OnceCell;
 use regex::Regex;
 use std::{
@@ -28,58 +28,65 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("tailr")
+    let matches = Command::new("tailr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust tail")
         .arg(
-            Arg::with_name("files")
+            Arg::new("files")
                 .value_name("FILE")
                 .help("Input file(s)")
                 .required(true)
-                .multiple(true),
+                .num_args(1..),
         )
         .arg(
-            Arg::with_name("lines")
-                .short("n")
+            Arg::new("lines")
+                .short('n')
                 .long("lines")
                 .value_name("LINES")
                 .help("Number of lines")
                 .default_value("10"),
         )
         .arg(
-            Arg::with_name("bytes")
-                .short("c")
+            Arg::new("bytes")
+                .short('c')
                 .long("bytes")
                 .value_name("BYTES")
                 .conflicts_with("lines")
                 .help("Number of bytes"),
         )
         .arg(
-            Arg::with_name("quiet")
-                .short("q")
+            Arg::new("quiet")
+                .short('q')
                 .long("quiet")
+                .action(ArgAction::SetTrue)
                 .help("Suppress headers"),
         )
         .get_matches();
 
     let lines = matches
-        .value_of("lines")
-        .map(parse_num)
+        .get_one("lines")
+        .cloned()
+        .map(|v: String| parse_num(v.as_str()))
         .transpose()
         .map_err(|e| format!("illegal line count -- {}", e))?;
 
     let bytes = matches
-        .value_of("bytes")
-        .map(parse_num)
+        .get_one("bytes")
+        .cloned()
+        .map(|v: String| parse_num(v.as_str()))
         .transpose()
         .map_err(|e| format!("illegal byte count -- {}", e))?;
 
     Ok(Config {
-        files: matches.values_of_lossy("files").unwrap(),
+        files: matches
+            .get_many("files")
+            .expect("files required")
+            .cloned()
+            .collect(),
         lines: lines.unwrap(),
         bytes,
-        quiet: matches.is_present("quiet"),
+        quiet: matches.get_one("quiet").copied().unwrap(),
     })
 }
 

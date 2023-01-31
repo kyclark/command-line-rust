@@ -1,7 +1,7 @@
 mod owner;
 
 use chrono::{DateTime, Local};
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use owner::Owner;
 use std::{error::Error, fs, os::unix::fs::MetadataExt, path::PathBuf};
 use tabular::{Row, Table};
@@ -18,37 +18,41 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("lsr")
+    let matches = Command::new("lsr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust ls")
         .arg(
-            Arg::with_name("paths")
+            Arg::new("paths")
                 .value_name("PATH")
                 .help("Files and/or directories")
                 .default_value(".")
-                .multiple(true),
+                .num_args(1..),
         )
         .arg(
-            Arg::with_name("long")
-                .takes_value(false)
+            Arg::new("long")
+                .action(ArgAction::SetTrue)
                 .help("Long listing")
-                .short("l")
+                .short('l')
                 .long("long"),
         )
         .arg(
-            Arg::with_name("all")
-                .takes_value(false)
+            Arg::new("all")
+                .action(ArgAction::SetTrue)
                 .help("Show all files")
-                .short("a")
+                .short('a')
                 .long("all"),
         )
         .get_matches();
 
     Ok(Config {
-        paths: matches.values_of_lossy("paths").unwrap(),
-        long: matches.is_present("long"),
-        show_hidden: matches.is_present("all"),
+        paths: matches
+            .get_many("paths")
+            .expect("paths required")
+            .cloned()
+            .collect(),
+        long: matches.get_one("long").copied().unwrap(),
+        show_hidden: matches.get_one("all").copied().unwrap(),
     })
 }
 

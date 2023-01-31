@@ -1,4 +1,4 @@
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use std::{
     error::Error,
     fs::File,
@@ -16,37 +16,34 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("uniqr")
+    let matches = Command::new("uniqr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust uniq")
         .arg(
-            Arg::with_name("in_file")
+            Arg::new("in_file")
                 .value_name("IN_FILE")
                 .help("Input file")
                 .default_value("-"),
         )
         .arg(
-            Arg::with_name("out_file")
+            Arg::new("out_file")
                 .value_name("OUT_FILE")
                 .help("Output file"),
         )
         .arg(
-            Arg::with_name("count")
-                .short("c")
+            Arg::new("count")
+                .short('c')
                 .long("count")
-                .help("Show counts")
-                .takes_value(false),
+                .action(ArgAction::SetTrue)
+                .help("Show counts"),
         )
         .get_matches();
 
     Ok(Config {
-        //in_file: matches.value_of_lossy("in_file").unwrap().to_string(),
-        //in_file: matches.value_of_lossy("in_file").map(String::from).unwrap(),
-        //in_file: matches.value_of_lossy("in_file").map(|v| v.into()).unwrap(),
-        in_file: matches.value_of_lossy("in_file").map(Into::into).unwrap(),
-        out_file: matches.value_of("out_file").map(|v| v.to_string()),
-        count: matches.is_present("count"),
+        in_file: matches.get_one("in_file").cloned().unwrap(),
+        out_file: matches.get_one("out_file").cloned(),
+        count: matches.get_one("count").copied().unwrap(),
     })
 }
 

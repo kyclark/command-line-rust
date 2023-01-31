@@ -1,5 +1,5 @@
 use crate::Column::*;
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use std::{
     cmp::Ordering::*,
     error::Error,
@@ -29,67 +29,75 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("commr")
+    let matches = Command::new("commr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust comm")
         .arg(
-            Arg::with_name("file1")
+            Arg::new("file1")
                 .value_name("FILE1")
                 .help("Input file 1")
-                .takes_value(true)
+                .num_args(1)
                 .required(true),
         )
         .arg(
-            Arg::with_name("file2")
+            Arg::new("file2")
                 .value_name("FILE2")
                 .help("Input file 2")
-                .takes_value(true)
+                .num_args(1)
                 .required(true),
         )
         .arg(
-            Arg::with_name("suppress_col1")
-                .short("1")
-                .takes_value(false)
+            Arg::new("suppress_col1")
+                .short('1')
+                .action(ArgAction::SetTrue)
                 .help("Suppress printing of column 1"),
         )
         .arg(
-            Arg::with_name("suppress_col2")
-                .short("2")
-                .takes_value(false)
+            Arg::new("suppress_col2")
+                .short('2')
+                .action(ArgAction::SetTrue)
                 .help("Suppress printing of column 2"),
         )
         .arg(
-            Arg::with_name("suppress_col3")
-                .short("3")
-                .takes_value(false)
+            Arg::new("suppress_col3")
+                .short('3')
+                .action(ArgAction::SetTrue)
                 .help("Suppress printing of column 3"),
         )
         .arg(
-            Arg::with_name("insensitive")
-                .short("i")
-                .takes_value(false)
+            Arg::new("insensitive")
+                .short('i')
+                .action(ArgAction::SetTrue)
                 .help("Case-insensitive comparison of lines"),
         )
         .arg(
-            Arg::with_name("delimiter")
-                .short("d")
+            Arg::new("delimiter")
+                .short('d')
                 .long("output-delimiter")
                 .value_name("DELIM")
                 .help("Output delimiter")
-                .default_value("\t")
-                .takes_value(true),
+                .default_value("\t"),
         )
         .get_matches();
 
     Ok(Config {
-        file1: matches.value_of("file1").unwrap().to_string(),
-        file2: matches.value_of("file2").unwrap().to_string(),
-        show_col1: !matches.is_present("suppress_col1"),
-        show_col2: !matches.is_present("suppress_col2"),
-        show_col3: !matches.is_present("suppress_col3"),
-        insensitive: matches.is_present("insensitive"),
-        delimiter: matches.value_of("delimiter").unwrap().to_string(),
+        file1: matches.get_one("file1").cloned().unwrap(),
+        file2: matches.get_one("file2").cloned().unwrap(),
+        show_col1: !matches
+            .get_one::<bool>("suppress_col1")
+            .copied()
+            .unwrap(),
+        show_col2: !matches
+            .get_one::<bool>("suppress_col2")
+            .copied()
+            .unwrap(),
+        show_col3: !matches
+            .get_one::<bool>("suppress_col3")
+            .copied()
+            .unwrap(),
+        insensitive: matches.get_one("insensitive").copied().unwrap(),
+        delimiter: matches.get_one("delimiter").cloned().unwrap(),
     })
 }
 

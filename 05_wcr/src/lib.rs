@@ -1,4 +1,4 @@
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
@@ -24,52 +24,52 @@ pub struct FileInfo {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("wcr")
+    let matches = Command::new("wcr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust wc")
         .arg(
-            Arg::with_name("files")
+            Arg::new("files")
                 .value_name("FILE")
                 .help("Input file(s)")
                 .default_value("-")
-                .multiple(true),
+                .num_args(1..),
         )
         .arg(
-            Arg::with_name("words")
-                .short("w")
+            Arg::new("words")
+                .short('w')
                 .long("words")
-                .help("Show word count")
-                .takes_value(false),
+                .action(ArgAction::SetTrue)
+                .help("Show word count"),
         )
         .arg(
-            Arg::with_name("bytes")
-                .short("c")
+            Arg::new("bytes")
+                .short('c')
                 .long("bytes")
-                .help("Show byte count")
-                .takes_value(false),
+                .action(ArgAction::SetTrue)
+                .help("Show byte count"),
         )
         .arg(
-            Arg::with_name("chars")
-                .short("m")
+            Arg::new("chars")
+                .short('m')
                 .long("chars")
+                .action(ArgAction::SetTrue)
                 .help("Show character count")
-                .takes_value(false)
                 .conflicts_with("bytes"),
         )
         .arg(
-            Arg::with_name("lines")
-                .short("l")
+            Arg::new("lines")
+                .short('l')
                 .long("lines")
-                .help("Show line count")
-                .takes_value(false),
+                .action(ArgAction::SetTrue)
+                .help("Show line count"),
         )
         .get_matches();
 
-    let mut lines = matches.is_present("lines");
-    let mut words = matches.is_present("words");
-    let mut bytes = matches.is_present("bytes");
-    let chars = matches.is_present("chars");
+    let mut lines = matches.get_one("lines").copied().unwrap();
+    let mut words = matches.get_one("words").copied().unwrap();
+    let mut bytes = matches.get_one("bytes").copied().unwrap();
+    let chars = matches.get_one("chars").copied().unwrap();
 
     if [words, bytes, chars, lines].iter().all(|v| v == &false) {
         lines = true;
@@ -78,7 +78,11 @@ pub fn get_args() -> MyResult<Config> {
     }
 
     Ok(Config {
-        files: matches.values_of_lossy("files").unwrap(),
+        files: matches
+            .get_many("files")
+            .expect("files required")
+            .cloned()
+            .collect(),
         lines,
         words,
         bytes,

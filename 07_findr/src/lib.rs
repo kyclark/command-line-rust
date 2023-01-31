@@ -1,5 +1,5 @@
 use crate::EntryType::*;
-use clap::{App, Arg};
+use clap::{Arg, ArgAction, Command};
 use regex::Regex;
 use std::error::Error;
 use walkdir::{DirEntry, WalkDir};
@@ -22,68 +22,70 @@ pub struct Config {
 
 // --------------------------------------------------
 pub fn get_args() -> MyResult<Config> {
-    let matches = App::new("findr")
+    let matches = Command::new("findr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust find")
         .arg(
-            Arg::with_name("paths")
+            Arg::new("paths")
                 .value_name("PATH")
                 .help("Search paths")
                 .default_value(".")
-                .multiple(true),
+                .num_args(1..),
         )
         .arg(
-            Arg::with_name("names")
+            Arg::new("names")
                 .value_name("NAME")
-                .short("n")
+                .short('n')
                 .long("name")
                 .help("Name")
-                .takes_value(true)
-                .multiple(true),
+                .action(ArgAction::Append)
+                .num_args(0..),
         )
         .arg(
-            Arg::with_name("types")
+            Arg::new("types")
                 .value_name("TYPE")
-                .short("t")
+                .short('t')
                 .long("type")
                 .help("Entry type")
-                .possible_values(&["f", "d", "l"])
-                .multiple(true)
-                .takes_value(true),
+                .value_parser(["f", "d", "l"])
+                .num_args(0..),
         )
         .get_matches();
 
     let names = matches
-        .values_of_lossy("names")
-        .map(|vals| {
-            vals.into_iter()
-                .map(|name| {
-                    Regex::new(&name)
-                        .map_err(|_| format!("Invalid --name \"{}\"", name))
-                })
-                .collect::<Result<Vec<_>, _>>()
+        .get_many("names")
+        .unwrap_or_default()
+        .cloned()
+        .collect::<Vec<String>>()
+        .iter()
+        .map(|name| {
+            Regex::new(&name)
+                .map_err(|_| format!("Invalid --name \"{}\"", name))
         })
-        .transpose()?
-        .unwrap_or_default();
+        .collect::<Result<Vec<_>, _>>()?;
 
     // clap should disallow anything but "d," "f," or "l"
     let entry_types = matches
-        .values_of_lossy("types")
-        .map(|vals| {
-            vals.iter()
-                .map(|val| match val.as_str() {
-                    "d" => Dir,
-                    "f" => File,
-                    "l" => Link,
-                    _ => unreachable!("Invalid type"),
-                })
-                .collect()
+        .get_many("types")
+        .unwrap_or_default()
+        .cloned()
+        .collect::<Vec<String>>()
+        .iter()
+        .map(|val| match val.as_str() {
+            "d" => Dir,
+            "f" => File,
+            "l" => Link,
+            _ => unreachable!("Invalid type"),
         })
-        .unwrap_or_default();
+        .collect();
 
     Ok(Config {
-        paths: matches.values_of_lossy("paths").unwrap(),
+        paths: matches
+            .get_many("paths")
+            .expect("paths required")
+            .cloned()
+            .collect(),
         names,
         entry_types,
     })
