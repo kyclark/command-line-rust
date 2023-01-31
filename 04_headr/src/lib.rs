@@ -49,14 +49,14 @@ pub fn get_args() -> MyResult<Config> {
         .cloned()
         .map(parse_positive_int)
         .transpose()
-        .map_err(|e| format!("illegal line count -- {}", e))?;
+        .map_err(|e| format!("illegal line count -- {e}"))?;
 
     let bytes = matches
         .get_one("bytes")
         .cloned()
         .map(parse_positive_int)
         .transpose()
-        .map_err(|e| format!("illegal byte count -- {}", e))?;
+        .map_err(|e| format!("illegal byte count -- {e}"))?;
 
     Ok(Config {
         files: matches
@@ -75,7 +75,7 @@ pub fn run(config: Config) -> MyResult<()> {
 
     for (file_num, filename) in config.files.iter().enumerate() {
         match open(filename) {
-            Err(err) => eprintln!("{}: {}", filename, err),
+            Err(err) => eprintln!("{filename}: {err}"),
             Ok(mut file) => {
                 if num_files > 1 {
                     println!(
@@ -100,7 +100,7 @@ pub fn run(config: Config) -> MyResult<()> {
                         if bytes == 0 {
                             break;
                         }
-                        print!("{}", line);
+                        print!("{line}");
                         line.clear();
                     }
                 }
