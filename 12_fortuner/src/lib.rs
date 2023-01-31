@@ -71,7 +71,7 @@ pub fn get_args() -> MyResult<Config> {
                     matches.get_one("insensitive").copied().unwrap(),
                 )
                 .build()
-                .map_err(|_| format!("Invalid --pattern \"{}\"", val))
+                .map_err(|_| format!("Invalid --pattern \"{val}\""))
         })
         .transpose()?;
 
@@ -122,7 +122,7 @@ pub fn run(config: Config) -> MyResult<()> {
 // --------------------------------------------------
 fn parse_u64(val: &str) -> MyResult<u64> {
     val.parse()
-        .map_err(|_| format!("\"{}\" not a valid integer", val).into())
+        .map_err(|_| format!("\"{val}\" not a valid integer").into())
 }
 
 // --------------------------------------------------
@@ -132,7 +132,7 @@ fn find_files(paths: &[String]) -> MyResult<Vec<PathBuf>> {
 
     for path in paths {
         match fs::metadata(path) {
-            Err(e) => return Err(format!("{}: {}", path, e).into()),
+            Err(e) => return Err(format!("{path}: {e}").into()),
             Ok(_) => files.extend(
                 WalkDir::new(path)
                     .into_iter()
