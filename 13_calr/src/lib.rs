@@ -47,7 +47,7 @@ pub fn get_args() -> MyResult<Config> {
                 .short('y')
                 .long("year")
                 .help("Show whole current year")
-                .conflicts_with_all(&["month", "year"])
+                .conflicts_with_all(["month", "year"])
                 .action(ArgAction::SetTrue),
         )
         .arg(Arg::new("year").value_name("YEAR").help("Year (1-9999)"))
@@ -115,7 +115,7 @@ pub fn run(config: Config) -> MyResult<()> {
 // --------------------------------------------------
 fn parse_int<T: FromStr>(val: &str) -> MyResult<T> {
     val.parse()
-        .map_err(|_| format!("Invalid integer \"{}\"", val).into())
+        .map_err(|_| format!("Invalid integer \"{val}\"").into())
 }
 
 // --------------------------------------------------
@@ -124,7 +124,7 @@ fn parse_year(year: &str) -> MyResult<i32> {
         if (1..=9999).contains(&num) {
             Ok(num)
         } else {
-            Err(format!("year \"{}\" not in the range 1 through 9999", year)
+            Err(format!("year \"{year}\" not in the range 1 through 9999")
                 .into())
         }
     })
@@ -138,8 +138,7 @@ fn parse_month(month: &str) -> MyResult<u32> {
                 Ok(num)
             } else {
                 Err(format!(
-                    "month \"{}\" not in the range 1 through 12",
-                    month
+                    "month \"{month}\" not in the range 1 through 12"
                 )
                 .into())
             }
@@ -161,7 +160,7 @@ fn parse_month(month: &str) -> MyResult<u32> {
             if matches.len() == 1 {
                 Ok(matches[0] as u32)
             } else {
-                Err(format!("Invalid month \"{}\"", month).into())
+                Err(format!("Invalid month \"{month}\"").into())
             }
         }
     }
@@ -198,7 +197,7 @@ fn format_month(
 
     let last = last_day_in_month(year, month);
     days.extend((first.day()..=last.day()).into_iter().map(|num| {
-        let fmt = format!("{:>2}", num);
+        let fmt = format!("{num:>2}");
         if is_today(num) {
             Style::new().reverse().paint(fmt).to_string()
         } else {
@@ -211,7 +210,7 @@ fn format_month(
     lines.push(format!(
         "{:^20}  ", // two trailing spaces
         if print_year {
-            format!("{} {}", month_name, year)
+            format!("{month_name} {year}")
         } else {
             month_name.to_string()
         }

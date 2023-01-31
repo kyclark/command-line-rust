@@ -43,7 +43,7 @@ fn dies_invalid_year() -> TestResult {
 #[test]
 fn dies_month_0() -> TestResult {
     Command::cargo_bin(PRG)?
-        .args(&["-m", "0"])
+        .args(["-m", "0"])
         .assert()
         .failure()
         .stderr("month \"0\" not in the range 1 through 12\n");
@@ -54,7 +54,7 @@ fn dies_month_0() -> TestResult {
 #[test]
 fn dies_month_13() -> TestResult {
     Command::cargo_bin(PRG)?
-        .args(&["-m", "13"])
+        .args(["-m", "13"])
         .assert()
         .failure()
         .stderr("month \"13\" not in the range 1 through 12\n");
@@ -65,7 +65,7 @@ fn dies_month_13() -> TestResult {
 #[test]
 fn dies_invalid_month() -> TestResult {
     Command::cargo_bin(PRG)?
-        .args(&["-m", "foo"])
+        .args(["-m", "foo"])
         .assert()
         .failure()
         .stderr("Invalid month \"foo\"\n");
@@ -77,7 +77,7 @@ fn dies_invalid_month() -> TestResult {
 fn dies_y_and_month() -> TestResult {
     let expected = "the argument '-m <MONTH>' cannot be used with '--year'";
     Command::cargo_bin(PRG)?
-        .args(&["-m", "1", "-y"])
+        .args(["-m", "1", "-y"])
         .assert()
         .failure()
         .stderr(predicate::str::contains(expected));
@@ -89,7 +89,7 @@ fn dies_y_and_month() -> TestResult {
 fn dies_y_and_year() -> TestResult {
     let expected = "the argument '--year' cannot be used with '[YEAR]'";
     Command::cargo_bin(PRG)?
-        .args(&["-y", "2000"])
+        .args(["-y", "2000"])
         .assert()
         .failure()
         .stderr(predicate::str::contains(expected));
@@ -116,7 +116,7 @@ fn month_num() -> TestResult {
 
     for (num, month) in expected {
         Command::cargo_bin(PRG)?
-            .args(&["-m", num])
+            .args(["-m", num])
             .assert()
             .success()
             .stdout(predicates::str::contains(month.to_string()));
@@ -143,7 +143,7 @@ fn partial_month() -> TestResult {
 
     for (arg, month) in expected {
         Command::cargo_bin(PRG)?
-            .args(&["-m", arg])
+            .args(["-m", arg])
             .assert()
             .success()
             .stdout(predicates::str::contains(month.to_string()));
@@ -168,7 +168,7 @@ fn default_one_month() -> TestResult {
     let cmd = Command::cargo_bin(PRG)?.assert().success();
     let out = cmd.get_output();
     let stdout = String::from_utf8(out.stdout.clone())?;
-    let lines: Vec<_> = stdout.split("\n").collect();
+    let lines: Vec<_> = stdout.split('\n').collect();
     assert_eq!(lines.len(), 9);
     assert_eq!(lines[0].len(), 22);
     Ok(())
@@ -203,7 +203,7 @@ fn test_2020() -> TestResult {
 fn year() -> TestResult {
     let cmd = Command::cargo_bin(PRG)?.arg("-y").assert().success();
     let stdout = String::from_utf8(cmd.get_output().stdout.clone())?;
-    let lines: Vec<&str> = stdout.split("\n").collect();
+    let lines: Vec<&str> = stdout.split('\n').collect();
     assert_eq!(lines.len(), 37);
     Ok(())
 }
