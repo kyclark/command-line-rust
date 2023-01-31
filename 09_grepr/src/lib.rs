@@ -35,7 +35,7 @@ pub fn get_args() -> MyResult<Config> {
             Arg::new("files")
                 .value_name("FILE")
                 .help("Input file(s)")
-                .multiple(true)
+                .num_args(1..)
                 .default_value("-"),
         )
         .arg(
@@ -68,9 +68,9 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let pattern = matches.get_one("pattern").cloned().unwrap();
-    let pattern = RegexBuilder::new(pattern)
-        .case_insensitive(matches.is_present("insensitive"))
+    let pattern: String = matches.get_one("pattern").cloned().unwrap();
+    let pattern = RegexBuilder::new(&pattern)
+        .case_insensitive(matches.get_one("insensitive").copied().unwrap())
         .build()
         .map_err(|_| format!("Invalid pattern \"{}\"", pattern))?;
 
@@ -80,7 +80,7 @@ pub fn get_args() -> MyResult<Config> {
             .get_many("files")
             .expect("files required")
             .cloned()
-            .unwrap(),
+            .collect(),
         recursive: matches.get_one("recursive").copied().unwrap(),
         count: matches.get_one("count").copied().unwrap(),
         invert_match: matches.get_one("invert").copied().unwrap(),
