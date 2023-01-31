@@ -2,9 +2,9 @@
 
 ![Rust](rust.jpg)
 
-[Buy the logo on a shirt!](https://www.etsy.com/shop/ProgDrip)
-
 This is the code repository for the O'Reilly book [_Command-Line Rust_](https://learning.oreilly.com/library/view/command-line-rust/9781098109424/) (ISBN 9781098109417) by Ken Youens-Clark.
+The "main" branch has the original source code using version 2.33 of the `clap` crate, which was the latest version while I was writing the book.
+The "clap_v4" branch has been updated to use the builder pattern of `clap` version 4 along with clippy suggestions as of Rust 1.67.
 
 For several consecutive years, Rust has been voted "most loved programming language" in Stack Overflow's annual developer survey. This open source systems programming language is now used for everything from game engines and operating systems to browser components and virtual reality simulation engines. But Rust is also an incredibly complex language with a notoriously difficult learning curve.
 
