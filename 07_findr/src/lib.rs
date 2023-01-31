@@ -60,8 +60,8 @@ pub fn get_args() -> MyResult<Config> {
         .collect::<Vec<String>>()
         .iter()
         .map(|name| {
-            Regex::new(&name)
-                .map_err(|_| format!("Invalid --name \"{}\"", name))
+            Regex::new(name)
+                .map_err(|_| format!("Invalid --name \"{name}\""))
         })
         .collect::<Result<Vec<_>, _>>()?;
 
@@ -118,7 +118,7 @@ pub fn run(config: Config) -> MyResult<()> {
             .into_iter()
             .filter_map(|e| match e {
                 Err(e) => {
-                    eprintln!("{}", e);
+                    eprintln!("{e}");
                     None
                 }
                 Ok(entry) => Some(entry),

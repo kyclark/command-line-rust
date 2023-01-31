@@ -39,7 +39,7 @@ fn skips_bad_dir() -> TestResult {
 #[test]
 fn dies_bad_name() -> TestResult {
     Command::cargo_bin(PRG)?
-        .args(&["--name", "*.csv"])
+        .args(["--name", "*.csv"])
         .assert()
         .failure()
         .stderr(predicate::str::contains("Invalid --name \"*.csv\""));
@@ -51,7 +51,7 @@ fn dies_bad_name() -> TestResult {
 fn dies_bad_type() -> TestResult {
     let expected = "error: invalid value 'x' for '--type [<TYPE>...]'";
     Command::cargo_bin(PRG)?
-        .args(&["--type", "x"])
+        .args(["--type", "x"])
         .assert()
         .failure()
         .stderr(predicate::str::contains(expected));
@@ -77,14 +77,14 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
     let file = format_file_name(expected_file);
     let contents = fs::read_to_string(file.as_ref())?;
     let mut expected: Vec<&str> =
-        contents.split("\n").filter(|s| !s.is_empty()).collect();
+        contents.split('\n').filter(|s| !s.is_empty()).collect();
     expected.sort();
 
     let cmd = Command::cargo_bin(PRG)?.args(args).assert().success();
     let out = cmd.get_output();
     let stdout = String::from_utf8(out.stdout.clone())?;
     let mut lines: Vec<&str> =
-        stdout.split("\n").filter(|s| !s.is_empty()).collect();
+        stdout.split('\n').filter(|s| !s.is_empty()).collect();
     lines.sort();
 
     assert_eq!(lines, expected);
@@ -295,7 +295,7 @@ fn unreadable_dir() -> TestResult {
     //permissions.set_mode(0o000);
 
     std::process::Command::new("chmod")
-        .args(&["000", dirname])
+        .args(["000", dirname])
         .status()
         .expect("failed");
 
@@ -308,7 +308,7 @@ fn unreadable_dir() -> TestResult {
     let out = cmd.get_output();
     let stdout = String::from_utf8(out.stdout.clone())?;
     let lines: Vec<&str> =
-        stdout.split("\n").filter(|s| !s.is_empty()).collect();
+        stdout.split('\n').filter(|s| !s.is_empty()).collect();
 
     assert_eq!(lines.len(), 17);
 
