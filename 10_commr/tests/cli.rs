@@ -40,9 +40,9 @@ fn gen_bad_file() -> String {
 #[test]
 fn dies_bad_file1() -> TestResult {
     let bad = gen_bad_file();
-    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    let expected = format!("{bad}: .* [(]os error 2[)]");
     Command::cargo_bin(PRG)?
-        .args(&[&bad, FILE1])
+        .args([&bad, FILE1])
         .assert()
         .failure()
         .stderr(predicate::str::is_match(expected)?);
@@ -53,9 +53,9 @@ fn dies_bad_file1() -> TestResult {
 #[test]
 fn dies_bad_file2() -> TestResult {
     let bad = gen_bad_file();
-    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    let expected = format!("{bad}: .* [(]os error 2[)]");
     Command::cargo_bin(PRG)?
-        .args(&[FILE1, &bad])
+        .args([FILE1, &bad])
         .assert()
         .failure()
         .stderr(predicate::str::is_match(expected)?);
@@ -67,7 +67,7 @@ fn dies_bad_file2() -> TestResult {
 fn dies_both_stdin() -> TestResult {
     let expected = "Both input files cannot be STDIN (\"-\")";
     Command::cargo_bin(PRG)?
-        .args(&["-", "-"])
+        .args(["-", "-"])
         .assert()
         .failure()
         .stderr(predicate::str::contains(expected));

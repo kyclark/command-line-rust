@@ -196,7 +196,7 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
         _ => Ok(Box::new(BufReader::new(
             File::open(filename)
-                .map_err(|e| format!("{}: {}", filename, e))?,
+                .map_err(|e| format!("{filename}: {e}"))?,
         ))),
     }
 }
