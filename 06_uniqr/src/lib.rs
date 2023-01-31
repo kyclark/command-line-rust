@@ -60,9 +60,9 @@ pub fn run(config: Config) -> MyResult<()> {
     let mut print = |count: u64, text: &str| -> MyResult<()> {
         if count > 0 {
             if config.count {
-                write!(out_file, "{:>4} {}", count, text)?;
+                write!(out_file, "{count:>4} {text}")?;
             } else {
-                write!(out_file, "{}", text)?;
+                write!(out_file, "{text}")?;
             }
         };
         Ok(())

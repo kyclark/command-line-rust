@@ -99,7 +99,7 @@ fn gen_bad_file() -> String {
 #[test]
 fn dies_bad_file() -> TestResult {
     let bad = gen_bad_file();
-    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    let expected = format!("{bad}: .* [(]os error 2[)]");
     Command::cargo_bin(PRG)?
         .arg(bad)
         .assert()
@@ -124,7 +124,7 @@ fn run(test: &Test) -> TestResult {
 fn run_count(test: &Test) -> TestResult {
     let expected = fs::read_to_string(test.out_count)?;
     Command::cargo_bin(PRG)?
-        .args(&[test.input, "-c"])
+        .args([test.input, "-c"])
         .assert()
         .success()
         .stdout(expected);
@@ -162,12 +162,12 @@ fn run_outfile(test: &Test) -> TestResult {
     let outfile = NamedTempFile::new()?;
     let outpath = &outfile.path().to_str().unwrap();
     Command::cargo_bin(PRG)?
-        .args(&[test.input, outpath])
+        .args([test.input, outpath])
         .assert()
         .success()
         .stdout("");
 
-    let contents = fs::read_to_string(&outpath)?;
+    let contents = fs::read_to_string(outpath)?;
     assert_eq!(&expected, &contents);
 
     Ok(())
@@ -179,13 +179,13 @@ fn run_outfile_count(test: &Test) -> TestResult {
     let outpath = &outfile.path().to_str().unwrap();
 
     Command::cargo_bin(PRG)?
-        .args(&[test.input, outpath, "--count"])
+        .args([test.input, outpath, "--count"])
         .assert()
         .success()
         .stdout("");
 
     let expected = fs::read_to_string(test.out_count)?;
-    let contents = fs::read_to_string(&outpath)?;
+    let contents = fs::read_to_string(outpath)?;
     assert_eq!(&expected, &contents);
 
     Ok(())
@@ -198,13 +198,13 @@ fn run_stdin_outfile_count(test: &Test) -> TestResult {
     let outpath = &outfile.path().to_str().unwrap();
 
     Command::cargo_bin(PRG)?
-        .args(&["-", outpath, "-c"])
+        .args(["-", outpath, "-c"])
         .write_stdin(input)
         .assert()
         .stdout("");
 
     let expected = fs::read_to_string(test.out_count)?;
-    let contents = fs::read_to_string(&outpath)?;
+    let contents = fs::read_to_string(outpath)?;
     assert_eq!(&expected, &contents);
 
     Ok(())
