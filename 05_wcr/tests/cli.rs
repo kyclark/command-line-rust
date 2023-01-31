@@ -29,7 +29,7 @@ fn gen_bad_file() -> String {
 #[test]
 fn dies_chars_and_bytes() -> TestResult {
     Command::cargo_bin(PRG)?
-        .args(&["-m", "-c"])
+        .args(["-m", "-c"])
         .assert()
         .failure()
         .stderr(predicate::str::contains(
@@ -53,7 +53,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
 #[test]
 fn skips_bad_file() -> TestResult {
     let bad = gen_bad_file();
-    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    let expected = format!("{bad}: .* [(]os error 2[)]");
     Command::cargo_bin(PRG)?
         .arg(bad)
         .assert()

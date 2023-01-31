@@ -99,7 +99,7 @@ pub fn run(config: Config) -> MyResult<()> {
 
     for filename in &config.files {
         match open(filename) {
-            Err(err) => eprintln!("{}: {}", filename, err),
+            Err(err) => eprintln!("{filename}: {err}"),
             Ok(file) => {
                 if let Ok(info) = count(file) {
                     println!(
@@ -148,7 +148,7 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
 // --------------------------------------------------
 fn format_field(value: usize, show: bool) -> String {
     if show {
-        format!("{:>8}", value)
+        format!("{value:>8}")
     } else {
         "".to_string()
     }
