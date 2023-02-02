@@ -86,7 +86,7 @@ pub fn get_args() -> MyResult<Config> {
             .collect(),
         lines: lines.unwrap(),
         bytes,
-        quiet: matches.get_one("quiet").copied().unwrap(),
+        quiet: matches.get_flag("quiet"),
     })
 }
 

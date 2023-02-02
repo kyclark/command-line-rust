@@ -9,22 +9,25 @@ const PRG: &str = "calr";
 // --------------------------------------------------
 #[test]
 fn dies_year_0() -> TestResult {
-    Command::cargo_bin(PRG)?
-        .arg("0")
-        .assert()
-        .failure()
-        .stderr("year \"0\" not in the range 1 through 9999\n");
+    Command::cargo_bin(PRG)?.arg("0").assert().failure().stderr(
+        predicate::str::contains(
+            "error: invalid value '0' for '[YEAR]': 0 is not in 1..=9999",
+        ),
+    );
     Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn dies_year_13() -> TestResult {
+fn dies_year_10000() -> TestResult {
     Command::cargo_bin(PRG)?
         .arg("10000")
         .assert()
         .failure()
-        .stderr("year \"10000\" not in the range 1 through 9999\n");
+        .stderr(predicate::str::contains(
+            "error: invalid value \'10000\' \
+                for \'[YEAR]\': 10000 is not in 1..=9999",
+        ));
     Ok(())
 }
 
@@ -35,7 +38,10 @@ fn dies_invalid_year() -> TestResult {
         .arg("foo")
         .assert()
         .failure()
-        .stderr("Invalid integer \"foo\"\n");
+        .stderr(predicate::str::contains(
+            "error: invalid value \'foo\' for \'[YEAR]\': \
+                invalid digit found in string",
+        ));
     Ok(())
 }
 

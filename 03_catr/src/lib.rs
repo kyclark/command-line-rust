@@ -48,11 +48,8 @@ pub fn get_args() -> MyResult<Config> {
             .expect("files required")
             .cloned()
             .collect(),
-        number_lines: matches.get_one("number").copied().unwrap(),
-        number_nonblank_lines: matches
-            .get_one("number_nonblank")
-            .copied()
-            .unwrap(),
+        number_lines: matches.get_flag("number"),
+        number_nonblank_lines: matches.get_flag("number_nonblank"),
     })
 }
 

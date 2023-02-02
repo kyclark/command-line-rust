@@ -6,7 +6,7 @@ use walkdir::{DirEntry, WalkDir};
 
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 enum EntryType {
     Dir,
     File,
@@ -39,6 +39,7 @@ pub fn get_args() -> MyResult<Config> {
                 .short('n')
                 .long("name")
                 .help("Name")
+                .value_parser(Regex::new)
                 .action(ArgAction::Append)
                 .num_args(0..),
         )
@@ -48,22 +49,16 @@ pub fn get_args() -> MyResult<Config> {
                 .short('t')
                 .long("type")
                 .help("Entry type")
-                .value_parser(["f", "d", "l"])
+                .value_parser(["d", "f", "l"])
                 .num_args(0..),
         )
         .get_matches();
 
-    let names = matches
+    let names: Vec<Regex> = matches
         .get_many("names")
         .unwrap_or_default()
         .cloned()
-        .collect::<Vec<String>>()
-        .iter()
-        .map(|name| {
-            Regex::new(name)
-                .map_err(|_| format!("Invalid --name \"{name}\""))
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+        .collect();
 
     // clap should disallow anything but "d," "f," or "l"
     let entry_types = matches

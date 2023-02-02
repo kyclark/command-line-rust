@@ -81,9 +81,9 @@ pub fn get_args() -> MyResult<Config> {
             .expect("files required")
             .cloned()
             .collect(),
-        recursive: matches.get_one("recursive").copied().unwrap(),
-        count: matches.get_one("count").copied().unwrap(),
-        invert_match: matches.get_one("invert").copied().unwrap(),
+        recursive: matches.get_flag("recursive"),
+        count: matches.get_flag("count"),
+        invert_match: matches.get_flag("invert"),
     })
 }
 

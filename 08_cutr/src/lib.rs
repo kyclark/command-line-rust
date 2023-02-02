@@ -1,5 +1,5 @@
 use crate::Extract::*;
-use clap::{Arg, Command};
+use clap::{Arg, ArgGroup, Command};
 use csv::{ReaderBuilder, StringRecord, WriterBuilder};
 use regex::Regex;
 use std::{
@@ -54,24 +54,27 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("FIELDS")
                 .short('f')
                 .long("fields")
-                .help("Selected fields")
-                .conflicts_with_all(["chars", "bytes"]),
+                .help("Selected fields"),
         )
         .arg(
             Arg::new("bytes")
                 .value_name("BYTES")
                 .short('b')
                 .long("bytes")
-                .help("Selected bytes")
-                .conflicts_with_all(["fields", "chars"]),
+                .help("Selected bytes"),
         )
         .arg(
             Arg::new("chars")
                 .value_name("CHARS")
                 .short('c')
                 .long("chars")
-                .help("Selected characters")
-                .conflicts_with_all(["fields", "bytes"]),
+                .help("Selected characters"),
+        )
+        .group(
+            ArgGroup::new("group")
+                .args(["fields", "bytes", "chars"])
+                .required(true)
+                .multiple(false),
         )
         .get_matches();
 

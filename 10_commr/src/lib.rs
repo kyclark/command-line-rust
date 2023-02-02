@@ -84,19 +84,10 @@ pub fn get_args() -> MyResult<Config> {
     Ok(Config {
         file1: matches.get_one("file1").cloned().unwrap(),
         file2: matches.get_one("file2").cloned().unwrap(),
-        show_col1: !matches
-            .get_one::<bool>("suppress_col1")
-            .copied()
-            .unwrap(),
-        show_col2: !matches
-            .get_one::<bool>("suppress_col2")
-            .copied()
-            .unwrap(),
-        show_col3: !matches
-            .get_one::<bool>("suppress_col3")
-            .copied()
-            .unwrap(),
-        insensitive: matches.get_one("insensitive").copied().unwrap(),
+        show_col1: !matches.get_flag("suppress_col1"),
+        show_col2: !matches.get_flag("suppress_col2"),
+        show_col3: !matches.get_flag("suppress_col3"),
+        insensitive: matches.get_flag("insensitive"),
         delimiter: matches.get_one("delimiter").cloned().unwrap(),
     })
 }
@@ -195,8 +186,7 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
     match filename {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
         _ => Ok(Box::new(BufReader::new(
-            File::open(filename)
-                .map_err(|e| format!("{filename}: {e}"))?,
+            File::open(filename).map_err(|e| format!("{filename}: {e}"))?,
         ))),
     }
 }

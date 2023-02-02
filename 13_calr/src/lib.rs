@@ -2,7 +2,7 @@ use ansi_term::Style;
 use chrono::{Datelike, Local, NaiveDate};
 use clap::{Arg, ArgAction, Command};
 use itertools::izip;
-use std::{error::Error, str::FromStr};
+use std::error::Error;
 
 #[derive(Debug)]
 pub struct Config {
@@ -50,7 +50,12 @@ pub fn get_args() -> MyResult<Config> {
                 .conflicts_with_all(["month", "year"])
                 .action(ArgAction::SetTrue),
         )
-        .arg(Arg::new("year").value_name("YEAR").help("Year (1-9999)"))
+        .arg(
+            Arg::new("year")
+                .value_name("YEAR")
+                .value_parser(clap::value_parser!(i32).range(1..=9999))
+                .help("Year (1-9999)"),
+        )
         .get_matches();
 
     let mut month = matches
@@ -58,14 +63,11 @@ pub fn get_args() -> MyResult<Config> {
         .cloned()
         .map(|v: String| parse_month(v.as_str()))
         .transpose()?;
-    let mut year = matches
-        .get_one("year")
-        .cloned()
-        .map(|v: String| parse_year(v.as_str()))
-        .transpose()?;
+
+    let mut year = matches.get_one("year").cloned();
 
     let today = Local::today();
-    if let Some(true) = matches.get_one("show_current_year").copied() {
+    if matches.get_flag("show_current_year") {
         month = None;
         year = Some(today.year());
     } else if month.is_none() && year.is_none() {
@@ -113,26 +115,8 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn parse_int<T: FromStr>(val: &str) -> MyResult<T> {
-    val.parse()
-        .map_err(|_| format!("Invalid integer \"{val}\"").into())
-}
-
-// --------------------------------------------------
-fn parse_year(year: &str) -> MyResult<i32> {
-    parse_int(year).and_then(|num| {
-        if (1..=9999).contains(&num) {
-            Ok(num)
-        } else {
-            Err(format!("year \"{year}\" not in the range 1 through 9999")
-                .into())
-        }
-    })
-}
-
-// --------------------------------------------------
 fn parse_month(month: &str) -> MyResult<u32> {
-    match parse_int(month) {
+    match month.parse() {
         Ok(num) => {
             if (1..=12).contains(&num) {
                 Ok(num)
@@ -236,57 +220,8 @@ fn format_month(
 // --------------------------------------------------
 #[cfg(test)]
 mod tests {
-    use super::{
-        format_month, last_day_in_month, parse_int, parse_month, parse_year,
-    };
+    use super::{format_month, last_day_in_month, parse_month};
     use chrono::NaiveDate;
-
-    #[test]
-    fn test_parse_int() {
-        // Parse positive int as usize
-        let res = parse_int::<usize>("1");
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap(), 1usize);
-
-        // Parse negative int as i32
-        let res = parse_int::<i32>("-1");
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap(), -1i32);
-
-        // Fail on a string
-        let res = parse_int::<i64>("foo");
-        assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "Invalid integer \"foo\"");
-    }
-
-    #[test]
-    fn test_parse_year() {
-        let res = parse_year("1");
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap(), 1i32);
-
-        let res = parse_year("9999");
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap(), 9999i32);
-
-        let res = parse_year("0");
-        assert!(res.is_err());
-        assert_eq!(
-            res.unwrap_err().to_string(),
-            "year \"0\" not in the range 1 through 9999"
-        );
-
-        let res = parse_year("10000");
-        assert!(res.is_err());
-        assert_eq!(
-            res.unwrap_err().to_string(),
-            "year \"10000\" not in the range 1 through 9999"
-        );
-
-        let res = parse_year("foo");
-        assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "Invalid integer \"foo\"");
-    }
 
     #[test]
     fn test_parse_month() {

@@ -66,10 +66,10 @@ pub fn get_args() -> MyResult<Config> {
         )
         .get_matches();
 
-    let mut lines = matches.get_one("lines").copied().unwrap();
-    let mut words = matches.get_one("words").copied().unwrap();
-    let mut bytes = matches.get_one("bytes").copied().unwrap();
-    let chars = matches.get_one("chars").copied().unwrap();
+    let mut lines = matches.get_flag("lines");
+    let mut words = matches.get_flag("words");
+    let mut bytes = matches.get_flag("bytes");
+    let chars = matches.get_flag("chars");
 
     if [words, bytes, chars, lines].iter().all(|v| v == &false) {
         lines = true;

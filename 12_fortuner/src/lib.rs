@@ -58,6 +58,7 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("SEED")
                 .short('s')
                 .long("seed")
+                .value_parser(clap::value_parser!(u64))
                 .help("Random seed"),
         )
         .get_matches();
@@ -81,11 +82,7 @@ pub fn get_args() -> MyResult<Config> {
             .expect("sources required")
             .cloned()
             .collect(),
-        seed: matches
-            .get_one("seed")
-            .cloned()
-            .map(|v: String| parse_u64(v.as_str()))
-            .transpose()?,
+        seed: matches.get_one("seed").cloned(),
         pattern,
     })
 }
@@ -117,12 +114,6 @@ pub fn run(config: Config) -> MyResult<()> {
     }
 
     Ok(())
-}
-
-// --------------------------------------------------
-fn parse_u64(val: &str) -> MyResult<u64> {
-    val.parse()
-        .map_err(|_| format!("\"{val}\" not a valid integer").into())
 }
 
 // --------------------------------------------------
@@ -195,25 +186,8 @@ fn pick_fortune(fortunes: &[Fortune], seed: Option<u64>) -> Option<String> {
 // --------------------------------------------------
 #[cfg(test)]
 mod tests {
-    use super::{
-        find_files, parse_u64, pick_fortune, read_fortunes, Fortune,
-    };
+    use super::{find_files, pick_fortune, read_fortunes, Fortune};
     use std::path::PathBuf;
-
-    #[test]
-    fn test_parse_u64() {
-        let res = parse_u64("a");
-        assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "\"a\" not a valid integer");
-
-        let res = parse_u64("0");
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap(), 0);
-
-        let res = parse_u64("4");
-        assert!(res.is_ok());
-        assert_eq!(res.unwrap(), 4);
-    }
 
     #[test]
     fn test_find_files() {

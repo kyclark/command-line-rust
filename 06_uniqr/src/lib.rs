@@ -43,7 +43,7 @@ pub fn get_args() -> MyResult<Config> {
     Ok(Config {
         in_file: matches.get_one("in_file").cloned().unwrap(),
         out_file: matches.get_one("out_file").cloned(),
-        count: matches.get_one("count").copied().unwrap(),
+        count: matches.get_flag("count"),
     })
 }
 

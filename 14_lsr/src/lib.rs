@@ -51,15 +51,14 @@ pub fn get_args() -> MyResult<Config> {
             .expect("paths required")
             .cloned()
             .collect(),
-        long: matches.get_one("long").copied().unwrap(),
-        show_hidden: matches.get_one("all").copied().unwrap(),
+        long: matches.get_flag("long"),
+        show_hidden: matches.get_flag("all"),
     })
 }
 
 // --------------------------------------------------
 pub fn run(config: Config) -> MyResult<()> {
     let paths = find_files(&config.paths, config.show_hidden)?;
-    //println!("{:?}", paths);
     if config.long {
         println!("{}", format_output(&paths)?);
     } else {

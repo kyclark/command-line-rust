@@ -8,8 +8,8 @@ type MyResult<T> = Result<T, Box<dyn Error>>;
 #[derive(Debug)]
 pub struct Config {
     files: Vec<String>,
-    lines: usize,
-    bytes: Option<usize>,
+    lines: u64,
+    bytes: Option<u64>,
 }
 
 // --------------------------------------------------
@@ -24,6 +24,7 @@ pub fn get_args() -> MyResult<Config> {
                 .long("lines")
                 .value_name("LINES")
                 .help("Number of lines")
+                .value_parser(clap::value_parser!(u64).range(1..))
                 .default_value("10"),
         )
         .arg(
@@ -33,6 +34,7 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("BYTES")
                 .num_args(0..=1)
                 .conflicts_with("lines")
+                .value_parser(clap::value_parser!(u64).range(1..))
                 .help("Number of bytes"),
         )
         .arg(
@@ -42,21 +44,8 @@ pub fn get_args() -> MyResult<Config> {
                 .num_args(1..)
                 .default_value("-"),
         )
-        .get_matches();
-
-    let lines = matches
-        .get_one("lines")
-        .cloned()
-        .map(parse_positive_int)
-        .transpose()
-        .map_err(|e| format!("illegal line count -- {e}"))?;
-
-    let bytes = matches
-        .get_one("bytes")
-        .cloned()
-        .map(parse_positive_int)
-        .transpose()
-        .map_err(|e| format!("illegal byte count -- {e}"))?;
+        .try_get_matches()
+        .unwrap_or_else(|e| e.exit());
 
     Ok(Config {
         files: matches
@@ -64,8 +53,8 @@ pub fn get_args() -> MyResult<Config> {
             .expect("file required")
             .cloned()
             .collect(),
-        lines: lines.unwrap(),
-        bytes,
+        lines: matches.get_one("lines").cloned().unwrap(),
+        bytes: matches.get_one("bytes").cloned(),
     })
 }
 
@@ -86,8 +75,8 @@ pub fn run(config: Config) -> MyResult<()> {
                 }
 
                 if let Some(num_bytes) = config.bytes {
-                    let mut handle = file.take(num_bytes as u64);
-                    let mut buffer = vec![0; num_bytes];
+                    let mut handle = file.take(num_bytes);
+                    let mut buffer = vec![0; num_bytes as usize];
                     let bytes_read = handle.read(&mut buffer)?;
                     print!(
                         "{}",
@@ -116,31 +105,4 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
         _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
     }
-}
-
-// --------------------------------------------------
-fn parse_positive_int(val: String) -> MyResult<usize> {
-    match val.parse() {
-        Ok(n) if n > 0 => Ok(n),
-        _ => Err(From::from(val)),
-    }
-}
-
-// --------------------------------------------------
-#[test]
-fn test_parse_positive_int() {
-    // 3 is an OK integer
-    let res = parse_positive_int("3".to_string());
-    assert!(res.is_ok());
-    assert_eq!(res.unwrap(), 3);
-
-    // Any string is an error
-    let res = parse_positive_int("foo".to_string());
-    assert!(res.is_err());
-    assert_eq!(res.unwrap_err().to_string(), "foo".to_string());
-
-    // A zero is an error
-    let res = parse_positive_int("0".to_string());
-    assert!(res.is_err());
-    assert_eq!(res.unwrap_err().to_string(), "0".to_string());
 }

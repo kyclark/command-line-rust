@@ -39,7 +39,10 @@ fn gen_bad_file() -> String {
 #[test]
 fn dies_bad_bytes() -> TestResult {
     let bad = random_string();
-    let expected = format!("illegal byte count -- {}", &bad);
+    let expected = format!(
+        "invalid value '{bad}' for \
+        '--bytes [<BYTES>]': invalid digit found in string"
+    );
     Command::cargo_bin(PRG)?
         .args(["-c", &bad, EMPTY])
         .assert()
@@ -53,7 +56,10 @@ fn dies_bad_bytes() -> TestResult {
 #[test]
 fn dies_bad_lines() -> TestResult {
     let bad = random_string();
-    let expected = format!("illegal line count -- {}", &bad);
+    let expected = format!(
+        "error: invalid value '{bad}' for \
+        '--lines <LINES>': invalid digit found in string"
+    );
     Command::cargo_bin(PRG)?
         .args(["-n", &bad, EMPTY])
         .assert()

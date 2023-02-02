@@ -26,8 +26,7 @@ fn main() {
         .cloned()
         .collect();
 
-    let omit_newline: bool =
-        matches.get_one("omit_newline").copied().unwrap();
+    let omit_newline = matches.get_flag("omit_newline");
 
     print!("{}{}", text.join(" "), if omit_newline { "" } else { "\n" });
 }
