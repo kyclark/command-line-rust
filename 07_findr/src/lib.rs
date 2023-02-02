@@ -1,5 +1,5 @@
 use crate::EntryType::*;
-use clap::{Arg, ArgAction, Command};
+use clap::{builder::PossibleValue, Arg, ArgAction, Command, ValueEnum};
 use regex::Regex;
 use std::error::Error;
 use walkdir::{DirEntry, WalkDir};
@@ -11,6 +11,20 @@ enum EntryType {
     Dir,
     File,
     Link,
+}
+
+impl ValueEnum for EntryType {
+    fn value_variants<'a>() -> &'a [Self] {
+        &[Dir, File, Link]
+    }
+
+    fn to_possible_value<'a>(&self) -> Option<PossibleValue> {
+        Some(match self {
+            Dir => PossibleValue::new("d"),
+            File => PossibleValue::new("f"),
+            Link => PossibleValue::new("l"),
+        })
+    }
 }
 
 #[derive(Debug)]
@@ -31,7 +45,7 @@ pub fn get_args() -> MyResult<Config> {
                 .value_name("PATH")
                 .help("Search paths")
                 .default_value(".")
-                .num_args(1..),
+                .num_args(0..),
         )
         .arg(
             Arg::new("names")
@@ -49,31 +63,11 @@ pub fn get_args() -> MyResult<Config> {
                 .short('t')
                 .long("type")
                 .help("Entry type")
-                .value_parser(["d", "f", "l"])
+                .value_parser(clap::value_parser!(EntryType))
+                .action(ArgAction::Append)
                 .num_args(0..),
         )
         .get_matches();
-
-    let names: Vec<Regex> = matches
-        .get_many("names")
-        .unwrap_or_default()
-        .cloned()
-        .collect();
-
-    // clap should disallow anything but "d," "f," or "l"
-    let entry_types = matches
-        .get_many("types")
-        .unwrap_or_default()
-        .cloned()
-        .collect::<Vec<String>>()
-        .iter()
-        .map(|val| match val.as_str() {
-            "d" => Dir,
-            "f" => File,
-            "l" => Link,
-            _ => unreachable!("Invalid type"),
-        })
-        .collect();
 
     Ok(Config {
         paths: matches
@@ -81,8 +75,16 @@ pub fn get_args() -> MyResult<Config> {
             .expect("paths required")
             .cloned()
             .collect(),
-        names,
-        entry_types,
+        names: matches
+            .get_many("names")
+            .unwrap_or_default()
+            .cloned()
+            .collect(),
+        entry_types: matches
+            .get_many("types")
+            .unwrap_or_default()
+            .cloned()
+            .collect(),
     })
 }
 
