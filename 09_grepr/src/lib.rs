@@ -70,7 +70,7 @@ pub fn get_args() -> MyResult<Config> {
 
     let pattern: String = matches.get_one("pattern").cloned().unwrap();
     let pattern = RegexBuilder::new(&pattern)
-        .case_insensitive(matches.get_one("insensitive").copied().unwrap())
+        .case_insensitive(matches.get_flag("insensitive"))
         .build()
         .map_err(|_| format!("Invalid pattern \"{pattern}\""))?;
 

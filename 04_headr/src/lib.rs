@@ -44,8 +44,7 @@ pub fn get_args() -> MyResult<Config> {
                 .num_args(1..)
                 .default_value("-"),
         )
-        .try_get_matches()
-        .unwrap_or_else(|e| e.exit());
+        .get_matches();
 
     Ok(Config {
         files: matches
@@ -96,6 +95,7 @@ pub fn run(config: Config) -> MyResult<()> {
             }
         }
     }
+
     Ok(())
 }
 

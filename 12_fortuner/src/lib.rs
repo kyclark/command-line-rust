@@ -68,9 +68,7 @@ pub fn get_args() -> MyResult<Config> {
         .cloned()
         .map(|val: String| {
             RegexBuilder::new(val.as_str())
-                .case_insensitive(
-                    matches.get_one("insensitive").copied().unwrap(),
-                )
+                .case_insensitive(matches.get_flag("insensitive"))
                 .build()
                 .map_err(|_| format!("Invalid --pattern \"{val}\""))
         })
