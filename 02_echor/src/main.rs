@@ -2,6 +2,7 @@ use clap::Parser;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
+/// Rust version of `echo`
 struct Args {
     /// Input text
     #[arg(required(true))]

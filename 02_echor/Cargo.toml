@@ -2,6 +2,7 @@
 name = "echor"
 version = "0.1.0"
 edition = "2021"
+authors = [ "Ken Youens-Clark <kyclark@gmail.com>" ]
 
 [dependencies]
 clap = { version = "4.1.4", features = ["derive"] }
