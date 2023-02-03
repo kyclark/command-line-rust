@@ -84,7 +84,7 @@ fn skips_bad_file() -> TestResult {
     let bad = gen_bad_file();
     let expected = format!("{}: .* [(]os error 2[)]", bad);
     Command::cargo_bin(PRG)?
-        .args([EMPTY, &bad, ONE])
+        .args(&[EMPTY, &bad, ONE])
         .assert()
         .stderr(predicate::str::is_match(expected)?);
 
