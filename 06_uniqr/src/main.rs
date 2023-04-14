@@ -8,6 +8,7 @@ use std::{
 type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug, Parser)]
+#[command(author, version, about)]
 /// Rust version of `uniq`
 pub struct Args {
     /// Input file
