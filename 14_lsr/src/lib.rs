@@ -3,6 +3,7 @@ mod owner;
 use chrono::{DateTime, Local};
 use clap::{App, Arg};
 use owner::Owner;
+use size::Size;
 use std::{error::Error, fs, os::unix::fs::MetadataExt, path::PathBuf};
 use tabular::{Row, Table};
 use users::{get_group_by_gid, get_user_by_uid};
@@ -14,6 +15,7 @@ pub struct Config {
     paths: Vec<String>,
     long: bool,
     show_hidden: bool,
+    human: bool,
 }
 
 // --------------------------------------------------
@@ -37,6 +39,13 @@ pub fn get_args() -> MyResult<Config> {
                 .long("long"),
         )
         .arg(
+            Arg::with_name("human")
+                .takes_value(false)
+                .help("Human-readable file sizes")
+                .short("H")
+                .long("human"),
+        )
+        .arg(
             Arg::with_name("all")
                 .takes_value(false)
                 .help("Show all files")
@@ -49,6 +58,7 @@ pub fn get_args() -> MyResult<Config> {
         paths: matches.values_of_lossy("paths").unwrap(),
         long: matches.is_present("long"),
         show_hidden: matches.is_present("all"),
+        human: matches.is_present("human"),
     })
 }
 
@@ -57,7 +67,7 @@ pub fn run(config: Config) -> MyResult<()> {
     let paths = find_files(&config.paths, config.show_hidden)?;
     //println!("{:?}", paths);
     if config.long {
-        println!("{}", format_output(&paths)?);
+        println!("{}", format_output(&paths, config.human)?);
     } else {
         for path in paths {
             println!("{}", path.display());
@@ -95,7 +105,7 @@ fn find_files(paths: &[String], show_hidden: bool) -> MyResult<Vec<PathBuf>> {
 }
 
 // --------------------------------------------------
-fn format_output(paths: &[PathBuf]) -> MyResult<String> {
+fn format_output(paths: &[PathBuf], human: bool) -> MyResult<String> {
     //         1   2     3     4     5     6     7     8
     let fmt = "{:<}{:<}  {:>}  {:<}  {:<}  {:>}  {:<}  {:<}";
     let mut table = Table::new(fmt);
@@ -116,6 +126,11 @@ fn format_output(paths: &[PathBuf]) -> MyResult<String> {
         let file_type = if path.is_dir() { "d" } else { "-" };
         let perms = format_mode(metadata.mode());
         let modified: DateTime<Local> = DateTime::from(metadata.modified()?);
+        let size = if human {
+            Size::from_bytes(metadata.len()).to_string()
+        } else {
+            metadata.len().to_string()
+        };
 
         table.add_row(
             Row::new()
@@ -124,7 +139,7 @@ fn format_output(paths: &[PathBuf]) -> MyResult<String> {
                 .with_cell(metadata.nlink()) // 3
                 .with_cell(user) // 4
                 .with_cell(group) // 5
-                .with_cell(metadata.len()) // 6
+                .with_cell(size) // 6
                 .with_cell(modified.format("%b %d %y %H:%M")) // 7
                 .with_cell(path.display()), // 8
         );
