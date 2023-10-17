@@ -1,9 +1,7 @@
+use anyhow::Result;
 use clap::{Arg, ArgAction, Command};
-use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
-
-type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug)]
 pub struct Config {
@@ -13,7 +11,7 @@ pub struct Config {
 }
 
 // --------------------------------------------------
-pub fn get_args() -> MyResult<Config> {
+pub fn get_args() -> Result<Config> {
     let matches = Command::new("catr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -54,7 +52,7 @@ pub fn get_args() -> MyResult<Config> {
 }
 
 // --------------------------------------------------
-pub fn run(config: Config) -> MyResult<()> {
+pub fn run(config: Config) -> Result<()> {
     for filename in config.files {
         match open(&filename) {
             Err(e) => eprintln!("{filename}: {e}"),
@@ -82,7 +80,7 @@ pub fn run(config: Config) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
+fn open(filename: &str) -> Result<Box<dyn BufRead>> {
     match filename {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
         _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
