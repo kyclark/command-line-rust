@@ -23,7 +23,7 @@ fn usage() -> Result<()> {
 }
 
 // --------------------------------------------------
-fn gen_bad_file() -> Result<String> {
+fn gen_bad_file() -> String {
     loop {
         let filename: String = rand::thread_rng()
             .sample_iter(&Alphanumeric)
@@ -40,7 +40,7 @@ fn gen_bad_file() -> Result<String> {
 // --------------------------------------------------
 #[test]
 fn skips_bad_file() -> Result<()> {
-    let bad = gen_bad_file()?;
+    let bad = gen_bad_file();
     let expected = format!("{bad}: .* [(]os error 2[)]");
     Command::cargo_bin(PRG)?
         .arg(&bad)
