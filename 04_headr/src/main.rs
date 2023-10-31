@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Arg, Command};
 use std::fs::File;
-use std::io::{self, BufRead, BufReader, Read};
+use std::io::{self, BufRead, BufReader};
 
 #[derive(Debug)]
 pub struct Config {
@@ -37,7 +37,6 @@ fn get_args() -> Config {
                 .short('c')
                 .long("bytes")
                 .value_name("BYTES")
-                .num_args(0..=1)
                 .conflicts_with("lines")
                 .value_parser(clap::value_parser!(u64).range(1..))
                 .help("Number of bytes"),
@@ -63,12 +62,6 @@ fn get_args() -> Config {
 }
 
 // --------------------------------------------------
-//fn run(config: Config) -> Result<()> {
-//    dbg!(config);
-//    Ok(())
-//}
-
-// --------------------------------------------------
 fn run(config: Config) -> Result<()> {
     let num_files = config.files.len();
 
@@ -85,9 +78,8 @@ fn run(config: Config) -> Result<()> {
                 }
 
                 if let Some(num_bytes) = config.bytes {
-                    let mut handle = file.take(num_bytes);
                     let mut buffer = vec![0; num_bytes as usize];
-                    let bytes_read = handle.read(&mut buffer)?;
+                    let bytes_read = file.read(&mut buffer)?;
                     print!(
                         "{}",
                         String::from_utf8_lossy(&buffer[..bytes_read])

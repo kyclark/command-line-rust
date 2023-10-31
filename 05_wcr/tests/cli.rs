@@ -1,9 +1,8 @@
+use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
 use rand::{distributions::Alphanumeric, Rng};
 use std::fs;
-
-type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 const PRG: &str = "wcr";
 const EMPTY: &str = "tests/inputs/empty.txt";
@@ -27,7 +26,7 @@ fn gen_bad_file() -> String {
 
 // --------------------------------------------------
 #[test]
-fn dies_chars_and_bytes() -> TestResult {
+fn dies_chars_and_bytes() -> Result<()> {
     Command::cargo_bin(PRG)?
         .args(["-m", "-c"])
         .assert()
@@ -39,7 +38,7 @@ fn dies_chars_and_bytes() -> TestResult {
 }
 
 // --------------------------------------------------
-fn run(args: &[&str], expected_file: &str) -> TestResult {
+fn run(args: &[&str], expected_file: &str) -> Result<()> {
     let expected = fs::read_to_string(expected_file)?;
     Command::cargo_bin(PRG)?
         .args(args)
@@ -51,7 +50,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn skips_bad_file() -> TestResult {
+fn skips_bad_file() -> Result<()> {
     let bad = gen_bad_file();
     let expected = format!("{bad}: .* [(]os error 2[)]");
     Command::cargo_bin(PRG)?
@@ -64,103 +63,103 @@ fn skips_bad_file() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn empty() -> TestResult {
+fn empty() -> Result<()> {
     run(&[EMPTY], "tests/expected/empty.txt.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn fox() -> TestResult {
+fn fox() -> Result<()> {
     run(&[FOX], "tests/expected/fox.txt.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn fox_bytes() -> TestResult {
+fn fox_bytes() -> Result<()> {
     run(&["--bytes", FOX], "tests/expected/fox.txt.c.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn fox_chars() -> TestResult {
+fn fox_chars() -> Result<()> {
     run(&["--chars", FOX], "tests/expected/fox.txt.m.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn fox_words() -> TestResult {
+fn fox_words() -> Result<()> {
     run(&["--words", FOX], "tests/expected/fox.txt.w.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn fox_lines() -> TestResult {
+fn fox_lines() -> Result<()> {
     run(&["--lines", FOX], "tests/expected/fox.txt.l.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn fox_words_bytes() -> TestResult {
+fn fox_words_bytes() -> Result<()> {
     run(&["-w", "-c", FOX], "tests/expected/fox.txt.wc.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn fox_words_lines() -> TestResult {
+fn fox_words_lines() -> Result<()> {
     run(&["-w", "-l", FOX], "tests/expected/fox.txt.wl.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn fox_bytes_lines() -> TestResult {
+fn fox_bytes_lines() -> Result<()> {
     run(&["-l", "-c", FOX], "tests/expected/fox.txt.cl.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn atlamal() -> TestResult {
+fn atlamal() -> Result<()> {
     run(&[ATLAMAL], "tests/expected/atlamal.txt.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn atlamal_bytes() -> TestResult {
+fn atlamal_bytes() -> Result<()> {
     run(&["-c", ATLAMAL], "tests/expected/atlamal.txt.c.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn atlamal_words() -> TestResult {
+fn atlamal_words() -> Result<()> {
     run(&["-w", ATLAMAL], "tests/expected/atlamal.txt.w.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn atlamal_lines() -> TestResult {
+fn atlamal_lines() -> Result<()> {
     run(&["-l", ATLAMAL], "tests/expected/atlamal.txt.l.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn atlamal_words_bytes() -> TestResult {
+fn atlamal_words_bytes() -> Result<()> {
     run(&["-w", "-c", ATLAMAL], "tests/expected/atlamal.txt.wc.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn atlamal_words_lines() -> TestResult {
+fn atlamal_words_lines() -> Result<()> {
     run(&["-w", "-l", ATLAMAL], "tests/expected/atlamal.txt.wl.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn atlamal_bytes_lines() -> TestResult {
+fn atlamal_bytes_lines() -> Result<()> {
     run(&["-l", "-c", ATLAMAL], "tests/expected/atlamal.txt.cl.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn atlamal_stdin() -> TestResult {
+fn atlamal_stdin() -> Result<()> {
     let input = fs::read_to_string(ATLAMAL)?;
     let expected =
         fs::read_to_string("tests/expected/atlamal.txt.stdin.out")?;
@@ -173,42 +172,42 @@ fn atlamal_stdin() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn test_all() -> TestResult {
+fn test_all() -> Result<()> {
     run(&[EMPTY, FOX, ATLAMAL], "tests/expected/all.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn test_all_lines() -> TestResult {
+fn test_all_lines() -> Result<()> {
     run(&["-l", EMPTY, FOX, ATLAMAL], "tests/expected/all.l.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn test_all_words() -> TestResult {
+fn test_all_words() -> Result<()> {
     run(&["-w", EMPTY, FOX, ATLAMAL], "tests/expected/all.w.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn test_all_bytes() -> TestResult {
+fn test_all_bytes() -> Result<()> {
     run(&["-c", EMPTY, FOX, ATLAMAL], "tests/expected/all.c.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn test_all_words_bytes() -> TestResult {
+fn test_all_words_bytes() -> Result<()> {
     run(&["-cw", EMPTY, FOX, ATLAMAL], "tests/expected/all.wc.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn test_all_words_lines() -> TestResult {
+fn test_all_words_lines() -> Result<()> {
     run(&["-wl", EMPTY, FOX, ATLAMAL], "tests/expected/all.wl.out")
 }
 
 // --------------------------------------------------
 #[test]
-fn test_all_bytes_lines() -> TestResult {
+fn test_all_bytes_lines() -> Result<()> {
     run(&["-cl", EMPTY, FOX, ATLAMAL], "tests/expected/all.cl.out")
 }

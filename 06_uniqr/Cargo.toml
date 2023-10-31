@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 clap = "4"
+anyhow = "1"
 
 [dev-dependencies]
 assert_cmd = "2"
