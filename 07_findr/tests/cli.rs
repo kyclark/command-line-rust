@@ -290,10 +290,6 @@ fn unreadable_dir() -> TestResult {
         fs::create_dir(dirname)?;
     }
 
-    //let metadata = fs::metadata(dirname)?;
-    //let mut permissions = metadata.permissions();
-    //permissions.set_mode(0o000);
-
     std::process::Command::new("chmod")
         .args(["000", dirname])
         .status()
