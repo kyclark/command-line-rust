@@ -201,7 +201,6 @@ fn parse_pos(range: &str) -> Result<PositionList> {
     let range_re = Regex::new(r"^(\d+)-(\d+)$").unwrap();
     range
         .split(',')
-        .into_iter()
         .map(|val| {
             parse_index(val).map(|n| n..n + 1).or_else(|e| {
                 range_re.captures(val).ok_or(e).and_then(|captures| {

@@ -115,8 +115,8 @@ fn run(config: Config) -> Result<()> {
         }
     };
 
-    let mut lines1 = open(file1)?.lines().filter_map(Result::ok).map(case);
-    let mut lines2 = open(file2)?.lines().filter_map(Result::ok).map(case);
+    let mut lines1 = open(file1)?.lines().map_while(Result::ok).map(case);
+    let mut lines2 = open(file2)?.lines().map_while(Result::ok).map(case);
 
     let print = |col: Column| {
         let mut columns = vec![];
