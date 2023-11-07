@@ -8,6 +8,7 @@ clap = "4"
 rand = "0.8"
 walkdir = "2"
 regex = "1"
+anyhow = "1"
 
 [dev-dependencies]
 assert_cmd = "2"

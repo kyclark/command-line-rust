@@ -1,14 +1,13 @@
+use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
-use std::{error::Error, fs};
-
-type TestResult = Result<(), Box<dyn Error>>;
+use std::fs;
 
 const PRG: &str = "calr";
 
 // --------------------------------------------------
 #[test]
-fn dies_year_0() -> TestResult {
+fn dies_year_0() -> Result<()> {
     Command::cargo_bin(PRG)?.arg("0").assert().failure().stderr(
         predicate::str::contains(
             "error: invalid value '0' for '[YEAR]': 0 is not in 1..=9999",
@@ -19,7 +18,7 @@ fn dies_year_0() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn dies_year_10000() -> TestResult {
+fn dies_year_10000() -> Result<()> {
     Command::cargo_bin(PRG)?
         .arg("10000")
         .assert()
@@ -33,7 +32,7 @@ fn dies_year_10000() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn dies_invalid_year() -> TestResult {
+fn dies_invalid_year() -> Result<()> {
     Command::cargo_bin(PRG)?
         .arg("foo")
         .assert()
@@ -47,7 +46,7 @@ fn dies_invalid_year() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn dies_month_0() -> TestResult {
+fn dies_month_0() -> Result<()> {
     Command::cargo_bin(PRG)?
         .args(["-m", "0"])
         .assert()
@@ -58,7 +57,7 @@ fn dies_month_0() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn dies_month_13() -> TestResult {
+fn dies_month_13() -> Result<()> {
     Command::cargo_bin(PRG)?
         .args(["-m", "13"])
         .assert()
@@ -69,7 +68,7 @@ fn dies_month_13() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn dies_invalid_month() -> TestResult {
+fn dies_invalid_month() -> Result<()> {
     Command::cargo_bin(PRG)?
         .args(["-m", "foo"])
         .assert()
@@ -80,7 +79,7 @@ fn dies_invalid_month() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn dies_y_and_month() -> TestResult {
+fn dies_y_and_month() -> Result<()> {
     let expected = "the argument '-m <MONTH>' cannot be used with '--year'";
     Command::cargo_bin(PRG)?
         .args(["-m", "1", "-y"])
@@ -92,7 +91,7 @@ fn dies_y_and_month() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn dies_y_and_year() -> TestResult {
+fn dies_y_and_year() -> Result<()> {
     let expected = "the argument '--year' cannot be used with '[YEAR]'";
     Command::cargo_bin(PRG)?
         .args(["-y", "2000"])
@@ -104,7 +103,7 @@ fn dies_y_and_year() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn month_num() -> TestResult {
+fn month_num() -> Result<()> {
     let expected = &[
         ("1", "January"),
         ("2", "February"),
@@ -132,7 +131,7 @@ fn month_num() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn partial_month() -> TestResult {
+fn partial_month() -> Result<()> {
     let expected = &[
         ("ja", "January"),
         ("f", "February"),
@@ -158,7 +157,7 @@ fn partial_month() -> TestResult {
 }
 
 // --------------------------------------------------
-fn run(args: &[&str], expected_file: &str) -> TestResult {
+fn run(args: &[&str], expected_file: &str) -> Result<()> {
     let expected = fs::read_to_string(expected_file)?;
     Command::cargo_bin(PRG)?
         .args(args)
@@ -170,7 +169,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn default_one_month() -> TestResult {
+fn default_one_month() -> Result<()> {
     let cmd = Command::cargo_bin(PRG)?.assert().success();
     let out = cmd.get_output();
     let stdout = String::from_utf8(out.stdout.clone())?;
@@ -182,31 +181,31 @@ fn default_one_month() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn test_2_2020_leap_year() -> TestResult {
+fn test_2_2020_leap_year() -> Result<()> {
     run(&["-m", "2", "2020"], "tests/expected/2-2020.txt")
 }
 
 // --------------------------------------------------
 #[test]
-fn test_4_2020() -> TestResult {
+fn test_4_2020() -> Result<()> {
     run(&["-m", "4", "2020"], "tests/expected/4-2020.txt")
 }
 
 // --------------------------------------------------
 #[test]
-fn test_april_2020() -> TestResult {
+fn test_april_2020() -> Result<()> {
     run(&["2020", "-m", "april"], "tests/expected/4-2020.txt")
 }
 
 // --------------------------------------------------
 #[test]
-fn test_2020() -> TestResult {
+fn test_2020() -> Result<()> {
     run(&["2020"], "tests/expected/2020.txt")
 }
 
 // --------------------------------------------------
 #[test]
-fn year() -> TestResult {
+fn year() -> Result<()> {
     let cmd = Command::cargo_bin(PRG)?.arg("-y").assert().success();
     let stdout = String::from_utf8(cmd.get_output().stdout.clone())?;
     let lines: Vec<&str> = stdout.split('\n').collect();

@@ -7,6 +7,7 @@ edition = "2021"
 clap = "4"
 csv = "1"
 regex = "1"
+anyhow = "1"
 
 [dev-dependencies]
 assert_cmd = "2"
