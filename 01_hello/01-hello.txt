@@ -1,0 +1,131 @@
+* Clone GitHub Repo
+
+git clone https://github.com/kyclark/command-line-rust.git
+cd command-line-rust
+git checkout clap_v4
+
+* Hello, World!
+
+hello.rs:
+
+fn main() {
+    println!("Hello, world!");
+}
+
+* Organizing a Rust Project
+
+mkdir -p hello/src
+mv hello.rs hello/src
+cd hello
+rustc src/hello.rs
+
+* Writing a Test
+
+mkdir tests
+
+tests/cli.rs:
+
+#[test]
+fn works() {
+    assert!(true);
+}
+
+* Update tests/cli.rs
+
+use std::process::Command;
+
+#[test]
+fn runs() {
+    let mut cmd = Command::new("ls");
+    let res = cmd.output();
+    assert!(res.is_ok());
+}
+
+* Update tests/cli.rs
+
+use std::process::Command;
+
+#[test]
+fn runs() {
+    let mut cmd = Command::new("hello");
+    let res = cmd.output();
+    assert!(res.is_ok());
+}
+
+* Update Cargo.toml
+
+[package]
+name = "hello"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+assert_cmd = "2"
+
+* Update tests/cli.rs
+
+use assert_cmd::Command;
+
+#[test]
+fn runs() {
+    let mut cmd = Command::cargo_bin("hello").unwrap();
+    cmd.assert().success();
+}
+
+* Writing Rust true
+
+mkdir src/bin
+
+src/bin/true.rs:
+
+fn main() {
+    std::process::exit(0);
+}
+
+* Update tests/cli.rs
+
+#[test]
+fn true_ok() {
+    let mut cmd = Command::cargo_bin("true").unwrap();
+    cmd.assert().success();
+}
+
+* Update src/bin/true.rs
+
+fn main() {}
+
+* Rust Version of false
+
+src/bin/false.rs:
+
+fn main() {
+    std::process::exit(1);
+}
+
+* Update tests/cli.rs
+
+#[test]
+fn false_not_ok() {
+    let mut cmd = Command::cargo_bin("false").unwrap();
+    cmd.assert().failure();
+}
+
+* Using std::process::abort
+
+fn main() {
+    std::process::abort();
+}
+
+* Update tests/cli.rs
+
+#[test]
+fn runs() {
+    let mut cmd = Command::cargo_bin("hello").unwrap();
+    cmd.assert().success().stdout("Hello, world!\n");
+}
+
+* Update src/main.rs
+
+fn main() {
+    println!("Hello, world!!!");
+}
