@@ -444,21 +444,21 @@ fn run(args: &[&str], expected_file: &str) -> Result<()> {
 }
 
 #[test]
-fn hello1() -> TestResult {
+fn hello1() -> Result<()> {
     run(&["Hello there"], "tests/expected/hello1.txt")
 }
 
 #[test]
-fn hello2() -> TestResult {
+fn hello2() -> Result<()> {
     run(&["Hello", "there"], "tests/expected/hello2.txt")
 }
 
 #[test]
-fn hello1_no_newline() -> TestResult {
+fn hello1_no_newline() -> Result<()> {
     run(&["Hello  there", "-n"], "tests/expected/hello1.n.txt") // Two spaces!
 }
 
 #[test]
-fn hello2_no_newline() -> TestResult {
+fn hello2_no_newline() -> Result<()> {
     run(&["-n", "Hello", "there"], "tests/expected/hello2.n.txt")
 }
