@@ -1,0 +1,464 @@
+* Update src/main.rs
+
+fn main() {
+    println!(std::env::args()); // This will not work
+}
+
+* Update src/main.rs
+
+fn main() {
+    println!("{}", std::env::args()); // This will not work either
+}
+
+* Update src/main.rs
+
+fn main() {
+    println!("{:?}", std::env::args());
+}
+
+* Update Cargo.toml
+
+[package]
+name = "echor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = "4"
+
+* Update src/main.rs
+
+use clap::Command;
+
+fn main() {
+    let _matches = Command::new("echor")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust echo")
+        .get_matches();
+}
+
+* Update src/main.rs
+
+use clap::{Arg, ArgAction, Command};
+
+fn main() {
+    let matches = Command::new("echor")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust echo")
+        .arg(
+            Arg::new("text")
+                .value_name("TEXT")
+                .help("Input text")
+                .required(true)
+                .num_args(1..),
+        )
+        .arg(
+            Arg::new("omit_newline")
+                .short('n')
+                .action(ArgAction::SetTrue)
+                .help("Do not print newline"),
+        )
+        .get_matches();
+
+    println!("{:#?}", matches);
+}
+
+* Update src/main.rs
+
+use clap::{Arg, ArgAction, Command};
+
+fn main() {
+    let matches = Command::new("echor")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust echo")
+        .arg(
+            Arg::new("text")
+                .value_name("TEXT")
+                .help("Input text")
+                .required(true)
+                .num_args(1..),
+        )
+        .arg(
+            Arg::new("omit_newline")
+                .short('n')
+                .action(ArgAction::SetTrue)
+                .help("Do not print newline"),
+        )
+        .get_matches();
+
+    let text: Vec<String> = matches
+        .get_many("text")
+        .expect("text is required")
+        .cloned()
+        .collect();
+
+    println!("{:#?}", text);
+}
+
+* Update src/main.rs
+
+use clap::{Arg, ArgAction, Command};
+
+fn main() {
+    let matches = Command::new("echor")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust echo")
+        .arg(
+            Arg::new("text")
+                .value_name("TEXT")
+                .help("Input text")
+                .required(true)
+                .num_args(1..),
+        )
+        .arg(
+            Arg::new("omit_newline")
+                .short('n')
+                .action(ArgAction::SetTrue)
+                .help("Do not print newline"),
+        )
+        .get_matches();
+
+    let text: Vec<String> = matches
+        .get_many("text")
+        .expect("text is required")
+        .cloned()
+        .collect();
+
+    let omit_newline = matches.get_flag("omit_newline");
+
+    println!("{:#?}", omit_newline);
+}
+
+* Update src/main.rs
+
+use clap::{Arg, ArgAction, Command};
+
+fn main() {
+    let matches = Command::new("echor")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust echo")
+        .arg(
+            Arg::new("text")
+                .value_name("TEXT")
+                .help("Input text")
+                .required(true)
+                .num_args(1..),
+        )
+        .arg(
+            Arg::new("omit_newline")
+                .short('n')
+                .action(ArgAction::SetTrue)
+                .help("Do not print newline"),
+        )
+        .get_matches();
+
+    let text: Vec<String> = matches
+        .get_many("text")
+        .expect("text is required")
+        .cloned()
+        .collect();
+
+    let _omit_newline = matches.get_flag("omit_newline");
+
+    println!("{}", text.join(" "));
+}
+
+* Update src/main.rs
+
+use clap::{Arg, ArgAction, Command};
+
+fn main() {
+    let matches = Command::new("echor")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust echo")
+        .arg(
+            Arg::new("text")
+                .value_name("TEXT")
+                .help("Input text")
+                .required(true)
+                .num_args(1..),
+        )
+        .arg(
+            Arg::new("omit_newline")
+                .short('n')
+                .action(ArgAction::SetTrue)
+                .help("Do not print newline"),
+        )
+        .get_matches();
+
+    let text: Vec<String> = matches
+        .get_many("text")
+        .expect("text is required")
+        .cloned()
+        .collect();
+
+    let omit_newline = matches.get_flag("omit_newline");
+
+    let ending = "\n";
+    if omit_newline {
+        ending = ""; // This will not work
+    }
+
+    print!("{}{}", text.join(" "), ending);
+}
+
+* Update src/main.rs
+
+use clap::{Arg, ArgAction, Command};
+
+fn main() {
+    let matches = Command::new("echor")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust echo")
+        .arg(
+            Arg::new("text")
+                .value_name("TEXT")
+                .help("Input text")
+                .required(true)
+                .num_args(1..),
+        )
+        .arg(
+            Arg::new("omit_newline")
+                .short('n')
+                .action(ArgAction::SetTrue)
+                .help("Do not print newline"),
+        )
+        .get_matches();
+
+    let text: Vec<String> = matches
+        .get_many("text")
+        .expect("text is required")
+        .cloned()
+        .collect();
+
+    let omit_newline = matches.get_flag("omit_newline");
+
+    let mut ending = "\n";
+    if omit_newline {
+        ending = "";
+    }
+
+    print!("{}{}", text.join(" "), ending);
+}
+
+* Update src/main.rs
+
+use clap::{Arg, ArgAction, Command};
+
+fn main() {
+    let matches = Command::new("echor")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust echo")
+        .arg(
+            Arg::new("text")
+                .value_name("TEXT")
+                .help("Input text")
+                .required(true)
+                .num_args(1..),
+        )
+        .arg(
+            Arg::new("omit_newline")
+                .short('n')
+                .action(ArgAction::SetTrue)
+                .help("Do not print newline"),
+        )
+        .get_matches();
+
+    let text: Vec<String> = matches
+        .get_many("text")
+        .expect("text is required")
+        .cloned()
+        .collect();
+
+    let omit_newline = matches.get_flag("omit_newline");
+    let ending = if omit_newline { "" } else { "\n" };
+
+    print!("{}{}", text.join(" "), ending);
+}
+
+* Update src/main.rs
+
+use clap::{Arg, ArgAction, Command};
+
+fn main() {
+    let matches = Command::new("echor")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust echo")
+        .arg(
+            Arg::new("text")
+                .value_name("TEXT")
+                .help("Input text")
+                .required(true)
+                .num_args(1..),
+        )
+        .arg(
+            Arg::new("omit_newline")
+                .short('n')
+                .action(ArgAction::SetTrue)
+                .help("Do not print newline"),
+        )
+        .get_matches();
+
+    let text: Vec<String> = matches
+        .get_many("text")
+        .expect("text is required")
+        .cloned()
+        .collect();
+
+    let omit_newline = matches.get_flag("omit_newline");
+    print!("{}{}", text.join(" "), if omit_newline { "" } else { "\n" });
+}
+
+* Update Cargo.toml
+
+[package]
+name = "echor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = "4"
+assert_cmd = "2"
+predicates = "2"
+
+* Create tests/cli.rs
+
+use assert_cmd::Command;
+use predicates::prelude::*;
+
+#[test]
+fn dies_no_args() {
+    let mut cmd = Command::cargo_bin("echor").unwrap();
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Usage"));
+}
+
+* Update tests/cli.rs
+
+#[test]
+fn runs() {
+    let mut cmd = Command::cargo_bin("echor").unwrap();
+    cmd.arg("hello").assert().success();
+}
+
+* Creating Test Data
+
+mk-outs.sh:
+
+#!/usr/bin/env bash
+
+OUTDIR="tests/expected"
+[[ ! -d "$OUTDIR" ]] && mkdir -p "$OUTDIR"
+
+echo "Hello there" > $OUTDIR/hello1.txt
+echo "Hello"  "there" > $OUTDIR/hello2.txt
+echo -n "Hello  there" > $OUTDIR/hello1.n.txt
+echo -n "Hello"  "there" > $OUTDIR/hello2.n.txt
+
+* Update tests/cli.rs
+
+use assert_cmd::Command;
+use predicates::prelude::*;
+use std::fs;
+
+#[test]
+fn hello1() {
+    let outfile = "tests/expected/hello1.txt";
+    let expected = fs::read_to_string(outfile).unwrap();
+    let mut cmd = Command::cargo_bin("echor").unwrap();
+    cmd.arg("Hello there").assert().success().stdout(expected);
+}
+
+* Update Cargo.toml
+
+[package]
+name = "echor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = "4"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "2"
+anyhow = "1"
+
+* Update tests/cli.rs
+
+use assert_cmd::Command;
+use predicates::prelude::*;
+use std::fs;
+use anyhow::Result;
+
+#[test]
+fn dies_no_args() -> Result<()> {
+    let mut cmd = Command::cargo_bin("echor")?;
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Usage"));
+    Ok(())
+}
+
+#[test]
+fn hello1() -> Result<()> {
+    let expected = fs::read_to_string("tests/expected/hello1.txt")?;
+    let mut cmd = Command::cargo_bin("echor")?;
+    cmd.arg("Hello there").assert().success().stdout(expected);
+    Ok(())
+}
+
+* Update tests/cli.rs
+
+#[test]
+fn hello2() -> Result<()> {
+    let expected = fs::read_to_string("tests/expected/hello2.txt")?;
+    let mut cmd = Command::cargo_bin("echor")?;
+    cmd.args(vec!["Hello", "there"])
+        .assert()
+        .success()
+        .stdout(expected);
+    Ok(())
+}
+
+* Update tests/cli.rs
+
+fn run(args: &[&str], expected_file: &str) -> Result<()> {
+    let expected = fs::read_to_string(expected_file)?;
+    Command::cargo_bin("echor")?
+        .args(args)
+        .assert()
+        .success()
+        .stdout(expected);
+    Ok(())
+}
+
+#[test]
+fn hello1() -> TestResult {
+    run(&["Hello there"], "tests/expected/hello1.txt")
+}
+
+#[test]
+fn hello2() -> TestResult {
+    run(&["Hello", "there"], "tests/expected/hello2.txt")
+}
+
+#[test]
+fn hello1_no_newline() -> TestResult {
+    run(&["Hello  there", "-n"], "tests/expected/hello1.n.txt") // Two spaces!
+}
+
+#[test]
+fn hello2_no_newline() -> TestResult {
+    run(&["-n", "Hello", "there"], "tests/expected/hello2.n.txt")
+}
