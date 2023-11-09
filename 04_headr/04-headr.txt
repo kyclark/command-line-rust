@@ -1,0 +1,335 @@
+* Getting Started
+
+cargo new headr
+cp -r ~/command-line-rust/04_headr/tests headr
+
+* Cargo.toml
+
+[package]
+name = "headr"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = "4"
+anyhow = "1"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "2"
+rand = "0.8"
+
+* Update src/main.rs
+
+use anyhow::Result;
+use clap::{Arg, Command};
+
+#[derive(Debug)]
+pub struct Config {
+    files: Vec<String>,
+    lines: u64,
+    bytes: Option<u64>,
+}
+
+fn main() {
+    if let Err(e) = run(get_args()) {
+        eprintln!("{e}");
+        std::process::exit(1);
+    }
+}
+
+fn get_args() -> Config {
+    let matches = Command::new("headr")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust head")
+        // What goes here?
+        .get_matches();
+
+    Config {
+        files: ...,
+        lines: ...,
+        bytes: ...,
+    }
+}
+
+fn run(config: Config) -> Result<()> {
+    dbg!(config);
+    Ok(())
+}
+
+* Completed src/main.rs
+
+use anyhow::Result;
+use clap::{Arg, Command};
+
+#[derive(Debug)]
+pub struct Config {
+    files: Vec<String>,
+    lines: u64,
+    bytes: Option<u64>,
+}
+
+fn main() {
+    if let Err(e) = run(get_args()) {
+        eprintln!("{e}");
+        std::process::exit(1);
+    }
+}
+
+fn get_args() -> Config {
+    let matches = Command::new("headr")
+        .version("0.1.0")
+        .author("Ken Youens-Clark <kyclark@gmail.com>")
+        .about("Rust head")
+        .arg(
+            Arg::new("lines")
+                .short('n')
+                .long("lines")
+                .value_name("LINES")
+                .help("Number of lines")
+                .value_parser(clap::value_parser!(u64).range(1..))
+                .default_value("10"),
+        )
+        .arg(
+            Arg::new("bytes")
+                .short('c')
+                .long("bytes")
+                .value_name("BYTES")
+                .conflicts_with("lines")
+                .value_parser(clap::value_parser!(u64).range(1..))
+                .help("Number of bytes"),
+        )
+        .arg(
+            Arg::new("files")
+                .value_name("FILE")
+                .help("Input file(s)")
+                .num_args(1..)
+                .default_value("-"),
+        )
+        .get_matches();
+
+    Config {
+        files: matches
+            .get_many("files")
+            .expect("file required")
+            .cloned()
+            .collect(),
+        lines: matches.get_one("lines").cloned().unwrap(),
+        bytes: matches.get_one("bytes").cloned(),
+    }
+}
+
+fn run(config: Config) -> Result<()> {
+    dbg!(config);
+    Ok(())
+}
+
+* Add to src/main.rs
+
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
+
+fn run(config: Config) -> Result<()> {
+    for filename in config.files {
+        match open(&filename) {
+            Err(err) => eprintln!("{filename}: {err}"),
+            Ok(_) => println!("Opened {filename}"),
+        }
+    }
+    Ok(())
+}
+
+fn open(filename: &str) -> Result<Box<dyn BufRead>> {
+    match filename {
+        "-" => Ok(Box::new(BufReader::new(io::stdin()))),
+        _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
+    }
+}
+
+* Update src/main.rs
+
+fn run(config: Config) -> Result<()> {
+    for filename in config.files {
+        match open(&filename) {
+            Err(err) => eprintln!("{filename}: {err}"),
+            Ok(file) => {
+                let num_lines = config.lines as usize;
+                for line in file.lines().take(num_lines) {
+                    println!("{}", line?);
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+* Alternate way to convert u64 to usize
+
+fn run(config: Config) -> Result<()> {
+    for filename in config.files {
+        match open(&filename) {
+            Err(err) => eprintln!("{filename}: {err}"),
+            Ok(file) => {
+                let num_lines: usize = config.lines.try_into().unwrap();
+                for line in file.lines().take(num_lines) {
+                    println!("{}", line?);
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+* Update src/main.rs
+
+fn run(config: Config) -> Result<()> {
+    for filename in config.files {
+        match open(&filename) {
+            Err(err) => eprintln!("{filename}: {err}"),
+            Ok(mut file) => {
+                let mut line = String::new();
+                for _ in 0..config.lines {
+                    let bytes = file.read_line(&mut line)?;
+                    if bytes == 0 {
+                        break;
+                    }
+                    print!("{line}");
+                    line.clear();
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+* Update src/main.rs
+
+fn run(config: Config) -> Result<()> {
+    for filename in config.files {
+        match open(&filename) {
+            Err(err) => eprintln!("{filename}: {err}"),
+            Ok(mut file) => {
+                if let Some(num_bytes) = config.bytes {
+                    let mut buffer = vec![0; num_bytes as usize];
+                    let bytes_read = file.read(&mut buffer)?;
+                    print!(
+                        "{}",
+                        String::from_utf8_lossy(&buffer[..bytes_read])
+                    );
+                } else {
+                    let mut line = String::new();
+                    for _ in 0..config.lines {
+                        let bytes = file.read_line(&mut line)?;
+                        if bytes == 0 {
+                            break;
+                        }
+                        print!("{line}");
+                        line.clear();
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+* Alternate Way to Read Bytes
+
+use std::io::{self, BufRead, BufReader, Read};
+
+fn run(config: Config) -> Result<()> {
+    for filename in config.files {
+        match open(&filename) {
+            Err(err) => eprintln!("{filename}: {err}"),
+            Ok(mut file) => {
+                if let Some(num_bytes) = config.bytes {
+                    let bytes: Result<Vec<_>, _> =
+                        file.bytes().take(num_bytes as usize).collect();
+
+                    print!("{}", String::from_utf8_lossy(&bytes?));
+                } else {
+                    let mut line = String::new();
+                    for _ in 0..config.lines {
+                        let bytes = file.read_line(&mut line)?;
+                        if bytes == 0 {
+                            break;
+                        }
+                        print!("{line}");
+                        line.clear();
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+* Type Annotation via Turbofish
+
+fn run(config: Config) -> Result<()> {
+    for filename in config.files {
+        match open(&filename) {
+            Err(err) => eprintln!("{filename}: {err}"),
+            Ok(mut file) => {
+                if let Some(num_bytes) = config.bytes {
+                    let bytes = file
+                        .bytes()
+                        .take(num_bytes as usize)
+                        .collect::<Result<Vec<_>, _>>();
+                    print!("{}", String::from_utf8_lossy(&bytes?));
+                } else {
+                    let mut line = String::new();
+                    for _ in 0..config.lines {
+                        let bytes = file.read_line(&mut line)?;
+                        if bytes == 0 {
+                            break;
+                        }
+                        print!("{line}");
+                        line.clear();
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+* Update src/main.rs
+
+fn run(config: Config) -> Result<()> {
+    let num_files = config.files.len();
+
+    for (file_num, filename) in config.files.iter().enumerate() {
+        match open(&filename) {
+            Err(err) => eprintln!("{filename}: {err}"),
+            Ok(mut file) => {
+                if num_files > 1 {
+                    println!(
+                        "{}==> {filename} <==",
+                        if file_num > 0 { "\n" } else { "" }
+                    );
+                }
+
+                if let Some(num_bytes) = config.bytes {
+                    let bytes = file
+                        .bytes()
+                        .take(num_bytes as usize)
+                        .collect::<Result<Vec<_>, _>>();
+                    print!("{}", String::from_utf8_lossy(&bytes?));
+                } else {
+                    let mut line = String::new();
+                    for _ in 0..config.lines {
+                        let bytes = file.read_line(&mut line)?;
+                        if bytes == 0 {
+                            break;
+                        }
+                        print!("{line}");
+                        line.clear();
+                    }
+                }
+            }
+        }
+    }
+    Ok(())
+}

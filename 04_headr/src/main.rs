@@ -10,6 +10,7 @@ pub struct Config {
     bytes: Option<u64>,
 }
 
+// --------------------------------------------------
 fn main() {
     if let Err(e) = run(get_args()) {
         eprintln!("{e}");

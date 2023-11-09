@@ -56,17 +56,17 @@ fn get_args() -> Config {
 // --------------------------------------------------
 fn run(config: Config) -> Result<()> {
     let mut file = open(&config.in_file)
-        .map_err(|e| anyhow!("{}: {}", config.in_file, e))?;
+        .map_err(|e| anyhow!("{}: {e}", config.in_file))?;
 
     let mut out_file: Box<dyn Write> = match &config.out_file {
         Some(out_name) => Box::new(File::create(out_name)?),
         _ => Box::new(io::stdout()),
     };
 
-    let mut print = |count: u64, text: &str| -> Result<()> {
-        if count > 0 {
+    let mut print = |num: u64, text: &str| -> Result<()> {
+        if num > 0 {
             if config.count {
-                write!(out_file, "{count:>4} {text}")?;
+                write!(out_file, "{num:>4} {text}")?;
             } else {
                 write!(out_file, "{text}")?;
             }
