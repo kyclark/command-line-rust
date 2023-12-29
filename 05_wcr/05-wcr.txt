@@ -181,7 +181,7 @@ fn open(filename: &str) -> Result<Box<dyn BufRead>> {
 * Update src/main.rs
 
 #[derive(Debug, PartialEq)]
-pub struct FileInfo {
+struct FileInfo {
     num_lines: usize,
     num_words: usize,
     num_bytes: usize,
