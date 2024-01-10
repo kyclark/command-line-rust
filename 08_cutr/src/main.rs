@@ -75,17 +75,16 @@ fn run(args: Args) -> Result<()> {
     }
     let delimiter: u8 = *delim_bytes.first().unwrap();
 
-    let extract = if let Some(field_pos) =
-        args.fields.map(parse_pos).transpose()?
-    {
-        Fields(field_pos)
-    } else if let Some(byte_pos) = args.bytes.map(parse_pos).transpose()? {
-        Bytes(byte_pos)
-    } else if let Some(char_pos) = args.chars.map(parse_pos).transpose()? {
-        Chars(char_pos)
-    } else {
-        bail!("Must have --fields, --bytes, or --chars");
-    };
+    let extract =
+        if let Some(fields) = args.fields.map(parse_pos).transpose()? {
+            Fields(fields)
+        } else if let Some(bytes) = args.bytes.map(parse_pos).transpose()? {
+            Bytes(bytes)
+        } else if let Some(chars) = args.chars.map(parse_pos).transpose()? {
+            Chars(chars)
+        } else {
+            bail!("Must have --fields, --bytes, or --chars");
+        };
 
     for filename in &args.files {
         match open(filename) {
@@ -224,55 +223,67 @@ mod unit_tests {
         // Zero is an error
         let res = parse_pos("0".to_string());
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"0\"",);
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            r#"illegal list value: "0""#
+        );
 
         let res = parse_pos("0-1".to_string());
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"0\"",);
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            r#"illegal list value: "0""#
+        );
 
         // A leading "+" is an error
         let res = parse_pos("+1".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "illegal list value: \"+1\"",
+            r#"illegal list value: "+1""#,
         );
 
         let res = parse_pos("+1-2".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "illegal list value: \"+1-2\"",
+            r#"illegal list value: "+1-2""#,
         );
 
         let res = parse_pos("1-+2".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "illegal list value: \"1-+2\"",
+            r#"illegal list value: "1-+2""#,
         );
 
         // Any non-number is an error
         let res = parse_pos("a".to_string());
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"a\"",);
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            r#"illegal list value: "a""#
+        );
 
         let res = parse_pos("1,a".to_string());
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"a\"",);
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            r#"illegal list value: "a""#
+        );
 
         let res = parse_pos("1-a".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "illegal list value: \"1-a\"",
+            r#"illegal list value: "1-a""#,
         );
 
         let res = parse_pos("a-1".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "illegal list value: \"a-1\"",
+            r#"illegal list value: "a-1""#,
         );
 
         // Wonky ranges

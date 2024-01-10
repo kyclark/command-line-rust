@@ -50,15 +50,15 @@ fn run(args: Args) -> Result<()> {
     let pattern = RegexBuilder::new(&args.pattern)
         .case_insensitive(args.insensitive)
         .build()
-        .map_err(|_| anyhow!("Invalid pattern \"{}\"", args.pattern))?;
+        .map_err(|_| anyhow!(r#"Invalid pattern "{}""#, args.pattern))?;
 
     let entries = find_files(&args.files, args.recursive);
     let num_files = entries.len();
     let print = |fname: &str, val: &str| {
         if num_files > 1 {
-            print!("{}:{}", fname, val);
+            print!("{fname}:{val}");
         } else {
-            print!("{}", val);
+            print!("{val}");
         }
     };
 
@@ -66,7 +66,7 @@ fn run(args: Args) -> Result<()> {
         match entry {
             Err(e) => eprintln!("{e}"),
             Ok(filename) => match open(&filename) {
-                Err(e) => eprintln!("{}: {}", filename, e),
+                Err(e) => eprintln!("{filename}: {e}"),
                 Ok(file) => match find_lines(file, &pattern, args.invert) {
                     Err(e) => eprintln!("{e}"),
                     Ok(matches) => {
