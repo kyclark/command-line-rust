@@ -8,7 +8,7 @@ use std::{
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
 /// Rust version of `uniq`
-pub struct Args {
+struct Args {
     /// Input file
     #[arg(value_name = "FILE", default_value = "-")]
     in_file: String,
@@ -31,7 +31,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> Result<()> {
+fn run(args: Args) -> Result<()> {
     let mut file =
         open(&args.in_file).map_err(|e| anyhow!("{}: {e}", args.in_file))?;
 

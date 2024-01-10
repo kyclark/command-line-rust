@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-transpose = "0.2"
+transpose = "0.2.2"
 
 [dev-dependencies]
-assert_cmd = "2"
+assert_cmd = "2.0.12"

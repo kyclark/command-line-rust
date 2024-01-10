@@ -5,7 +5,7 @@ use std::io::{self, BufRead, BufReader};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
-pub struct Args {
+struct Args {
     /// Input file(s)
     #[arg(value_name = "FILE", default_value = "-")]
     files: Vec<String>,
@@ -28,7 +28,7 @@ pub struct Args {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct FileInfo {
+struct FileInfo {
     num_lines: usize,
     num_words: usize,
     num_bytes: usize,
@@ -54,7 +54,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> Result<()> {
+fn run(args: Args) -> Result<()> {
     let mut total_lines = 0;
     let mut total_words = 0;
     let mut total_bytes = 0;
@@ -118,7 +118,7 @@ fn format_field(value: usize, show: bool) -> String {
 }
 
 // --------------------------------------------------
-pub fn count(mut file: impl BufRead) -> Result<FileInfo> {
+fn count(mut file: impl BufRead) -> Result<FileInfo> {
     let mut num_lines = 0;
     let mut num_words = 0;
     let mut num_bytes = 0;

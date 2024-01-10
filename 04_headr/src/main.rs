@@ -6,7 +6,7 @@ use std::io::{self, BufRead, BufReader, Read};
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 /// Rust version of `head`
-pub struct Args {
+struct Args {
     /// Input file(s)
     #[arg(default_value = "-", value_name = "FILE")]
     files: Vec<String>,
@@ -41,7 +41,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> Result<()> {
+fn run(args: Args) -> Result<()> {
     let num_files = args.files.len();
 
     for (file_num, filename) in args.files.iter().enumerate() {

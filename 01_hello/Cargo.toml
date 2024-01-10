@@ -7,4 +7,4 @@ authors = [ "Ken Youens-Clark <kyclark@gmail.com>" ]
 [dependencies]
 
 [dev-dependencies]
-assert_cmd = "2"
+assert_cmd = "2.0.12"

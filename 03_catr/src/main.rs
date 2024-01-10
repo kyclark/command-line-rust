@@ -6,7 +6,7 @@ use std::io::{self, BufRead, BufReader};
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
 /// Rust version of `cat`
-pub struct Args {
+struct Args {
     /// Input file(s)
     #[arg(value_name = "FILE", default_value = "-")]
     files: Vec<String>,
@@ -33,7 +33,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> Result<()> {
+fn run(args: Args) -> Result<()> {
     for filename in args.files {
         match open(&filename) {
             Err(e) => eprintln!("{filename}: {e}"),

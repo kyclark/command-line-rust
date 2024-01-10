@@ -5,9 +5,9 @@ edition = "2021"
 authors = [ "Ken Youens-Clark <kyclark@gmail.com>" ]
 
 [dependencies]
-anyhow = "1"
 clap = { version = "4.1.4", features = ["derive"] }
 
 [dev-dependencies]
-assert_cmd = "2"
-predicates = "2"
+assert_cmd = "2.0.12"
+predicates = "3.0.4"
+anyhow = "1.0.79"

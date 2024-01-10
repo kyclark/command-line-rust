@@ -46,7 +46,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> Result<()> {
+fn run(args: Args) -> Result<()> {
     let pattern = RegexBuilder::new(&args.pattern)
         .case_insensitive(args.insensitive)
         .build()

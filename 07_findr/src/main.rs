@@ -6,7 +6,7 @@ use walkdir::{DirEntry, WalkDir};
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
 /// Rust version of `find`
-pub struct Args {
+struct Args {
     /// Search path(s)
     #[arg(value_name = "PATH", default_value = ".")]
     paths: Vec<String>,
@@ -64,7 +64,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> Result<()> {
+fn run(args: Args) -> Result<()> {
     let type_filter = |entry: &DirEntry| {
         args.entry_types.is_empty()
             || args.entry_types.iter().any(|entry_type| match entry_type {
