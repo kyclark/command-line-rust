@@ -54,7 +54,7 @@ fn run(config: Config) -> Result<()> {
             RegexBuilder::new(val.as_str())
                 .case_insensitive(config.insensitive)
                 .build()
-                .map_err(|_| anyhow!("Invalid --pattern \"{val}\""))
+                .map_err(|_| anyhow!(r#"Invalid --pattern "{val}""#))
         })
         .transpose()?;
 

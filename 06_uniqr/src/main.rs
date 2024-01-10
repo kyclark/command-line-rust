@@ -10,11 +10,11 @@ use std::{
 /// Rust version of `uniq`
 struct Args {
     /// Input file
-    #[arg(value_name = "FILE", default_value = "-")]
+    #[arg(value_name = "IN_FILE", default_value = "-")]
     in_file: String,
 
     /// Output file
-    #[arg(value_name = "FILE")]
+    #[arg(value_name = "OUT_FILE")]
     out_file: Option<String>,
 
     /// Show counts

@@ -1,6 +1,6 @@
 use crate::Extract::*;
 use anyhow::{anyhow, bail, Result};
-use clap::{Arg, ArgGroup, Command};
+use clap::Parser;
 use csv::{ReaderBuilder, StringRecord, WriterBuilder};
 use regex::Regex;
 use std::{
@@ -10,11 +10,44 @@ use std::{
     ops::Range,
 };
 
-#[derive(Debug)]
-struct Config {
+#[derive(Debug, Parser)]
+#[command(author, version, about)]
+/// Rust version of `cut`
+struct Args {
+    /// Input file(s)
+    #[arg(default_value = "-")]
     files: Vec<String>,
-    delimiter: u8,
-    extract: Extract,
+
+    /// Field delimiter
+    #[arg(short, long, value_name = "DELIMITER", default_value = "\t")]
+    delimiter: String,
+
+    /// Selected fields
+    #[arg(
+        short,
+        long,
+        value_name = "FIELDS",
+        conflicts_with_all(["bytes", "chars"])
+    )]
+    fields: Option<String>,
+
+    /// Selected bytes
+    #[arg(
+        short,
+        long,
+        value_name = "BYTES", 
+        conflicts_with_all(["fields", "chars"])
+    )]
+    bytes: Option<String>,
+
+    /// Selected chars
+    #[arg(
+        short,
+        long,
+        value_name = "CHARS",
+        conflicts_with_all(["fields", "bytes"])
+    )]
+    chars: Option<String>,
 }
 
 type PositionList = Vec<Range<usize>>;
@@ -28,122 +61,44 @@ enum Extract {
 
 // --------------------------------------------------
 fn main() {
-    if let Err(e) = get_args().and_then(run) {
+    if let Err(e) = run(Args::parse()) {
         eprintln!("{e}");
         std::process::exit(1);
     }
 }
 
 // --------------------------------------------------
-fn get_args() -> Result<Config> {
-    let matches = Command::new("cutr")
-        .version("0.1.0")
-        .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust cut")
-        .arg(
-            Arg::new("files")
-                .value_name("FILE")
-                .help("Input file(s)")
-                .num_args(1..)
-                .required(true)
-                .default_value("-"),
-        )
-        .arg(
-            Arg::new("delimiter")
-                .value_name("DELIMITER")
-                .short('d')
-                .long("delim")
-                .help("Field delimiter")
-                .default_value("\t"),
-        )
-        .arg(
-            Arg::new("fields")
-                .value_name("FIELDS")
-                .short('f')
-                .long("fields")
-                .help("Selected fields"),
-        )
-        .arg(
-            Arg::new("bytes")
-                .value_name("BYTES")
-                .short('b')
-                .long("bytes")
-                .help("Selected bytes"),
-        )
-        .arg(
-            Arg::new("chars")
-                .value_name("CHARS")
-                .short('c')
-                .long("chars")
-                .help("Selected characters"),
-        )
-        .group(
-            ArgGroup::new("group")
-                .args(["fields", "bytes", "chars"])
-                .required(true)
-                .multiple(false),
-        )
-        .get_matches();
-
-    let delimiter: String = matches.get_one("delimiter").cloned().unwrap();
-    let delim_bytes = delimiter.as_bytes();
+fn run(args: Args) -> Result<()> {
+    let delim_bytes = args.delimiter.as_bytes();
     if delim_bytes.len() != 1 {
-        bail!("--delim \"{delimiter}\" must be a single byte");
+        bail!(r#"--delim "{}" must be a single byte"#, args.delimiter);
     }
+    let delimiter: u8 = *delim_bytes.first().unwrap();
 
-    let fields = matches
-        .get_one("fields")
-        .cloned()
-        .map(|v: String| parse_pos(v.as_str()))
-        .transpose()?;
-
-    let bytes = matches
-        .get_one("bytes")
-        .cloned()
-        .map(|v: String| parse_pos(v.as_str()))
-        .transpose()?;
-
-    let chars = matches
-        .get_one("chars")
-        .cloned()
-        .map(|v: String| parse_pos(v.as_str()))
-        .transpose()?;
-
-    let extract = if let Some(field_pos) = fields {
+    let extract = if let Some(field_pos) =
+        args.fields.map(parse_pos).transpose()?
+    {
         Fields(field_pos)
-    } else if let Some(byte_pos) = bytes {
+    } else if let Some(byte_pos) = args.bytes.map(parse_pos).transpose()? {
         Bytes(byte_pos)
-    } else if let Some(char_pos) = chars {
+    } else if let Some(char_pos) = args.chars.map(parse_pos).transpose()? {
         Chars(char_pos)
     } else {
         bail!("Must have --fields, --bytes, or --chars");
     };
 
-    Ok(Config {
-        files: matches
-            .get_many("files")
-            .expect("files required")
-            .cloned()
-            .collect(),
-        delimiter: *delim_bytes.first().unwrap(),
-        extract,
-    })
-}
-
-// --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    for filename in &config.files {
+    for filename in &args.files {
         match open(filename) {
             Err(err) => eprintln!("{filename}: {err}"),
-            Ok(file) => match &config.extract {
+            Ok(file) => match &extract {
                 Fields(field_pos) => {
                     let mut reader = ReaderBuilder::new()
-                        .delimiter(config.delimiter)
+                        .delimiter(delimiter)
                         .has_headers(false)
                         .from_reader(file);
 
                     let mut wtr = WriterBuilder::new()
-                        .delimiter(config.delimiter)
+                        .delimiter(delimiter)
                         .from_writer(io::stdout());
 
                     for record in reader.records() {
@@ -184,7 +139,7 @@ fn open(filename: &str) -> Result<Box<dyn BufRead>> {
 // Returns an index, which is a non-negative integer that is
 // one less than the number represented by the original input.
 fn parse_index(input: &str) -> Result<usize> {
-    let value_error = || anyhow!("illegal list value: \"{input}\"");
+    let value_error = || anyhow!(r#"illegal list value: "{input}""#);
     input
         .starts_with('+')
         .then(|| Err(value_error()))
@@ -197,7 +152,7 @@ fn parse_index(input: &str) -> Result<usize> {
 }
 
 // --------------------------------------------------
-fn parse_pos(range: &str) -> Result<PositionList> {
+fn parse_pos(range: String) -> Result<PositionList> {
     let range_re = Regex::new(r"^(\d+)-(\d+)$").unwrap();
     range
         .split(',')
@@ -264,33 +219,33 @@ mod unit_tests {
     #[test]
     fn test_parse_pos() {
         // The empty string is an error
-        assert!(parse_pos("").is_err());
+        assert!(parse_pos("".to_string()).is_err());
 
         // Zero is an error
-        let res = parse_pos("0");
+        let res = parse_pos("0".to_string());
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"0\"",);
 
-        let res = parse_pos("0-1");
+        let res = parse_pos("0-1".to_string());
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"0\"",);
 
         // A leading "+" is an error
-        let res = parse_pos("+1");
+        let res = parse_pos("+1".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
             "illegal list value: \"+1\"",
         );
 
-        let res = parse_pos("+1-2");
+        let res = parse_pos("+1-2".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
             "illegal list value: \"+1-2\"",
         );
 
-        let res = parse_pos("1-+2");
+        let res = parse_pos("1-+2".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
@@ -298,22 +253,22 @@ mod unit_tests {
         );
 
         // Any non-number is an error
-        let res = parse_pos("a");
+        let res = parse_pos("a".to_string());
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"a\"",);
 
-        let res = parse_pos("1,a");
+        let res = parse_pos("1,a".to_string());
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"a\"",);
 
-        let res = parse_pos("1-a");
+        let res = parse_pos("1-a".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
             "illegal list value: \"1-a\"",
         );
 
-        let res = parse_pos("a-1");
+        let res = parse_pos("a-1".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
@@ -321,33 +276,33 @@ mod unit_tests {
         );
 
         // Wonky ranges
-        let res = parse_pos("-");
+        let res = parse_pos("-".to_string());
         assert!(res.is_err());
 
-        let res = parse_pos(",");
+        let res = parse_pos(",".to_string());
         assert!(res.is_err());
 
-        let res = parse_pos("1,");
+        let res = parse_pos("1,".to_string());
         assert!(res.is_err());
 
-        let res = parse_pos("1-");
+        let res = parse_pos("1-".to_string());
         assert!(res.is_err());
 
-        let res = parse_pos("1-1-1");
+        let res = parse_pos("1-1-1".to_string());
         assert!(res.is_err());
 
-        let res = parse_pos("1-1-a");
+        let res = parse_pos("1-1-a".to_string());
         assert!(res.is_err());
 
         // First number must be less than second
-        let res = parse_pos("1-1");
+        let res = parse_pos("1-1".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
             "First number in range (1) must be lower than second number (1)"
         );
 
-        let res = parse_pos("2-1");
+        let res = parse_pos("2-1".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
@@ -355,35 +310,35 @@ mod unit_tests {
         );
 
         // All the following are acceptable
-        let res = parse_pos("1");
+        let res = parse_pos("1".to_string());
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![0..1]);
 
-        let res = parse_pos("01");
+        let res = parse_pos("01".to_string());
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![0..1]);
 
-        let res = parse_pos("1,3");
+        let res = parse_pos("1,3".to_string());
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![0..1, 2..3]);
 
-        let res = parse_pos("001,0003");
+        let res = parse_pos("001,0003".to_string());
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![0..1, 2..3]);
 
-        let res = parse_pos("1-3");
+        let res = parse_pos("1-3".to_string());
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![0..3]);
 
-        let res = parse_pos("0001-03");
+        let res = parse_pos("0001-03".to_string());
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![0..3]);
 
-        let res = parse_pos("1,7,3-5");
+        let res = parse_pos("1,7,3-5".to_string());
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![0..1, 6..7, 2..5]);
 
-        let res = parse_pos("15,19-20");
+        let res = parse_pos("15,19-20".to_string());
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), vec![14..15, 18..20]);
     }

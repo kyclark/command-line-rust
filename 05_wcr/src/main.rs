@@ -37,7 +37,14 @@ struct FileInfo {
 
 // --------------------------------------------------
 fn main() {
-    let mut args = Args::parse();
+    if let Err(e) = run(Args::parse()) {
+        eprintln!("{e}");
+        std::process::exit(1);
+    }
+}
+
+// --------------------------------------------------
+fn run(mut args: Args) -> Result<()> {
     if [args.words, args.bytes, args.chars, args.lines]
         .iter()
         .all(|v| v == &false)
@@ -47,14 +54,6 @@ fn main() {
         args.bytes = true;
     }
 
-    if let Err(e) = run(args) {
-        eprintln!("{e}");
-        std::process::exit(1);
-    }
-}
-
-// --------------------------------------------------
-fn run(args: Args) -> Result<()> {
     let mut total_lines = 0;
     let mut total_words = 0;
     let mut total_bytes = 0;
@@ -153,11 +152,11 @@ mod tests {
 
     #[test]
     fn test_count() {
-        let text = "I don't want the world. I just want your half.\r\n";
+        let text = "I don't want the world.\nI just want your half.\r\n";
         let info = count(Cursor::new(text));
         assert!(info.is_ok());
         let expected = FileInfo {
-            num_lines: 1,
+            num_lines: 2,
             num_words: 10,
             num_chars: 48,
             num_bytes: 48,
