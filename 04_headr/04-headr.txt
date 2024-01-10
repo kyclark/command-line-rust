@@ -25,7 +25,7 @@ use anyhow::Result;
 use clap::{Arg, Command};
 
 #[derive(Debug)]
-pub struct Config {
+struct Config {
     files: Vec<String>,
     lines: u64,
     bytes: Option<u64>,
@@ -64,7 +64,7 @@ use anyhow::Result;
 use clap::{Arg, Command};
 
 #[derive(Debug)]
-pub struct Config {
+struct Config {
     files: Vec<String>,
     lines: u64,
     bytes: Option<u64>,

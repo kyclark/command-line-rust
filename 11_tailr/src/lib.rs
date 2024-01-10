@@ -19,7 +19,7 @@ enum TakeValue {
 }
 
 #[derive(Debug)]
-pub struct Config {
+struct Config {
     files: Vec<String>,
     lines: TakeValue,
     bytes: Option<TakeValue>,
@@ -27,7 +27,7 @@ pub struct Config {
 }
 
 // --------------------------------------------------
-pub fn get_args() -> MyResult<Config> {
+fn get_args() -> MyResult<Config> {
     let matches = Command::new("tailr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -91,7 +91,7 @@ pub fn get_args() -> MyResult<Config> {
 }
 
 // --------------------------------------------------
-pub fn run(config: Config) -> MyResult<()> {
+fn run(config: Config) -> MyResult<()> {
     let num_files = config.files.len();
     for (file_num, filename) in config.files.iter().enumerate() {
         match File::open(filename) {

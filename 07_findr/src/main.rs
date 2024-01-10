@@ -5,7 +5,7 @@ use regex::Regex;
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug)]
-pub struct Config {
+struct Config {
     paths: Vec<String>,
     names: Vec<Regex>,
     entry_types: Vec<EntryType>,

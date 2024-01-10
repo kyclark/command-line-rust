@@ -7,7 +7,7 @@ use thousands::Separable;
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
 /// Make big text files
-pub struct Args {
+struct Args {
     /// Output filename
     #[arg(short, long, value_name = "FILE", default_value = "out.txt")]
     outfile: String,
@@ -32,7 +32,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> Result<()> {
+fn run(args: Args) -> Result<()> {
     let mut file = File::create(&args.outfile)?;
     for _ in 0..args.lines {
         let num_words = rand::thread_rng().gen_range(7..15);

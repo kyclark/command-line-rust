@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
 #[derive(Debug)]
-pub struct Config {
+struct Config {
     files: Vec<String>,
     lines: u64,
     bytes: Option<u64>,

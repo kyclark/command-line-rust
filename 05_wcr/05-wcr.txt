@@ -302,7 +302,7 @@ struct Config {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct FileInfo {
+struct FileInfo {
     num_lines: usize,
     num_words: usize,
     num_bytes: usize,
