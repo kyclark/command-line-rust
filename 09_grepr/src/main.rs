@@ -10,8 +10,9 @@ use walkdir::WalkDir;
 
 #[derive(Debug)]
 struct Args {
-    pattern: Regex,
+    pattern: String,
     files: Vec<String>,
+    insensitive: bool,
     recursive: bool,
     count: bool,
     invert_match: bool,
@@ -74,19 +75,14 @@ fn get_args() -> Result<Args> {
         )
         .get_matches();
 
-    let pattern: String = matches.get_one("pattern").cloned().unwrap();
-    let pattern = RegexBuilder::new(&pattern)
-        .case_insensitive(matches.get_flag("insensitive"))
-        .build()
-        .map_err(|_| anyhow!("Invalid pattern \"{pattern}\""))?;
-
     Ok(Args {
-        pattern,
+        pattern: matches.get_one("pattern").cloned().unwrap(),
         files: matches
             .get_many("files")
             .expect("files required")
             .cloned()
             .collect(),
+        insensitive: matches.get_flag("insensitive"),
         recursive: matches.get_flag("recursive"),
         count: matches.get_flag("count"),
         invert_match: matches.get_flag("invert"),
@@ -95,6 +91,11 @@ fn get_args() -> Result<Args> {
 
 // --------------------------------------------------
 fn run(args: Args) -> Result<()> {
+    let pattern = RegexBuilder::new(&args.pattern)
+        .case_insensitive(args.insensitive)
+        .build()
+        .map_err(|_| anyhow!(r#"Invalid pattern "{}""#, args.pattern))?;
+
     let entries = find_files(&args.files, args.recursive);
     let num_files = entries.len();
     let print = |fname: &str, val: &str| {
@@ -111,7 +112,7 @@ fn run(args: Args) -> Result<()> {
             Ok(filename) => match open(&filename) {
                 Err(e) => eprintln!("{filename}: {e}"),
                 Ok(file) => {
-                    match find_lines(file, &args.pattern, args.invert_match) {
+                    match find_lines(file, &pattern, args.invert_match) {
                         Err(e) => eprintln!("{e}"),
                         Ok(matches) => {
                             if args.count {
