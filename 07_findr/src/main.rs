@@ -1,9 +1,7 @@
+use anyhow::Result;
 use clap::{builder::PossibleValue, ArgAction, Parser, ValueEnum};
 use regex::Regex;
-use std::error::Error;
 use walkdir::{DirEntry, WalkDir};
-
-type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -66,7 +64,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> MyResult<()> {
+pub fn run(args: Args) -> Result<()> {
     let type_filter = |entry: &DirEntry| {
         args.entry_types.is_empty()
             || args.entry_types.iter().any(|entry_type| match entry_type {
@@ -89,7 +87,7 @@ pub fn run(args: Args) -> MyResult<()> {
             .into_iter()
             .filter_map(|e| match e {
                 Err(e) => {
-                    eprintln!("{}", e);
+                    eprintln!("{e}");
                     None
                 }
                 Ok(entry) => Some(entry),

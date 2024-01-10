@@ -1,10 +1,9 @@
+use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
 use rand::{distributions::Alphanumeric, Rng};
 use std::{fs, path::Path};
 use sys_info::os_type;
-
-type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 const PRG: &str = "grepr";
 const BUSTLE: &str = "tests/inputs/bustle.txt";
@@ -30,19 +29,19 @@ fn gen_bad_file() -> String {
 
 // --------------------------------------------------
 #[test]
-fn dies_no_args() -> TestResult {
+fn dies_no_args() -> Result<()> {
     Command::cargo_bin(PRG)?
         .assert()
         .failure()
-        .stderr(predicate::str::contains("USAGE"));
+        .stderr(predicate::str::contains("Usage"));
     Ok(())
 }
 
 // --------------------------------------------------
 #[test]
-fn dies_bad_pattern() -> TestResult {
+fn dies_bad_pattern() -> Result<()> {
     Command::cargo_bin(PRG)?
-        .args(&["*foo", FOX])
+        .args(["*foo", FOX])
         .assert()
         .failure()
         .stderr(predicate::str::contains("Invalid pattern \"*foo\""));
@@ -51,19 +50,19 @@ fn dies_bad_pattern() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn warns_bad_file() -> TestResult {
+fn warns_bad_file() -> Result<()> {
     let bad = gen_bad_file();
-    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    let expected = format!("{bad}: .* [(]os error 2[)]");
     Command::cargo_bin(PRG)?
-        .args(&["foo", &bad])
+        .args(["foo", &bad])
         .assert()
         .stderr(predicate::str::is_match(expected)?);
     Ok(())
 }
 
 // --------------------------------------------------
-fn run(args: &[&str], expected_file: &str) -> TestResult {
-    let windows_file = format!("{}.windows", expected_file);
+fn run(args: &[&str], expected_file: &str) -> Result<()> {
+    let windows_file = format!("{expected_file}.windows");
     let expected_file = if os_type().unwrap() == "Windows"
         && Path::new(&windows_file).is_file()
     {
@@ -72,7 +71,7 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
         expected_file
     };
 
-    let expected = fs::read_to_string(&expected_file)?;
+    let expected = fs::read_to_string(expected_file)?;
 
     Command::cargo_bin(PRG)?
         .args(args)
@@ -83,19 +82,19 @@ fn run(args: &[&str], expected_file: &str) -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn empty_file() -> TestResult {
+fn empty_file() -> Result<()> {
     run(&["foo", EMPTY], "tests/expected/empty.foo")
 }
 
 // --------------------------------------------------
 #[test]
-fn empty_regex() -> TestResult {
+fn empty_regex() -> Result<()> {
     run(&["", FOX], "tests/expected/empty_regex.fox.txt")
 }
 
 // --------------------------------------------------
 #[test]
-fn bustle_capitalized() -> TestResult {
+fn bustle_capitalized() -> Result<()> {
     run(
         &["The", BUSTLE],
         "tests/expected/bustle.txt.the.capitalized",
@@ -104,13 +103,13 @@ fn bustle_capitalized() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn bustle_lowercase() -> TestResult {
+fn bustle_lowercase() -> Result<()> {
     run(&["the", BUSTLE], "tests/expected/bustle.txt.the.lowercase")
 }
 
 // --------------------------------------------------
 #[test]
-fn bustle_insensitive() -> TestResult {
+fn bustle_insensitive() -> Result<()> {
     run(
         &["--insensitive", "the", BUSTLE],
         "tests/expected/bustle.txt.the.lowercase.insensitive",
@@ -119,13 +118,13 @@ fn bustle_insensitive() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn nobody() -> TestResult {
+fn nobody() -> Result<()> {
     run(&["nobody", NOBODY], "tests/expected/nobody.txt")
 }
 
 // --------------------------------------------------
 #[test]
-fn nobody_insensitive() -> TestResult {
+fn nobody_insensitive() -> Result<()> {
     run(
         &["-i", "nobody", NOBODY],
         "tests/expected/nobody.txt.insensitive",
@@ -134,7 +133,7 @@ fn nobody_insensitive() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn multiple_files() -> TestResult {
+fn multiple_files() -> Result<()> {
     run(
         &["The", BUSTLE, EMPTY, FOX, NOBODY],
         "tests/expected/all.the.capitalized",
@@ -143,7 +142,7 @@ fn multiple_files() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn multiple_files_insensitive() -> TestResult {
+fn multiple_files_insensitive() -> Result<()> {
     run(
         &["-i", "the", BUSTLE, EMPTY, FOX, NOBODY],
         "tests/expected/all.the.lowercase.insensitive",
@@ -152,7 +151,7 @@ fn multiple_files_insensitive() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn recursive() -> TestResult {
+fn recursive() -> Result<()> {
     run(
         &["--recursive", "dog", INPUTS_DIR],
         "tests/expected/dog.recursive",
@@ -161,7 +160,7 @@ fn recursive() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn recursive_insensitive() -> TestResult {
+fn recursive_insensitive() -> Result<()> {
     run(
         &["-ri", "then", INPUTS_DIR],
         "tests/expected/the.recursive.insensitive",
@@ -170,7 +169,7 @@ fn recursive_insensitive() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn sensitive_count_capital() -> TestResult {
+fn sensitive_count_capital() -> Result<()> {
     run(
         &["--count", "The", BUSTLE],
         "tests/expected/bustle.txt.the.capitalized.count",
@@ -179,7 +178,7 @@ fn sensitive_count_capital() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn sensitive_count_lower() -> TestResult {
+fn sensitive_count_lower() -> Result<()> {
     run(
         &["--count", "the", BUSTLE],
         "tests/expected/bustle.txt.the.lowercase.count",
@@ -188,7 +187,7 @@ fn sensitive_count_lower() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn insensitive_count() -> TestResult {
+fn insensitive_count() -> Result<()> {
     run(
         &["-ci", "the", BUSTLE],
         "tests/expected/bustle.txt.the.lowercase.insensitive.count",
@@ -197,13 +196,13 @@ fn insensitive_count() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn nobody_count() -> TestResult {
+fn nobody_count() -> Result<()> {
     run(&["-c", "nobody", NOBODY], "tests/expected/nobody.txt.count")
 }
 
 // --------------------------------------------------
 #[test]
-fn nobody_count_insensitive() -> TestResult {
+fn nobody_count_insensitive() -> Result<()> {
     run(
         &["-ci", "nobody", NOBODY],
         "tests/expected/nobody.txt.insensitive.count",
@@ -212,7 +211,7 @@ fn nobody_count_insensitive() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn sensitive_count_multiple() -> TestResult {
+fn sensitive_count_multiple() -> Result<()> {
     run(
         &["-c", "The", BUSTLE, EMPTY, FOX, NOBODY],
         "tests/expected/all.the.capitalized.count",
@@ -221,7 +220,7 @@ fn sensitive_count_multiple() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn insensitive_count_multiple() -> TestResult {
+fn insensitive_count_multiple() -> Result<()> {
     run(
         &["-ic", "the", BUSTLE, EMPTY, FOX, NOBODY],
         "tests/expected/all.the.lowercase.insensitive.count",
@@ -230,11 +229,11 @@ fn insensitive_count_multiple() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn warns_dir_not_recursive() -> TestResult {
+fn warns_dir_not_recursive() -> Result<()> {
     let stdout = "tests/inputs/fox.txt:\
         The quick brown fox jumps over the lazy dog.";
     Command::cargo_bin(PRG)?
-        .args(&["fox", INPUTS_DIR, FOX])
+        .args(["fox", INPUTS_DIR, FOX])
         .assert()
         .stderr(predicate::str::contains("tests/inputs is a directory"))
         .stdout(predicate::str::contains(stdout));
@@ -243,7 +242,7 @@ fn warns_dir_not_recursive() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn stdin() -> TestResult {
+fn stdin() -> Result<()> {
     let input = fs::read_to_string(BUSTLE)?;
     let expected =
         fs::read_to_string("tests/expected/bustle.txt.the.capitalized")?;
@@ -258,7 +257,7 @@ fn stdin() -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn stdin_insensitive_count() -> TestResult {
+fn stdin_insensitive_count() -> Result<()> {
     let files = &[BUSTLE, EMPTY, FOX, NOBODY];
 
     let mut input = String::new();
@@ -271,7 +270,7 @@ fn stdin_insensitive_count() -> TestResult {
     let expected = fs::read_to_string(expected_file)?;
 
     Command::cargo_bin(PRG)?
-        .args(&["-ci", "the", "-"])
+        .args(["-ci", "the", "-"])
         .write_stdin(input)
         .assert()
         .stdout(expected);

@@ -1,9 +1,7 @@
+use anyhow::Result;
 use clap::Parser;
-use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read};
-
-type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
@@ -16,9 +14,9 @@ pub struct Args {
     /// Number of lines
     #[arg(
         short('n'),
-        long("lines"),
+        long,
         default_value = "10",
-        value_name = "NUM",
+        value_name = "LINES",
         value_parser = clap::value_parser!(u64).range(1..)
     )]
     lines: u64,
@@ -26,8 +24,8 @@ pub struct Args {
     /// Number of bytes
     #[arg(
         short('c'),
-        long("bytes"),
-        value_name = "NUM",
+        long,
+        value_name = "BYTES",
         conflicts_with("lines"),
         value_parser = clap::value_parser!(u64).range(1..)
     )]
@@ -37,18 +35,18 @@ pub struct Args {
 // --------------------------------------------------
 fn main() {
     if let Err(e) = run(Args::parse()) {
-        eprintln!("{}", e);
+        eprintln!("{e}");
         std::process::exit(1);
     }
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> MyResult<()> {
+pub fn run(args: Args) -> Result<()> {
     let num_files = args.files.len();
 
     for (file_num, filename) in args.files.iter().enumerate() {
         match open(filename) {
-            Err(err) => eprintln!("{}: {}", filename, err),
+            Err(err) => eprintln!("{filename}: {err}"),
             Ok(mut file) => {
                 if num_files > 1 {
                     println!(
@@ -59,9 +57,8 @@ pub fn run(args: Args) -> MyResult<()> {
                 }
 
                 if let Some(num_bytes) = args.bytes {
-                    let mut handle = file.take(num_bytes);
                     let mut buffer = vec![0; num_bytes as usize];
-                    let bytes_read = handle.read(&mut buffer)?;
+                    let bytes_read = file.read(&mut buffer)?;
                     print!(
                         "{}",
                         String::from_utf8_lossy(&buffer[..bytes_read])
@@ -73,7 +70,7 @@ pub fn run(args: Args) -> MyResult<()> {
                         if bytes == 0 {
                             break;
                         }
-                        print!("{}", line);
+                        print!("{line}");
                         line.clear();
                     }
                 }
@@ -85,7 +82,7 @@ pub fn run(args: Args) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
+fn open(filename: &str) -> Result<Box<dyn BufRead>> {
     match filename {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
         _ => Ok(Box::new(BufReader::new(File::open(filename)?))),

@@ -4,7 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = "2.33"
+anyhow = "1"
+clap = { version = "4.1.4", features = ["derive"] }
 num = "0.4"
 regex = "1"
 once_cell = "1"

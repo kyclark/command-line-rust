@@ -1,9 +1,7 @@
+use anyhow::Result;
 use clap::Parser;
-use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
-
-type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -13,19 +11,19 @@ pub struct Args {
     files: Vec<String>,
 
     /// Show line count
-    #[arg(short('l'), long("lines"))]
+    #[arg(short, long)]
     lines: bool,
 
     /// Show word count
-    #[arg(short('w'), long("words"))]
+    #[arg(short, long)]
     words: bool,
 
     /// Show byte count
-    #[arg(short('c'), long("bytes"))]
+    #[arg(short('c'), long)]
     bytes: bool,
 
     /// Show character count
-    #[arg(short('m'), long("chars"), conflicts_with("bytes"))]
+    #[arg(short('m'), long, conflicts_with("bytes"))]
     chars: bool,
 }
 
@@ -50,13 +48,13 @@ fn main() {
     }
 
     if let Err(e) = run(args) {
-        eprintln!("{}", e);
+        eprintln!("{e}");
         std::process::exit(1);
     }
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> MyResult<()> {
+pub fn run(args: Args) -> Result<()> {
     let mut total_lines = 0;
     let mut total_words = 0;
     let mut total_bytes = 0;
@@ -64,7 +62,7 @@ pub fn run(args: Args) -> MyResult<()> {
 
     for filename in &args.files {
         match open(filename) {
-            Err(err) => eprintln!("{}: {}", filename, err),
+            Err(err) => eprintln!("{filename}: {err}"),
             Ok(file) => {
                 if let Ok(info) = count(file) {
                     println!(
@@ -76,7 +74,7 @@ pub fn run(args: Args) -> MyResult<()> {
                         if filename == "-" {
                             "".to_string()
                         } else {
-                            format!(" {}", &filename)
+                            format!(" {filename}")
                         },
                     );
 
@@ -103,7 +101,7 @@ pub fn run(args: Args) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
+fn open(filename: &str) -> Result<Box<dyn BufRead>> {
     match filename {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
         _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
@@ -113,14 +111,14 @@ fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
 // --------------------------------------------------
 fn format_field(value: usize, show: bool) -> String {
     if show {
-        format!("{:>8}", value)
+        format!("{value:>8}")
     } else {
         "".to_string()
     }
 }
 
 // --------------------------------------------------
-pub fn count(mut file: impl BufRead) -> MyResult<FileInfo> {
+pub fn count(mut file: impl BufRead) -> Result<FileInfo> {
     let mut num_lines = 0;
     let mut num_words = 0;
     let mut num_bytes = 0;

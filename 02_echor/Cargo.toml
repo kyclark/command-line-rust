@@ -5,6 +5,7 @@ edition = "2021"
 authors = [ "Ken Youens-Clark <kyclark@gmail.com>" ]
 
 [dependencies]
+anyhow = "1"
 clap = { version = "4.1.4", features = ["derive"] }
 
 [dev-dependencies]

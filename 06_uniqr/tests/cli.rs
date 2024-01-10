@@ -1,10 +1,9 @@
+use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
 use rand::{distributions::Alphanumeric, Rng};
 use std::fs;
 use tempfile::NamedTempFile;
-
-type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 struct Test {
     input: &'static str,
@@ -97,9 +96,9 @@ fn gen_bad_file() -> String {
 
 // --------------------------------------------------
 #[test]
-fn dies_bad_file() -> TestResult {
+fn dies_bad_file() -> Result<()> {
     let bad = gen_bad_file();
-    let expected = format!("{}: .* [(]os error 2[)]", bad);
+    let expected = format!("{bad}: .* [(]os error 2[)]");
     Command::cargo_bin(PRG)?
         .arg(bad)
         .assert()
@@ -110,7 +109,7 @@ fn dies_bad_file() -> TestResult {
 
 // --------------------------------------------------
 // HELPER FUNCTIONS
-fn run(test: &Test) -> TestResult {
+fn run(test: &Test) -> Result<()> {
     let expected = fs::read_to_string(test.out)?;
     Command::cargo_bin(PRG)?
         .arg(test.input)
@@ -121,10 +120,10 @@ fn run(test: &Test) -> TestResult {
 }
 
 // --------------------------------------------------
-fn run_count(test: &Test) -> TestResult {
+fn run_count(test: &Test) -> Result<()> {
     let expected = fs::read_to_string(test.out_count)?;
     Command::cargo_bin(PRG)?
-        .args(&[test.input, "-c"])
+        .args([test.input, "-c"])
         .assert()
         .success()
         .stdout(expected);
@@ -132,7 +131,7 @@ fn run_count(test: &Test) -> TestResult {
 }
 
 // --------------------------------------------------
-fn run_stdin(test: &Test) -> TestResult {
+fn run_stdin(test: &Test) -> Result<()> {
     let input = fs::read_to_string(test.input)?;
     let expected = fs::read_to_string(test.out)?;
     Command::cargo_bin(PRG)?
@@ -144,7 +143,7 @@ fn run_stdin(test: &Test) -> TestResult {
 }
 
 // --------------------------------------------------
-fn run_stdin_count(test: &Test) -> TestResult {
+fn run_stdin_count(test: &Test) -> Result<()> {
     let input = fs::read_to_string(test.input)?;
     let expected = fs::read_to_string(test.out_count)?;
     Command::cargo_bin(PRG)?
@@ -157,54 +156,54 @@ fn run_stdin_count(test: &Test) -> TestResult {
 }
 
 // --------------------------------------------------
-fn run_outfile(test: &Test) -> TestResult {
+fn run_outfile(test: &Test) -> Result<()> {
     let expected = fs::read_to_string(test.out)?;
     let outfile = NamedTempFile::new()?;
     let outpath = &outfile.path().to_str().unwrap();
     Command::cargo_bin(PRG)?
-        .args(&[test.input, outpath])
+        .args([test.input, outpath])
         .assert()
         .success()
         .stdout("");
 
-    let contents = fs::read_to_string(&outpath)?;
+    let contents = fs::read_to_string(outpath)?;
     assert_eq!(&expected, &contents);
 
     Ok(())
 }
 
 // --------------------------------------------------
-fn run_outfile_count(test: &Test) -> TestResult {
+fn run_outfile_count(test: &Test) -> Result<()> {
     let outfile = NamedTempFile::new()?;
     let outpath = &outfile.path().to_str().unwrap();
 
     Command::cargo_bin(PRG)?
-        .args(&[test.input, outpath, "--count"])
+        .args([test.input, outpath, "--count"])
         .assert()
         .success()
         .stdout("");
 
     let expected = fs::read_to_string(test.out_count)?;
-    let contents = fs::read_to_string(&outpath)?;
+    let contents = fs::read_to_string(outpath)?;
     assert_eq!(&expected, &contents);
 
     Ok(())
 }
 
 // --------------------------------------------------
-fn run_stdin_outfile_count(test: &Test) -> TestResult {
+fn run_stdin_outfile_count(test: &Test) -> Result<()> {
     let input = fs::read_to_string(test.input)?;
     let outfile = NamedTempFile::new()?;
     let outpath = &outfile.path().to_str().unwrap();
 
     Command::cargo_bin(PRG)?
-        .args(&["-", outpath, "-c"])
+        .args(["-", outpath, "-c"])
         .write_stdin(input)
         .assert()
         .stdout("");
 
     let expected = fs::read_to_string(test.out_count)?;
-    let contents = fs::read_to_string(&outpath)?;
+    let contents = fs::read_to_string(outpath)?;
     assert_eq!(&expected, &contents);
 
     Ok(())
@@ -212,396 +211,396 @@ fn run_stdin_outfile_count(test: &Test) -> TestResult {
 
 // --------------------------------------------------
 #[test]
-fn empty() -> TestResult {
+fn empty() -> Result<()> {
     run(&EMPTY)
 }
 
 #[test]
-fn empty_count() -> TestResult {
+fn empty_count() -> Result<()> {
     run_count(&EMPTY)
 }
 
 #[test]
-fn empty_stdin() -> TestResult {
+fn empty_stdin() -> Result<()> {
     run_stdin(&EMPTY)
 }
 
 #[test]
-fn empty_stdin_count() -> TestResult {
+fn empty_stdin_count() -> Result<()> {
     run_stdin_count(&EMPTY)
 }
 
 #[test]
-fn empty_outfile() -> TestResult {
+fn empty_outfile() -> Result<()> {
     run_outfile(&EMPTY)
 }
 
 #[test]
-fn empty_outfile_count() -> TestResult {
+fn empty_outfile_count() -> Result<()> {
     run_outfile_count(&EMPTY)
 }
 
 #[test]
-fn empty_stdin_outfile_count() -> TestResult {
+fn empty_stdin_outfile_count() -> Result<()> {
     run_stdin_outfile_count(&EMPTY)
 }
 
 // --------------------------------------------------
 #[test]
-fn one() -> TestResult {
+fn one() -> Result<()> {
     run(&ONE)
 }
 
 #[test]
-fn one_count() -> TestResult {
+fn one_count() -> Result<()> {
     run_count(&ONE)
 }
 
 #[test]
-fn one_stdin() -> TestResult {
+fn one_stdin() -> Result<()> {
     run_stdin(&ONE)
 }
 
 #[test]
-fn one_stdin_count() -> TestResult {
+fn one_stdin_count() -> Result<()> {
     run_stdin_count(&ONE)
 }
 
 #[test]
-fn one_outfile() -> TestResult {
+fn one_outfile() -> Result<()> {
     run_outfile(&ONE)
 }
 
 #[test]
-fn one_outfile_count() -> TestResult {
+fn one_outfile_count() -> Result<()> {
     run_outfile_count(&ONE)
 }
 
 #[test]
-fn one_stdin_outfile_count() -> TestResult {
+fn one_stdin_outfile_count() -> Result<()> {
     run_stdin_outfile_count(&ONE)
 }
 
 // --------------------------------------------------
 #[test]
-fn two() -> TestResult {
+fn two() -> Result<()> {
     run(&TWO)
 }
 
 #[test]
-fn two_count() -> TestResult {
+fn two_count() -> Result<()> {
     run_count(&TWO)
 }
 
 #[test]
-fn two_stdin() -> TestResult {
+fn two_stdin() -> Result<()> {
     run_stdin(&TWO)
 }
 
 #[test]
-fn two_stdin_count() -> TestResult {
+fn two_stdin_count() -> Result<()> {
     run_stdin_count(&TWO)
 }
 
 #[test]
-fn two_outfile() -> TestResult {
+fn two_outfile() -> Result<()> {
     run_outfile(&TWO)
 }
 
 #[test]
-fn two_outfile_count() -> TestResult {
+fn two_outfile_count() -> Result<()> {
     run_outfile_count(&TWO)
 }
 
 #[test]
-fn two_stdin_outfile_count() -> TestResult {
+fn two_stdin_outfile_count() -> Result<()> {
     run_stdin_outfile_count(&TWO)
 }
 
 // --------------------------------------------------
 #[test]
-fn three() -> TestResult {
+fn three() -> Result<()> {
     run(&THREE)
 }
 
 #[test]
-fn three_count() -> TestResult {
+fn three_count() -> Result<()> {
     run_count(&THREE)
 }
 
 #[test]
-fn three_stdin() -> TestResult {
+fn three_stdin() -> Result<()> {
     run_stdin(&THREE)
 }
 
 #[test]
-fn three_stdin_count() -> TestResult {
+fn three_stdin_count() -> Result<()> {
     run_stdin_count(&THREE)
 }
 
 #[test]
-fn three_outfile() -> TestResult {
+fn three_outfile() -> Result<()> {
     run_outfile(&THREE)
 }
 
 #[test]
-fn three_outfile_count() -> TestResult {
+fn three_outfile_count() -> Result<()> {
     run_outfile_count(&THREE)
 }
 
 #[test]
-fn three_stdin_outfile_count() -> TestResult {
+fn three_stdin_outfile_count() -> Result<()> {
     run_stdin_outfile_count(&THREE)
 }
 
 // --------------------------------------------------
 #[test]
-fn skip() -> TestResult {
+fn skip() -> Result<()> {
     run(&SKIP)
 }
 
 #[test]
-fn skip_count() -> TestResult {
+fn skip_count() -> Result<()> {
     run_count(&SKIP)
 }
 
 #[test]
-fn skip_stdin() -> TestResult {
+fn skip_stdin() -> Result<()> {
     run_stdin(&SKIP)
 }
 
 #[test]
-fn skip_stdin_count() -> TestResult {
+fn skip_stdin_count() -> Result<()> {
     run_stdin_count(&SKIP)
 }
 
 #[test]
-fn skip_outfile() -> TestResult {
+fn skip_outfile() -> Result<()> {
     run_outfile(&SKIP)
 }
 
 #[test]
-fn skip_outfile_count() -> TestResult {
+fn skip_outfile_count() -> Result<()> {
     run_outfile_count(&SKIP)
 }
 
 #[test]
-fn skip_stdin_outfile_count() -> TestResult {
+fn skip_stdin_outfile_count() -> Result<()> {
     run_stdin_outfile_count(&SKIP)
 }
 
 // --------------------------------------------------
 #[test]
-fn t1() -> TestResult {
+fn t1() -> Result<()> {
     run(&T1)
 }
 
 #[test]
-fn t1_count() -> TestResult {
+fn t1_count() -> Result<()> {
     run_count(&T1)
 }
 
 #[test]
-fn t1_stdin() -> TestResult {
+fn t1_stdin() -> Result<()> {
     run_stdin(&T1)
 }
 
 #[test]
-fn t1_stdin_count() -> TestResult {
+fn t1_stdin_count() -> Result<()> {
     run_stdin_count(&T1)
 }
 
 #[test]
-fn t1_outfile() -> TestResult {
+fn t1_outfile() -> Result<()> {
     run_outfile(&T1)
 }
 
 #[test]
-fn t1_outfile_count() -> TestResult {
+fn t1_outfile_count() -> Result<()> {
     run_outfile_count(&T1)
 }
 
 #[test]
-fn t1_stdin_outfile_count() -> TestResult {
+fn t1_stdin_outfile_count() -> Result<()> {
     run_stdin_outfile_count(&T1)
 }
 
 // --------------------------------------------------
 #[test]
-fn t2() -> TestResult {
+fn t2() -> Result<()> {
     run(&T2)
 }
 
 #[test]
-fn t2_count() -> TestResult {
+fn t2_count() -> Result<()> {
     run_count(&T2)
 }
 
 #[test]
-fn t2_stdin() -> TestResult {
+fn t2_stdin() -> Result<()> {
     run_stdin(&T2)
 }
 
 #[test]
-fn t2_stdin_count() -> TestResult {
+fn t2_stdin_count() -> Result<()> {
     run_stdin_count(&T2)
 }
 
 #[test]
-fn t2_outfile() -> TestResult {
+fn t2_outfile() -> Result<()> {
     run_outfile(&T2)
 }
 
 #[test]
-fn t2_outfile_count() -> TestResult {
+fn t2_outfile_count() -> Result<()> {
     run_outfile_count(&T2)
 }
 
 #[test]
-fn t2_stdin_outfile_count() -> TestResult {
+fn t2_stdin_outfile_count() -> Result<()> {
     run_stdin_outfile_count(&T2)
 }
 
 // --------------------------------------------------
 #[test]
-fn t3() -> TestResult {
+fn t3() -> Result<()> {
     run(&T3)
 }
 
 #[test]
-fn t3_count() -> TestResult {
+fn t3_count() -> Result<()> {
     run_count(&T3)
 }
 
 #[test]
-fn t3_stdin() -> TestResult {
+fn t3_stdin() -> Result<()> {
     run_stdin(&T3)
 }
 
 #[test]
-fn t3_stdin_count() -> TestResult {
+fn t3_stdin_count() -> Result<()> {
     run_stdin_count(&T3)
 }
 
 #[test]
-fn t3_outfile() -> TestResult {
+fn t3_outfile() -> Result<()> {
     run_outfile(&T3)
 }
 
 #[test]
-fn t3_outfile_count() -> TestResult {
+fn t3_outfile_count() -> Result<()> {
     run_outfile_count(&T3)
 }
 
 #[test]
-fn t3_stdin_outfile_count() -> TestResult {
+fn t3_stdin_outfile_count() -> Result<()> {
     run_stdin_outfile_count(&T3)
 }
 
 // --------------------------------------------------
 #[test]
-fn t4() -> TestResult {
+fn t4() -> Result<()> {
     run(&T4)
 }
 
 #[test]
-fn t4_count() -> TestResult {
+fn t4_count() -> Result<()> {
     run_count(&T4)
 }
 
 #[test]
-fn t4_stdin() -> TestResult {
+fn t4_stdin() -> Result<()> {
     run_stdin(&T4)
 }
 
 #[test]
-fn t4_stdin_count() -> TestResult {
+fn t4_stdin_count() -> Result<()> {
     run_stdin_count(&T4)
 }
 
 #[test]
-fn t4_outfile() -> TestResult {
+fn t4_outfile() -> Result<()> {
     run_outfile(&T4)
 }
 
 #[test]
-fn t4_outfile_count() -> TestResult {
+fn t4_outfile_count() -> Result<()> {
     run_outfile_count(&T4)
 }
 
 #[test]
-fn t4_stdin_outfile_count() -> TestResult {
+fn t4_stdin_outfile_count() -> Result<()> {
     run_stdin_outfile_count(&T4)
 }
 
 // --------------------------------------------------
 #[test]
-fn t5() -> TestResult {
+fn t5() -> Result<()> {
     run(&T5)
 }
 
 #[test]
-fn t5_count() -> TestResult {
+fn t5_count() -> Result<()> {
     run_count(&T5)
 }
 
 #[test]
-fn t5_stdin() -> TestResult {
+fn t5_stdin() -> Result<()> {
     run_stdin(&T5)
 }
 
 #[test]
-fn t5_stdin_count() -> TestResult {
+fn t5_stdin_count() -> Result<()> {
     run_stdin_count(&T5)
 }
 
 #[test]
-fn t5_outfile() -> TestResult {
+fn t5_outfile() -> Result<()> {
     run_outfile(&T5)
 }
 
 #[test]
-fn t5_outfile_count() -> TestResult {
+fn t5_outfile_count() -> Result<()> {
     run_outfile_count(&T5)
 }
 
 #[test]
-fn t5_stdin_outfile_count() -> TestResult {
+fn t5_stdin_outfile_count() -> Result<()> {
     run_stdin_outfile_count(&T5)
 }
 
 // --------------------------------------------------
 #[test]
-fn t6() -> TestResult {
+fn t6() -> Result<()> {
     run(&T6)
 }
 
 #[test]
-fn t6_count() -> TestResult {
+fn t6_count() -> Result<()> {
     run_count(&T6)
 }
 
 #[test]
-fn t6_stdin() -> TestResult {
+fn t6_stdin() -> Result<()> {
     run_stdin(&T6)
 }
 
 #[test]
-fn t6_stdin_count() -> TestResult {
+fn t6_stdin_count() -> Result<()> {
     run_stdin_count(&T6)
 }
 
 #[test]
-fn t6_outfile() -> TestResult {
+fn t6_outfile() -> Result<()> {
     run_outfile(&T6)
 }
 
 #[test]
-fn t6_outfile_count() -> TestResult {
+fn t6_outfile_count() -> Result<()> {
     run_outfile_count(&T6)
 }
 
 #[test]
-fn t6_stdin_outfile_count() -> TestResult {
+fn t6_stdin_outfile_count() -> Result<()> {
     run_stdin_outfile_count(&T6)
 }

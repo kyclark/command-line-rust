@@ -1,9 +1,7 @@
+use anyhow::Result;
 use clap::Parser;
-use std::error::Error;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
-
-type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -29,16 +27,16 @@ pub struct Args {
 // --------------------------------------------------
 fn main() {
     if let Err(e) = run(Args::parse()) {
-        eprintln!("{}", e);
+        eprintln!("{e}");
         std::process::exit(1);
     }
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> MyResult<()> {
+pub fn run(args: Args) -> Result<()> {
     for filename in args.files {
         match open(&filename) {
-            Err(e) => eprintln!("{}: {}", filename, e),
+            Err(e) => eprintln!("{filename}: {e}"),
             Ok(file) => {
                 let mut last_num = 0;
                 for (line_num, line_result) in file.lines().enumerate() {
@@ -46,14 +44,14 @@ pub fn run(args: Args) -> MyResult<()> {
                     if args.number_lines {
                         println!("{:6}\t{}", line_num + 1, line);
                     } else if args.number_nonblank_lines {
-                        if !line.is_empty() {
-                            last_num += 1;
-                            println!("{:6}\t{}", last_num, line);
-                        } else {
+                        if line.is_empty() {
                             println!();
+                        } else {
+                            last_num += 1;
+                            println!("{last_num:6}\t{line}");
                         }
                     } else {
-                        println!("{}", line);
+                        println!("{line}");
                     }
                 }
             }
@@ -64,7 +62,7 @@ pub fn run(args: Args) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
+fn open(filename: &str) -> Result<Box<dyn BufRead>> {
     match filename {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
         _ => Ok(Box::new(BufReader::new(File::open(filename)?))),

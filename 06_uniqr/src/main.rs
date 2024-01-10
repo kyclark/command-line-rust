@@ -1,11 +1,9 @@
+use anyhow::{anyhow, Result};
 use clap::Parser;
 use std::{
-    error::Error,
     fs::File,
     io::{self, BufRead, BufReader, Write},
 };
-
-type MyResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
@@ -20,7 +18,7 @@ pub struct Args {
     out_file: Option<String>,
 
     /// Show counts
-    #[arg(short('c'), long("count"))]
+    #[arg(short, long)]
     count: bool,
 }
 
@@ -33,21 +31,21 @@ fn main() {
 }
 
 // --------------------------------------------------
-pub fn run(args: Args) -> MyResult<()> {
-    let mut file = open(&args.in_file)
-        .map_err(|e| format!("{}: {}", args.in_file, e))?;
+pub fn run(args: Args) -> Result<()> {
+    let mut file =
+        open(&args.in_file).map_err(|e| anyhow!("{}: {e}", args.in_file))?;
 
     let mut out_file: Box<dyn Write> = match &args.out_file {
         Some(out_name) => Box::new(File::create(out_name)?),
         _ => Box::new(io::stdout()),
     };
 
-    let mut print = |count: u64, text: &str| -> MyResult<()> {
-        if count > 0 {
+    let mut print = |num: u64, text: &str| -> Result<()> {
+        if num > 0 {
             if args.count {
-                write!(out_file, "{:>4} {}", count, text)?;
+                write!(out_file, "{num:>4} {text}")?;
             } else {
-                write!(out_file, "{}", text)?;
+                write!(out_file, "{text}")?;
             }
         };
         Ok(())
@@ -77,7 +75,7 @@ pub fn run(args: Args) -> MyResult<()> {
 }
 
 // --------------------------------------------------
-fn open(filename: &str) -> MyResult<Box<dyn BufRead>> {
+fn open(filename: &str) -> Result<Box<dyn BufRead>> {
     match filename {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
         _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
