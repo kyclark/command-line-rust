@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.7"
+anyhow = "1.0.79"
 clap = "4.4.13"
 regex = "1.10.2"
 walkdir = "2.4.0"
