@@ -4,10 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = "4"
-anyhow = "1"
+clap = "4.4.14"
+anyhow = "1.0.7"
 
 [dev-dependencies]
-assert_cmd = "2"
-predicates = "2"
-rand = "0.8"
+assert_cmd = "2.0.12"
+predicates = "3.0.4"
+rand = "0.8.5"

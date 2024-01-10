@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = "4"
-regex = "1"
-walkdir = "2"
-anyhow = "1"
+anyhow = "1.0.7"
+clap = "4.4.13"
+regex = "1.10.2"
+walkdir = "2.4.0"
 
 [dev-dependencies]
-assert_cmd = "2"
-predicates = "2"
-rand = "0.8"
-sys-info = "0.9"
+assert_cmd = "2.0.12"
+predicates = "3.0.4"
+rand = "0.8.5"
+sys-info = "0.9.1"

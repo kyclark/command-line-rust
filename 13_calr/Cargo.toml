@@ -4,12 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.7"
 clap = "4.4.14"
 chrono = "0.4.31"
-itertools = "0.10"
-ansi_term = "0.12"
-anyhow = "1"
+itertools = "0.12.0"
+ansi_term = "0.12.1"
 
 [dev-dependencies]
-assert_cmd = "2"
-predicates = "2"
+assert_cmd = "2.0.12"
+predicates = "3.0.4"
