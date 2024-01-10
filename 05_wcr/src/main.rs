@@ -117,7 +117,7 @@ fn run(config: Config) -> Result<()> {
                     if filename == "-" {
                         "".to_string()
                     } else {
-                        format!(" {}", &filename)
+                        format!(" {filename}")
                     },
                 );
 

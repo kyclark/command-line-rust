@@ -72,7 +72,7 @@ fn get_args() -> Result<Config> {
 
     let mut year = matches.get_one("year").cloned();
 
-    let today = Local::today();
+    let today = Local::now().date_naive();
     if matches.get_flag("show_current_year") {
         month = None;
         year = Some(today.year());
@@ -84,7 +84,7 @@ fn get_args() -> Result<Config> {
     Ok(Config {
         month,
         year: year.unwrap_or_else(|| today.year()),
-        today: today.naive_local(),
+        today,
     })
 }
 
@@ -160,8 +160,12 @@ fn last_day_in_month(year: i32, month: u32) -> NaiveDate {
     } else {
         (year, month + 1)
     };
+
     // ...is preceded by the last day of the original month
-    NaiveDate::from_ymd(y, m, 1).pred()
+    NaiveDate::from_ymd_opt(y, m, 1)
+        .unwrap()
+        .pred_opt()
+        .unwrap()
 }
 
 // --------------------------------------------------
@@ -171,7 +175,7 @@ fn format_month(
     print_year: bool,
     today: NaiveDate,
 ) -> Vec<String> {
-    let first = NaiveDate::from_ymd(year, month, 1);
+    let first = NaiveDate::from_ymd_opt(year, month, 1).unwrap();
     let mut days: Vec<String> = (1..first.weekday().number_from_sunday())
         .map(|_| "  ".to_string()) // two spaces
         .collect();
@@ -259,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_format_month() {
-        let today = NaiveDate::from_ymd(0, 1, 1);
+        let today = NaiveDate::from_ymd_opt(0, 1, 1).unwrap();
         let leap_february = vec![
             "   February 2020      ",
             "Su Mo Tu We Th Fr Sa  ",
@@ -294,7 +298,7 @@ mod tests {
             "25 26 27 28 29 30     ",
             "                      ",
         ];
-        let today = NaiveDate::from_ymd(2021, 4, 7);
+        let today = NaiveDate::from_ymd_opt(2021, 4, 7).unwrap();
         assert_eq!(format_month(2021, 4, true, today), april_hl);
     }
 
@@ -302,15 +306,15 @@ mod tests {
     fn test_last_day_in_month() {
         assert_eq!(
             last_day_in_month(2020, 1),
-            NaiveDate::from_ymd(2020, 1, 31)
+            NaiveDate::from_ymd_opt(2020, 1, 31).unwrap()
         );
         assert_eq!(
             last_day_in_month(2020, 2),
-            NaiveDate::from_ymd(2020, 2, 29)
+            NaiveDate::from_ymd_opt(2020, 2, 29).unwrap()
         );
         assert_eq!(
             last_day_in_month(2020, 4),
-            NaiveDate::from_ymd(2020, 4, 30)
+            NaiveDate::from_ymd_opt(2020, 4, 30).unwrap()
         );
     }
 }

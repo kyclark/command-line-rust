@@ -71,11 +71,11 @@ fn run(config: Config) -> Result<()> {
                     if config.number_lines {
                         println!("{:6}\t{}", line_num + 1, line);
                     } else if config.number_nonblank_lines {
-                        if !line.is_empty() {
+                        if line.is_empty() {
+                            println!();
+                        } else {
                             last_num += 1;
                             println!("{last_num:6}\t{line}");
-                        } else {
-                            println!();
                         }
                     } else {
                         println!("{line}");

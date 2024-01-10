@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-clap = "4"
-chrono = "0.4"
+clap = "4.4.14"
+chrono = "0.4.31"
 itertools = "0.10"
 ansi_term = "0.12"
 anyhow = "1"
