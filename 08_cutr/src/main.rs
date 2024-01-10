@@ -11,7 +11,7 @@ use std::{
 };
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     files: Vec<String>,
     delimiter: u8,
     extract: Extract,
@@ -35,7 +35,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Result<Config> {
+fn get_args() -> Result<Args> {
     let matches = Command::new("cutr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -119,7 +119,7 @@ fn get_args() -> Result<Config> {
         bail!("Must have --fields, --bytes, or --chars");
     };
 
-    Ok(Config {
+    Ok(Args {
         files: matches
             .get_many("files")
             .expect("files required")
@@ -131,19 +131,19 @@ fn get_args() -> Result<Config> {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    for filename in &config.files {
+fn run(args: Args) -> Result<()> {
+    for filename in &args.files {
         match open(filename) {
             Err(err) => eprintln!("{filename}: {err}"),
-            Ok(file) => match &config.extract {
+            Ok(file) => match &args.extract {
                 Fields(field_pos) => {
                     let mut reader = ReaderBuilder::new()
-                        .delimiter(config.delimiter)
+                        .delimiter(args.delimiter)
                         .has_headers(false)
                         .from_reader(file);
 
                     let mut wtr = WriterBuilder::new()
-                        .delimiter(config.delimiter)
+                        .delimiter(args.delimiter)
                         .from_writer(io::stdout());
 
                     for record in reader.records() {

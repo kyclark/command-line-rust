@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     files: Vec<String>,
     lines: u64,
     bytes: Option<u64>,
@@ -19,7 +19,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Config {
+fn get_args() -> Args {
     let matches = Command::new("headr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -51,7 +51,7 @@ fn get_args() -> Config {
         )
         .get_matches();
 
-    Config {
+    Args {
         files: matches
             .get_many("files")
             .expect("file required")
@@ -63,10 +63,10 @@ fn get_args() -> Config {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    let num_files = config.files.len();
+fn run(args: Args) -> Result<()> {
+    let num_files = args.files.len();
 
-    for (file_num, filename) in config.files.iter().enumerate() {
+    for (file_num, filename) in args.files.iter().enumerate() {
         match open(filename) {
             Err(err) => eprintln!("{filename}: {err}"),
             Ok(mut file) => {
@@ -78,7 +78,7 @@ fn run(config: Config) -> Result<()> {
                     );
                 }
 
-                if let Some(num_bytes) = config.bytes {
+                if let Some(num_bytes) = args.bytes {
                     let mut buffer = vec![0; num_bytes as usize];
                     let bytes_read = file.read(&mut buffer)?;
                     print!(
@@ -87,7 +87,7 @@ fn run(config: Config) -> Result<()> {
                     );
                 } else {
                     let mut line = String::new();
-                    for _ in 0..config.lines {
+                    for _ in 0..args.lines {
                         let bytes = file.read_line(&mut line)?;
                         if bytes == 0 {
                             break;

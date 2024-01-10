@@ -15,7 +15,7 @@ enum Column<'a> {
 }
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     file1: String,
     file2: String,
     show_col1: bool,
@@ -34,7 +34,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Config {
+fn get_args() -> Args {
     let matches = Command::new("commr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -87,7 +87,7 @@ fn get_args() -> Config {
         )
         .get_matches();
 
-    Config {
+    Args {
         file1: matches.get_one("file1").cloned().unwrap(),
         file2: matches.get_one("file2").cloned().unwrap(),
         show_col1: !matches.get_flag("suppress_col1"),
@@ -99,16 +99,16 @@ fn get_args() -> Config {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    let file1 = &config.file1;
-    let file2 = &config.file2;
+fn run(args: Args) -> Result<()> {
+    let file1 = &args.file1;
+    let file2 = &args.file2;
 
     if file1 == "-" && file2 == "-" {
-        bail!("Both input files cannot be STDIN (\"-\")");
+        bail!(r#"Both input files cannot be STDIN ("-")"#);
     }
 
     let case = |line: String| {
-        if config.insensitive {
+        if args.insensitive {
             line.to_lowercase()
         } else {
             line
@@ -122,24 +122,24 @@ fn run(config: Config) -> Result<()> {
         let mut columns = vec![];
         match col {
             Col1(val) => {
-                if config.show_col1 {
+                if args.show_col1 {
                     columns.push(val);
                 }
             }
             Col2(val) => {
-                if config.show_col2 {
-                    if config.show_col1 {
+                if args.show_col2 {
+                    if args.show_col1 {
                         columns.push("");
                     }
                     columns.push(val);
                 }
             }
             Col3(val) => {
-                if config.show_col3 {
-                    if config.show_col1 {
+                if args.show_col3 {
+                    if args.show_col1 {
                         columns.push("");
                     }
-                    if config.show_col2 {
+                    if args.show_col2 {
                         columns.push("");
                     }
                     columns.push(val);
@@ -148,7 +148,7 @@ fn run(config: Config) -> Result<()> {
         };
 
         if !columns.is_empty() {
-            println!("{}", columns.join(&config.delimiter));
+            println!("{}", columns.join(&args.delimiter));
         }
     };
 

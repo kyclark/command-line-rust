@@ -9,7 +9,7 @@ use std::{
 };
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     files: Vec<String>,
     lines: TakeValue,
     bytes: Option<TakeValue>,
@@ -33,7 +33,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Result<Config> {
+fn get_args() -> Result<Args> {
     let matches = Command::new("tailr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -84,7 +84,7 @@ fn get_args() -> Result<Config> {
         .transpose()
         .map_err(|e| anyhow!("illegal byte count -- {e}"))?;
 
-    Ok(Config {
+    Ok(Args {
         files: matches
             .get_many("files")
             .expect("files required")
@@ -97,13 +97,13 @@ fn get_args() -> Result<Config> {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    let num_files = config.files.len();
-    for (file_num, filename) in config.files.iter().enumerate() {
+fn run(args: Args) -> Result<()> {
+    let num_files = args.files.len();
+    for (file_num, filename) in args.files.iter().enumerate() {
         match File::open(filename) {
             Err(err) => eprintln!("{filename}: {err}"),
             Ok(file) => {
-                if !config.quiet && num_files > 1 {
+                if !args.quiet && num_files > 1 {
                     println!(
                         "{}==> {} <==",
                         if file_num > 0 { "\n" } else { "" },
@@ -113,10 +113,10 @@ fn run(config: Config) -> Result<()> {
 
                 let (total_lines, total_bytes) = count_lines_bytes(filename)?;
                 let file = BufReader::new(file);
-                if let Some(num_bytes) = &config.bytes {
+                if let Some(num_bytes) = &args.bytes {
                     print_bytes(file, num_bytes, total_bytes)?;
                 } else {
-                    print_lines(file, &config.lines, total_lines)?;
+                    print_lines(file, &args.lines, total_lines)?;
                 }
             }
         }

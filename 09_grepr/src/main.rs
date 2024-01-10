@@ -9,7 +9,7 @@ use std::{
 use walkdir::WalkDir;
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     pattern: Regex,
     files: Vec<String>,
     recursive: bool,
@@ -26,7 +26,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Result<Config> {
+fn get_args() -> Result<Args> {
     let matches = Command::new("grepr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -80,7 +80,7 @@ fn get_args() -> Result<Config> {
         .build()
         .map_err(|_| anyhow!("Invalid pattern \"{pattern}\""))?;
 
-    Ok(Config {
+    Ok(Args {
         pattern,
         files: matches
             .get_many("files")
@@ -94,8 +94,8 @@ fn get_args() -> Result<Config> {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    let entries = find_files(&config.files, config.recursive);
+fn run(args: Args) -> Result<()> {
+    let entries = find_files(&args.files, args.recursive);
     let num_files = entries.len();
     let print = |fname: &str, val: &str| {
         if num_files > 1 {
@@ -111,14 +111,10 @@ fn run(config: Config) -> Result<()> {
             Ok(filename) => match open(&filename) {
                 Err(e) => eprintln!("{filename}: {e}"),
                 Ok(file) => {
-                    match find_lines(
-                        file,
-                        &config.pattern,
-                        config.invert_match,
-                    ) {
+                    match find_lines(file, &args.pattern, args.invert_match) {
                         Err(e) => eprintln!("{e}"),
                         Ok(matches) => {
-                            if config.count {
+                            if args.count {
                                 print(
                                     &filename,
                                     &format!("{}\n", matches.len()),

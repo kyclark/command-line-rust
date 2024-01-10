@@ -5,7 +5,7 @@ use regex::Regex;
 use walkdir::{DirEntry, WalkDir};
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     paths: Vec<String>,
     names: Vec<Regex>,
     entry_types: Vec<EntryType>,
@@ -41,7 +41,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Config {
+fn get_args() -> Args {
     let matches = Command::new("findr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -75,7 +75,7 @@ fn get_args() -> Config {
         )
         .get_matches();
 
-    Config {
+    Args {
         paths: matches
             .get_many("paths")
             .expect("paths required")
@@ -95,28 +95,25 @@ fn get_args() -> Config {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
+fn run(args: Args) -> Result<()> {
     let type_filter = |entry: &DirEntry| {
-        config.entry_types.is_empty()
-            || config
-                .entry_types
-                .iter()
-                .any(|entry_type| match entry_type {
-                    Link => entry.file_type().is_symlink(),
-                    Dir => entry.file_type().is_dir(),
-                    File => entry.file_type().is_file(),
-                })
+        args.entry_types.is_empty()
+            || args.entry_types.iter().any(|entry_type| match entry_type {
+                Link => entry.file_type().is_symlink(),
+                Dir => entry.file_type().is_dir(),
+                File => entry.file_type().is_file(),
+            })
     };
 
     let name_filter = |entry: &DirEntry| {
-        config.names.is_empty()
-            || config
+        args.names.is_empty()
+            || args
                 .names
                 .iter()
                 .any(|re| re.is_match(&entry.file_name().to_string_lossy()))
     };
 
-    for path in &config.paths {
+    for path in &args.paths {
         let entries = WalkDir::new(path)
             .into_iter()
             .filter_map(|e| match e {

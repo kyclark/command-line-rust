@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     files: Vec<String>,
     lines: bool,
     words: bool,
@@ -29,7 +29,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Config {
+fn get_args() -> Args {
     let matches = Command::new("wcr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -83,7 +83,7 @@ fn get_args() -> Config {
         bytes = true;
     }
 
-    Config {
+    Args {
         files: matches
             .get_many("files")
             .expect("files required")
@@ -97,23 +97,23 @@ fn get_args() -> Config {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
+fn run(args: Args) -> Result<()> {
     let mut total_lines = 0;
     let mut total_words = 0;
     let mut total_bytes = 0;
     let mut total_chars = 0;
 
-    for filename in &config.files {
+    for filename in &args.files {
         match open(filename) {
             Err(err) => eprintln!("{filename}: {err}"),
             Ok(file) => {
                 let info = count(file)?;
                 println!(
                     "{}{}{}{}{}",
-                    format_field(info.num_lines, config.lines),
-                    format_field(info.num_words, config.words),
-                    format_field(info.num_bytes, config.bytes),
-                    format_field(info.num_chars, config.chars),
+                    format_field(info.num_lines, args.lines),
+                    format_field(info.num_words, args.words),
+                    format_field(info.num_bytes, args.bytes),
+                    format_field(info.num_chars, args.chars),
                     if filename == "-" {
                         "".to_string()
                     } else {
@@ -129,13 +129,13 @@ fn run(config: Config) -> Result<()> {
         }
     }
 
-    if config.files.len() > 1 {
+    if args.files.len() > 1 {
         println!(
             "{}{}{}{} total",
-            format_field(total_lines, config.lines),
-            format_field(total_words, config.words),
-            format_field(total_bytes, config.bytes),
-            format_field(total_chars, config.chars)
+            format_field(total_lines, args.lines),
+            format_field(total_words, args.words),
+            format_field(total_bytes, args.bytes),
+            format_field(total_chars, args.chars)
         );
     }
 

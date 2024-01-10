@@ -9,7 +9,7 @@ use tabular::{Row, Table};
 use users::{get_group_by_gid, get_user_by_uid};
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     paths: Vec<String>,
     long: bool,
     show_hidden: bool,
@@ -24,7 +24,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Config {
+fn get_args() -> Args {
     let matches = Command::new("lsr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -52,7 +52,7 @@ fn get_args() -> Config {
         )
         .get_matches();
 
-    Config {
+    Args {
         paths: matches
             .get_many("paths")
             .expect("paths required")
@@ -64,9 +64,9 @@ fn get_args() -> Config {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    let paths = find_files(&config.paths, config.show_hidden)?;
-    if config.long {
+fn run(args: Args) -> Result<()> {
+    let paths = find_files(&args.paths, args.show_hidden)?;
+    if args.long {
         println!("{}", format_output(&paths)?);
     } else {
         for path in paths {

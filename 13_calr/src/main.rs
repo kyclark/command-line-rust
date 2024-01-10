@@ -5,7 +5,7 @@ use clap::{Arg, ArgAction, Command};
 use itertools::izip;
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     month: Option<u32>,
     year: i32,
     today: NaiveDate,
@@ -36,7 +36,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Result<Config> {
+fn get_args() -> Result<Args> {
     let matches = Command::new("calr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -81,7 +81,7 @@ fn get_args() -> Result<Config> {
         year = Some(today.year());
     }
 
-    Ok(Config {
+    Ok(Args {
         month,
         year: year.unwrap_or_else(|| today.year()),
         today,
@@ -89,17 +89,17 @@ fn get_args() -> Result<Config> {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    match config.month {
+fn run(args: Args) -> Result<()> {
+    match args.month {
         Some(month) => {
-            let lines = format_month(config.year, month, true, config.today);
+            let lines = format_month(args.year, month, true, args.today);
             println!("{}", lines.join("\n"));
         }
         None => {
-            println!("{:>32}", config.year);
+            println!("{:>32}", args.year);
             let months: Vec<_> = (1..=12)
                 .map(|month| {
-                    format_month(config.year, month, false, config.today)
+                    format_month(args.year, month, false, args.today)
                 })
                 .collect();
 

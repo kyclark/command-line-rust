@@ -12,7 +12,7 @@ use std::{
 use walkdir::WalkDir;
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     sources: Vec<String>,
     pattern: Option<Regex>,
     seed: Option<u64>,
@@ -33,7 +33,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Result<Config> {
+fn get_args() -> Result<Args> {
     let matches = Command::new("fortuner")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -76,11 +76,11 @@ fn get_args() -> Result<Config> {
             RegexBuilder::new(val.as_str())
                 .case_insensitive(matches.get_flag("insensitive"))
                 .build()
-                .map_err(|_| anyhow!("Invalid --pattern \"{val}\""))
+                .map_err(|_| anyhow!(r#"Invalid --pattern "{val}""#))
         })
         .transpose()?;
 
-    Ok(Config {
+    Ok(Args {
         sources: matches
             .get_many("sources")
             .expect("sources required")
@@ -92,11 +92,11 @@ fn get_args() -> Result<Config> {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    let files = find_files(&config.sources)?;
+fn run(args: Args) -> Result<()> {
+    let files = find_files(&args.sources)?;
     let fortunes = read_fortunes(&files)?;
 
-    if let Some(pattern) = config.pattern {
+    if let Some(pattern) = args.pattern {
         let mut prev_source = None;
         for fortune in fortunes
             .iter()
@@ -111,7 +111,7 @@ fn run(config: Config) -> Result<()> {
     } else {
         println!(
             "{}",
-            pick_fortune(&fortunes, config.seed)
+            pick_fortune(&fortunes, args.seed)
                 .or_else(|| Some("No fortunes found".to_string()))
                 .unwrap()
         );

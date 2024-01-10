@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     files: Vec<String>,
     number_lines: bool,
     number_nonblank_lines: bool,
@@ -19,7 +19,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Config {
+fn get_args() -> Args {
     let matches = Command::new("catr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -48,7 +48,7 @@ fn get_args() -> Config {
         )
         .get_matches();
 
-    Config {
+    Args {
         files: matches
             .get_many("files")
             .expect("files required")
@@ -60,17 +60,17 @@ fn get_args() -> Config {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    for filename in config.files {
+fn run(args: Args) -> Result<()> {
+    for filename in args.files {
         match open(&filename) {
             Err(e) => eprintln!("{filename}: {e}"),
             Ok(file) => {
                 let mut last_num = 0;
                 for (line_num, line_result) in file.lines().enumerate() {
                     let line = line_result?;
-                    if config.number_lines {
+                    if args.number_lines {
                         println!("{:6}\t{}", line_num + 1, line);
-                    } else if config.number_nonblank_lines {
+                    } else if args.number_nonblank_lines {
                         if line.is_empty() {
                             println!();
                         } else {

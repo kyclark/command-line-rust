@@ -6,7 +6,7 @@ use std::{
 };
 
 #[derive(Debug)]
-struct Config {
+struct Args {
     in_file: String,
     out_file: Option<String>,
     count: bool,
@@ -21,7 +21,7 @@ fn main() {
 }
 
 // --------------------------------------------------
-fn get_args() -> Config {
+fn get_args() -> Args {
     let matches = Command::new("uniqr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
@@ -46,7 +46,7 @@ fn get_args() -> Config {
         )
         .get_matches();
 
-    Config {
+    Args {
         in_file: matches.get_one("in_file").cloned().unwrap(),
         out_file: matches.get_one("out_file").cloned(),
         count: matches.get_flag("count"),
@@ -54,18 +54,18 @@ fn get_args() -> Config {
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    let mut file = open(&config.in_file)
-        .map_err(|e| anyhow!("{}: {e}", config.in_file))?;
+fn run(args: Args) -> Result<()> {
+    let mut file =
+        open(&args.in_file).map_err(|e| anyhow!("{}: {e}", args.in_file))?;
 
-    let mut out_file: Box<dyn Write> = match &config.out_file {
+    let mut out_file: Box<dyn Write> = match &args.out_file {
         Some(out_name) => Box::new(File::create(out_name)?),
         _ => Box::new(io::stdout()),
     };
 
     let mut print = |num: u64, text: &str| -> Result<()> {
         if num > 0 {
-            if config.count {
+            if args.count {
                 write!(out_file, "{num:>4} {text}")?;
             } else {
                 write!(out_file, "{text}")?;
