@@ -1,4 +1,3 @@
-use crate::EntryType::*;
 use anyhow::Result;
 use clap::{builder::PossibleValue, Arg, ArgAction, Command, ValueEnum};
 use regex::Regex;
@@ -20,14 +19,14 @@ enum EntryType {
 
 impl ValueEnum for EntryType {
     fn value_variants<'a>() -> &'a [Self] {
-        &[Dir, File, Link]
+        &[EntryType::Dir, EntryType::File, EntryType::Link]
     }
 
     fn to_possible_value<'a>(&self) -> Option<PossibleValue> {
         Some(match self {
-            Dir => PossibleValue::new("d"),
-            File => PossibleValue::new("f"),
-            Link => PossibleValue::new("l"),
+            EntryType::Dir => PossibleValue::new("d"),
+            EntryType::File => PossibleValue::new("f"),
+            EntryType::Link => PossibleValue::new("l"),
         })
     }
 }
@@ -99,9 +98,9 @@ fn run(args: Args) -> Result<()> {
     let type_filter = |entry: &DirEntry| {
         args.entry_types.is_empty()
             || args.entry_types.iter().any(|entry_type| match entry_type {
-                Link => entry.file_type().is_symlink(),
-                Dir => entry.file_type().is_dir(),
-                File => entry.file_type().is_file(),
+                EntryType::Link => entry.file_type().is_symlink(),
+                EntryType::Dir => entry.file_type().is_dir(),
+                EntryType::File => entry.file_type().is_file(),
             })
     };
 

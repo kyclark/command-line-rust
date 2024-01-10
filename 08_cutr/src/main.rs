@@ -88,7 +88,7 @@ fn get_args() -> Result<Args> {
     let delimiter: String = matches.get_one("delimiter").cloned().unwrap();
     let delim_bytes = delimiter.as_bytes();
     if delim_bytes.len() != 1 {
-        bail!("--delim \"{delimiter}\" must be a single byte");
+        bail!(r#"--delim "{delimiter}" must be a single byte"#);
     }
 
     let fields = matches
@@ -184,7 +184,7 @@ fn open(filename: &str) -> Result<Box<dyn BufRead>> {
 // Returns an index, which is a non-negative integer that is
 // one less than the number represented by the original input.
 fn parse_index(input: &str) -> Result<usize> {
-    let value_error = || anyhow!("illegal list value: \"{input}\"");
+    let value_error = || anyhow!(r#"illegal list value: "{input}""#);
     input
         .starts_with('+')
         .then(|| Err(value_error()))
@@ -269,11 +269,17 @@ mod unit_tests {
         // Zero is an error
         let res = parse_pos("0");
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"0\"",);
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            r#"illegal list value: "0""#
+        );
 
         let res = parse_pos("0-1");
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "illegal list value: \"0\"",);
+        assert_eq!(
+            res.unwrap_err().to_string(),
+            r#"illegal list value: "0""#
+        );
 
         // A leading "+" is an error
         let res = parse_pos("+1");

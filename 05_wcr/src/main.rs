@@ -72,32 +72,30 @@ fn get_args() -> Args {
         )
         .get_matches();
 
-    let mut lines = matches.get_flag("lines");
-    let mut words = matches.get_flag("words");
-    let mut bytes = matches.get_flag("bytes");
-    let chars = matches.get_flag("chars");
-
-    if [words, bytes, chars, lines].iter().all(|v| v == &false) {
-        lines = true;
-        words = true;
-        bytes = true;
-    }
-
     Args {
         files: matches
             .get_many("files")
             .expect("files required")
             .cloned()
             .collect(),
-        lines,
-        words,
-        bytes,
-        chars,
+        lines: matches.get_flag("lines"),
+        words: matches.get_flag("words"),
+        bytes: matches.get_flag("bytes"),
+        chars: matches.get_flag("chars"),
     }
 }
 
 // --------------------------------------------------
-fn run(args: Args) -> Result<()> {
+fn run(mut args: Args) -> Result<()> {
+    if [args.words, args.bytes, args.chars, args.lines]
+        .iter()
+        .all(|v| v == &false)
+    {
+        args.lines = true;
+        args.words = true;
+        args.bytes = true;
+    }
+
     let mut total_lines = 0;
     let mut total_words = 0;
     let mut total_bytes = 0;
@@ -195,11 +193,11 @@ mod tests {
 
     #[test]
     fn test_count() {
-        let text = "I don't want the world. I just want your half.\r\n";
+        let text = "I don't want the world.\nI just want your half.\r\n";
         let info = count(Cursor::new(text));
         assert!(info.is_ok());
         let expected = FileInfo {
-            num_lines: 1,
+            num_lines: 2,
             num_words: 10,
             num_chars: 48,
             num_bytes: 48,
