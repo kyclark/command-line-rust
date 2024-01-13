@@ -1,6 +1,7 @@
 use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
+use pretty_assertions::assert_eq;
 use rand::{distributions::Alphanumeric, Rng};
 use std::fs::{self, File};
 use std::io::Read;
@@ -10,7 +11,7 @@ const EMPTY: &str = "tests/inputs/empty.txt";
 const ONE: &str = "tests/inputs/one.txt";
 const TWO: &str = "tests/inputs/two.txt";
 const THREE: &str = "tests/inputs/three.txt";
-const TEN: &str = "tests/inputs/ten.txt";
+const TWELVE: &str = "tests/inputs/twelve.txt";
 
 // --------------------------------------------------
 fn random_string() -> String {
@@ -106,10 +107,9 @@ fn run(args: &[&str], expected_file: &str) -> Result<()> {
     file.read_to_end(&mut buffer)?;
     let expected = String::from_utf8_lossy(&buffer);
 
-    Command::cargo_bin(PRG)?
-        .args(args)
-        .assert()
-        .stdout(predicate::eq(expected.as_bytes() as &[u8]));
+    let output = Command::cargo_bin(PRG)?.args(args).output().expect("fail");
+    assert!(output.status.success());
+    assert_eq!(String::from_utf8_lossy(&output.stdout), expected);
 
     Ok(())
 }
@@ -600,135 +600,135 @@ fn three_c_plus_2() -> Result<()> {
 
 // --------------------------------------------------
 #[test]
-fn ten() -> Result<()> {
-    run(&[TEN], "tests/expected/ten.txt.out")
+fn twelve() -> Result<()> {
+    run(&[TWELVE], "tests/expected/twelve.txt.out")
 }
 
 #[test]
-fn ten_n0() -> Result<()> {
-    run(&[TEN, "-n", "0"], "tests/expected/ten.txt.n0.out")
+fn twelve_n0() -> Result<()> {
+    run(&[TWELVE, "-n", "0"], "tests/expected/twelve.txt.n0.out")
 }
 
 #[test]
-fn ten_n1() -> Result<()> {
-    run(&[TEN, "-n", "1"], "tests/expected/ten.txt.n1.out")
+fn twelve_n1() -> Result<()> {
+    run(&[TWELVE, "-n", "1"], "tests/expected/twelve.txt.n1.out")
 }
 
 #[test]
-fn ten_n_minus_1() -> Result<()> {
-    run(&[TEN, "-n=-1"], "tests/expected/ten.txt.n1.out")
+fn twelve_n_minus_1() -> Result<()> {
+    run(&[TWELVE, "-n=-1"], "tests/expected/twelve.txt.n1.out")
 }
 
 #[test]
-fn ten_n3() -> Result<()> {
-    run(&[TEN, "-n", "3"], "tests/expected/ten.txt.n3.out")
+fn twelve_n3() -> Result<()> {
+    run(&[TWELVE, "-n", "3"], "tests/expected/twelve.txt.n3.out")
 }
 
 #[test]
-fn ten_n_minus_3() -> Result<()> {
-    run(&[TEN, "-n=-3"], "tests/expected/ten.txt.n3.out")
+fn twelve_n_minus_3() -> Result<()> {
+    run(&[TWELVE, "-n=-3"], "tests/expected/twelve.txt.n3.out")
 }
 
 #[test]
-fn ten_n4() -> Result<()> {
-    run(&[TEN, "-n", "4"], "tests/expected/ten.txt.n4.out")
+fn twelve_n4() -> Result<()> {
+    run(&[TWELVE, "-n", "4"], "tests/expected/twelve.txt.n4.out")
 }
 
 #[test]
-fn ten_n_minus_4() -> Result<()> {
-    run(&[TEN, "-n=-4"], "tests/expected/ten.txt.n4.out")
+fn twelve_n_minus_4() -> Result<()> {
+    run(&[TWELVE, "-n=-4"], "tests/expected/twelve.txt.n4.out")
 }
 
 #[test]
-fn ten_n200() -> Result<()> {
-    run(&[TEN, "-n", "200"], "tests/expected/ten.txt.n200.out")
+fn twelve_n200() -> Result<()> {
+    run(&[TWELVE, "-n", "200"], "tests/expected/twelve.txt.n200.out")
 }
 
 #[test]
-fn ten_n_minus_200() -> Result<()> {
-    run(&[TEN, "-n=-200"], "tests/expected/ten.txt.n200.out")
+fn twelve_n_minus_200() -> Result<()> {
+    run(&[TWELVE, "-n=-200"], "tests/expected/twelve.txt.n200.out")
 }
 
 #[test]
-fn ten_c3() -> Result<()> {
-    run(&[TEN, "-c", "3"], "tests/expected/ten.txt.c3.out")
+fn twelve_c3() -> Result<()> {
+    run(&[TWELVE, "-c", "3"], "tests/expected/twelve.txt.c3.out")
 }
 
 #[test]
-fn ten_c_minus_3() -> Result<()> {
-    run(&[TEN, "-c=-3"], "tests/expected/ten.txt.c3.out")
+fn twelve_c_minus_3() -> Result<()> {
+    run(&[TWELVE, "-c=-3"], "tests/expected/twelve.txt.c3.out")
 }
 
 #[test]
-fn ten_c8() -> Result<()> {
-    run(&[TEN, "-c", "8"], "tests/expected/ten.txt.c8.out")
+fn twelve_c8() -> Result<()> {
+    run(&[TWELVE, "-c", "8"], "tests/expected/twelve.txt.c8.out")
 }
 
 #[test]
-fn ten_c_minus_8() -> Result<()> {
-    run(&[TEN, "-c=8"], "tests/expected/ten.txt.c8.out")
+fn twelve_c_minus_8() -> Result<()> {
+    run(&[TWELVE, "-c=8"], "tests/expected/twelve.txt.c8.out")
 }
 
 #[test]
-fn ten_c12() -> Result<()> {
-    run(&[TEN, "-c", "12"], "tests/expected/ten.txt.c12.out")
+fn twelve_c12() -> Result<()> {
+    run(&[TWELVE, "-c", "12"], "tests/expected/twelve.txt.c12.out")
 }
 
 #[test]
-fn ten_c_minus_12() -> Result<()> {
-    run(&[TEN, "-c=-12"], "tests/expected/ten.txt.c12.out")
+fn twelve_c_minus_12() -> Result<()> {
+    run(&[TWELVE, "-c=-12"], "tests/expected/twelve.txt.c12.out")
 }
 
 #[test]
-fn ten_c200() -> Result<()> {
-    run(&[TEN, "-c", "200"], "tests/expected/ten.txt.c200.out")
+fn twelve_c200() -> Result<()> {
+    run(&[TWELVE, "-c", "200"], "tests/expected/twelve.txt.c200.out")
 }
 
 #[test]
-fn ten_c_minus_200() -> Result<()> {
-    run(&[TEN, "-c=-200"], "tests/expected/ten.txt.c200.out")
+fn twelve_c_minus_200() -> Result<()> {
+    run(&[TWELVE, "-c=-200"], "tests/expected/twelve.txt.c200.out")
 }
 
 #[test]
-fn ten_n_plus_0() -> Result<()> {
-    run(&[TEN, "-n", "+0"], "tests/expected/ten.txt.n+0.out")
+fn twelve_n_plus_0() -> Result<()> {
+    run(&[TWELVE, "-n", "+0"], "tests/expected/twelve.txt.n+0.out")
 }
 
 #[test]
-fn ten_n_plus_1() -> Result<()> {
-    run(&[TEN, "-n", "+1"], "tests/expected/ten.txt.n+1.out")
+fn twelve_n_plus_1() -> Result<()> {
+    run(&[TWELVE, "-n", "+1"], "tests/expected/twelve.txt.n+1.out")
 }
 
 #[test]
-fn ten_n_plus_2() -> Result<()> {
-    run(&[TEN, "-n", "+2"], "tests/expected/ten.txt.n+2.out")
+fn twelve_n_plus_2() -> Result<()> {
+    run(&[TWELVE, "-n", "+2"], "tests/expected/twelve.txt.n+2.out")
 }
 
 #[test]
-fn ten_c_plus_0() -> Result<()> {
-    run(&[TEN, "-c", "+0"], "tests/expected/ten.txt.c+0.out")
+fn twelve_c_plus_0() -> Result<()> {
+    run(&[TWELVE, "-c", "+0"], "tests/expected/twelve.txt.c+0.out")
 }
 
 #[test]
-fn ten_c_plus_1() -> Result<()> {
-    run(&[TEN, "-c", "+1"], "tests/expected/ten.txt.c+1.out")
+fn twelve_c_plus_1() -> Result<()> {
+    run(&[TWELVE, "-c", "+1"], "tests/expected/twelve.txt.c+1.out")
 }
 
 #[test]
-fn ten_c_plus_2() -> Result<()> {
-    run(&[TEN, "-c", "+2"], "tests/expected/ten.txt.c+2.out")
+fn twelve_c_plus_2() -> Result<()> {
+    run(&[TWELVE, "-c", "+2"], "tests/expected/twelve.txt.c+2.out")
 }
 
 // --------------------------------------------------
 #[test]
 fn multiple_files() -> Result<()> {
-    run(&[TEN, EMPTY, ONE, THREE, TWO], "tests/expected/all.out")
+    run(&[TWELVE, EMPTY, ONE, THREE, TWO], "tests/expected/all.out")
 }
 
 #[test]
 fn multiple_files_n0() -> Result<()> {
     run(
-        &["-n", "0", TEN, EMPTY, ONE, THREE, TWO],
+        &["-n", "0", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.n0.out",
     )
 }
@@ -736,7 +736,7 @@ fn multiple_files_n0() -> Result<()> {
 #[test]
 fn multiple_files_n1() -> Result<()> {
     run(
-        &["-n", "1", TEN, EMPTY, ONE, THREE, TWO],
+        &["-n", "1", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.n1.out",
     )
 }
@@ -744,7 +744,7 @@ fn multiple_files_n1() -> Result<()> {
 #[test]
 fn multiple_files_n1_q() -> Result<()> {
     run(
-        &["-n", "1", "-q", TEN, EMPTY, ONE, THREE, TWO],
+        &["-n", "1", "-q", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.n1.q.out",
     )
 }
@@ -752,7 +752,7 @@ fn multiple_files_n1_q() -> Result<()> {
 #[test]
 fn multiple_files_n1_quiet() -> Result<()> {
     run(
-        &["-n", "1", "--quiet", TEN, EMPTY, ONE, THREE, TWO],
+        &["-n", "1", "--quiet", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.n1.q.out",
     )
 }
@@ -760,7 +760,7 @@ fn multiple_files_n1_quiet() -> Result<()> {
 #[test]
 fn multiple_files_n_minus_1() -> Result<()> {
     run(
-        &["-n=-1", TEN, EMPTY, ONE, THREE, TWO],
+        &["-n=-1", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.n1.out",
     )
 }
@@ -768,7 +768,7 @@ fn multiple_files_n_minus_1() -> Result<()> {
 #[test]
 fn multiple_files_n_plus_1() -> Result<()> {
     run(
-        &["-n", "+1", TEN, EMPTY, ONE, THREE, TWO],
+        &["-n", "+1", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.n+1.out",
     )
 }
@@ -776,7 +776,7 @@ fn multiple_files_n_plus_1() -> Result<()> {
 #[test]
 fn multiple_files_n3() -> Result<()> {
     run(
-        &["-n", "3", TEN, EMPTY, ONE, THREE, TWO],
+        &["-n", "3", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.n3.out",
     )
 }
@@ -784,7 +784,7 @@ fn multiple_files_n3() -> Result<()> {
 #[test]
 fn multiple_files_n_minus_3() -> Result<()> {
     run(
-        &["-n=-3", TEN, EMPTY, ONE, THREE, TWO],
+        &["-n=-3", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.n3.out",
     )
 }
@@ -792,7 +792,7 @@ fn multiple_files_n_minus_3() -> Result<()> {
 #[test]
 fn multiple_files_n_plus_3() -> Result<()> {
     run(
-        &["-n", "+3", TEN, EMPTY, ONE, THREE, TWO],
+        &["-n", "+3", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.n+3.out",
     )
 }
@@ -800,7 +800,7 @@ fn multiple_files_n_plus_3() -> Result<()> {
 #[test]
 fn multiple_files_c0() -> Result<()> {
     run(
-        &["-c", "0", TEN, EMPTY, ONE, THREE, TWO],
+        &["-c", "0", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.c0.out",
     )
 }
@@ -808,7 +808,7 @@ fn multiple_files_c0() -> Result<()> {
 #[test]
 fn multiple_files_c3() -> Result<()> {
     run(
-        &["-c", "3", TEN, EMPTY, ONE, THREE, TWO],
+        &["-c", "3", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.c3.out",
     )
 }
@@ -816,7 +816,7 @@ fn multiple_files_c3() -> Result<()> {
 #[test]
 fn multiple_files_c_minus_3() -> Result<()> {
     run(
-        &["-c=-3", TEN, EMPTY, ONE, THREE, TWO],
+        &["-c=-3", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.c3.out",
     )
 }
@@ -824,7 +824,7 @@ fn multiple_files_c_minus_3() -> Result<()> {
 #[test]
 fn multiple_files_c_plus_3() -> Result<()> {
     run(
-        &["-c", "+3", TEN, EMPTY, ONE, THREE, TWO],
+        &["-c", "+3", TWELVE, EMPTY, ONE, THREE, TWO],
         "tests/expected/all.c+3.out",
     )
 }

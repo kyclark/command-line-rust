@@ -1,6 +1,7 @@
 use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
+use pretty_assertions::assert_eq;
 use rand::{distributions::Alphanumeric, Rng};
 use std::{fs, path::Path};
 use sys_info::os_type;
@@ -44,7 +45,7 @@ fn dies_bad_pattern() -> Result<()> {
         .args(["*foo", FOX])
         .assert()
         .failure()
-        .stderr(predicate::str::contains("Invalid pattern \"*foo\""));
+        .stderr(predicate::str::contains(r#"Invalid pattern "*foo""#));
     Ok(())
 }
 
@@ -72,11 +73,11 @@ fn run(args: &[&str], expected_file: &str) -> Result<()> {
     };
 
     let expected = fs::read_to_string(expected_file)?;
+    let output = Command::cargo_bin(PRG)?.args(args).output().expect("fail");
+    assert!(output.status.success());
 
-    Command::cargo_bin(PRG)?
-        .args(args)
-        .assert()
-        .stdout(expected);
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
     Ok(())
 }
 
@@ -247,11 +248,15 @@ fn stdin() -> Result<()> {
     let expected =
         fs::read_to_string("tests/expected/bustle.txt.the.capitalized")?;
 
-    Command::cargo_bin(PRG)?
+    let output = Command::cargo_bin(PRG)?
         .arg("The")
         .write_stdin(input)
-        .assert()
-        .stdout(expected);
+        .output()
+        .expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
     Ok(())
 }
 
@@ -269,10 +274,14 @@ fn stdin_insensitive_count() -> Result<()> {
         "tests/expected/the.recursive.insensitive.count.stdin";
     let expected = fs::read_to_string(expected_file)?;
 
-    Command::cargo_bin(PRG)?
+    let output = Command::cargo_bin(PRG)?
         .args(["-ci", "the", "-"])
         .write_stdin(input)
-        .assert()
-        .stdout(expected);
+        .output()
+        .expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
     Ok(())
 }

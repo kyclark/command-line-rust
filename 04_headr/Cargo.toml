@@ -10,4 +10,5 @@ clap = "4.4.14"
 [dev-dependencies]
 assert_cmd = "2.0.12"
 predicates = "3.0.4"
+pretty_assertions = "1.4.0"
 rand = "0.8.5"

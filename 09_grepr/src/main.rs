@@ -15,7 +15,7 @@ struct Args {
     insensitive: bool,
     recursive: bool,
     count: bool,
-    invert_match: bool,
+    invert: bool,
 }
 
 // --------------------------------------------------
@@ -85,7 +85,7 @@ fn get_args() -> Result<Args> {
         insensitive: matches.get_flag("insensitive"),
         recursive: matches.get_flag("recursive"),
         count: matches.get_flag("count"),
-        invert_match: matches.get_flag("invert"),
+        invert: matches.get_flag("invert"),
     })
 }
 
@@ -111,23 +111,18 @@ fn run(args: Args) -> Result<()> {
             Err(e) => eprintln!("{e}"),
             Ok(filename) => match open(&filename) {
                 Err(e) => eprintln!("{filename}: {e}"),
-                Ok(file) => {
-                    match find_lines(file, &pattern, args.invert_match) {
-                        Err(e) => eprintln!("{e}"),
-                        Ok(matches) => {
-                            if args.count {
-                                print(
-                                    &filename,
-                                    &format!("{}\n", matches.len()),
-                                );
-                            } else {
-                                for line in &matches {
-                                    print(&filename, line);
-                                }
+                Ok(file) => match find_lines(file, &pattern, args.invert) {
+                    Err(e) => eprintln!("{e}"),
+                    Ok(matches) => {
+                        if args.count {
+                            print(&filename, &format!("{}\n", matches.len()));
+                        } else {
+                            for line in &matches {
+                                print(&filename, line);
                             }
                         }
                     }
-                }
+                },
             },
         }
     }
@@ -146,7 +141,7 @@ fn open(filename: &str) -> Result<Box<dyn BufRead>> {
 fn find_lines<T: BufRead>(
     mut file: T,
     pattern: &Regex,
-    invert_match: bool,
+    invert: bool,
 ) -> Result<Vec<String>> {
     let mut matches = vec![];
     let mut line = String::new();
@@ -156,7 +151,7 @@ fn find_lines<T: BufRead>(
         if bytes == 0 {
             break;
         }
-        if pattern.is_match(&line) ^ invert_match {
+        if pattern.is_match(&line) ^ invert {
             matches.push(mem::take(&mut line));
         }
         line.clear();

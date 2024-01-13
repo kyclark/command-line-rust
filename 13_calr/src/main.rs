@@ -4,11 +4,18 @@ use chrono::{Datelike, Local, NaiveDate};
 use clap::{Arg, ArgAction, Command};
 use itertools::izip;
 
+//#[derive(Debug)]
+//struct Args {
+//    month: Option<u32>,
+//    year: i32,
+//    today: NaiveDate,
+//}
+
 #[derive(Debug)]
 struct Args {
-    month: Option<u32>,
-    year: i32,
-    today: NaiveDate,
+    year: Option<i32>,
+    month: Option<String>,
+    show_current_year: bool,
 }
 
 const LINE_WIDTH: usize = 22;
@@ -29,18 +36,24 @@ const MONTH_NAMES: [&str; 12] = [
 
 // --------------------------------------------------
 fn main() {
-    if let Err(e) = get_args().and_then(run) {
+    if let Err(e) = run(get_args()) {
         eprintln!("{e}");
         std::process::exit(1);
     }
 }
 
 // --------------------------------------------------
-fn get_args() -> Result<Args> {
+fn get_args() -> Args {
     let matches = Command::new("calr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
         .about("Rust cal")
+        .arg(
+            Arg::new("year")
+                .value_name("YEAR")
+                .value_parser(clap::value_parser!(i32).range(1..=9999))
+                .help("Year (1-9999)"),
+        )
         .arg(
             Arg::new("month")
                 .value_name("MONTH")
@@ -56,51 +69,39 @@ fn get_args() -> Result<Args> {
                 .conflicts_with_all(["month", "year"])
                 .action(ArgAction::SetTrue),
         )
-        .arg(
-            Arg::new("year")
-                .value_name("YEAR")
-                .value_parser(clap::value_parser!(i32).range(1..=9999))
-                .help("Year (1-9999)"),
-        )
         .get_matches();
 
-    let mut month = matches
-        .get_one("month")
-        .cloned()
-        .map(|v: String| parse_month(v.as_str()))
-        .transpose()?;
+    Args {
+        year: matches.get_one("year").cloned(),
+        month: matches.get_one("month").cloned(),
+        show_current_year: matches.get_flag("show_current_year"),
+    }
+}
 
-    let mut year = matches.get_one("year").cloned();
-
+// --------------------------------------------------
+fn run(args: Args) -> Result<()> {
     let today = Local::now().date_naive();
-    if matches.get_flag("show_current_year") {
+    let mut month = args.month.map(|v| parse_month(&v)).transpose()?;
+    let mut year = args.year;
+
+    if args.show_current_year {
         month = None;
         year = Some(today.year());
     } else if month.is_none() && year.is_none() {
         month = Some(today.month());
         year = Some(today.year());
     }
+    let year = year.unwrap_or(today.year());
 
-    Ok(Args {
-        month,
-        year: year.unwrap_or_else(|| today.year()),
-        today,
-    })
-}
-
-// --------------------------------------------------
-fn run(args: Args) -> Result<()> {
-    match args.month {
+    match month {
         Some(month) => {
-            let lines = format_month(args.year, month, true, args.today);
+            let lines = format_month(year, month, true, today);
             println!("{}", lines.join("\n"));
         }
         None => {
-            println!("{:>32}", args.year);
+            println!("{:>32}", year);
             let months: Vec<_> = (1..=12)
-                .map(|month| {
-                    format_month(args.year, month, false, args.today)
-                })
+                .map(|month| format_month(year, month, false, today))
                 .collect();
 
             for (i, chunk) in months.chunks(3).enumerate() {
@@ -126,7 +127,7 @@ fn parse_month(month: &str) -> Result<u32> {
             if (1..=12).contains(&num) {
                 Ok(num)
             } else {
-                bail!("month \"{month}\" not in the range 1 through 12")
+                bail!(r#"month "{month}" not in the range 1 through 12"#)
             }
         }
         _ => {
@@ -146,7 +147,7 @@ fn parse_month(month: &str) -> Result<u32> {
             if matches.len() == 1 {
                 Ok(matches[0] as u32)
             } else {
-                bail!("Invalid month \"{month}\"")
+                bail!(r#"Invalid month "{month}""#)
             }
         }
     }
@@ -246,19 +247,19 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "month \"0\" not in the range 1 through 12"
+            r#"month "0" not in the range 1 through 12"#
         );
 
         let res = parse_month("13");
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
-            "month \"13\" not in the range 1 through 12"
+            r#"month "13" not in the range 1 through 12"#
         );
 
         let res = parse_month("foo");
         assert!(res.is_err());
-        assert_eq!(res.unwrap_err().to_string(), "Invalid month \"foo\"");
+        assert_eq!(res.unwrap_err().to_string(), r#"Invalid month "foo""#);
     }
 
     #[test]

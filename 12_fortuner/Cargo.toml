@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.79"
-clap = "4.4.14"
+clap = "4.4.16"
 rand = "0.8.5"
 regex = "1.10.2"
 walkdir = "2.4.0"
@@ -13,3 +13,4 @@ walkdir = "2.4.0"
 [dev-dependencies]
 assert_cmd = "2.0.12"
 predicates = "3.0.4"
+pretty_assertions = "1.4.0"

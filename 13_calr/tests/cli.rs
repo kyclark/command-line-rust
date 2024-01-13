@@ -1,6 +1,7 @@
 use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
+use pretty_assertions::assert_eq;
 use std::fs;
 
 const PRG: &str = "calr";
@@ -51,7 +52,7 @@ fn dies_month_0() -> Result<()> {
         .args(["-m", "0"])
         .assert()
         .failure()
-        .stderr("month \"0\" not in the range 1 through 12\n");
+        .stderr(r#"month "0" not in the range 1 through 12\n"#);
     Ok(())
 }
 
@@ -62,7 +63,7 @@ fn dies_month_13() -> Result<()> {
         .args(["-m", "13"])
         .assert()
         .failure()
-        .stderr("month \"13\" not in the range 1 through 12\n");
+        .stderr(r#"month "13" not in the range 1 through 12\n"#);
     Ok(())
 }
 
@@ -73,7 +74,7 @@ fn dies_invalid_month() -> Result<()> {
         .args(["-m", "foo"])
         .assert()
         .failure()
-        .stderr("Invalid month \"foo\"\n");
+        .stderr(r#"Invalid month "foo"\n"#);
     Ok(())
 }
 
@@ -159,11 +160,11 @@ fn partial_month() -> Result<()> {
 // --------------------------------------------------
 fn run(args: &[&str], expected_file: &str) -> Result<()> {
     let expected = fs::read_to_string(expected_file)?;
-    Command::cargo_bin(PRG)?
-        .args(args)
-        .assert()
-        .success()
-        .stdout(expected);
+    let output = Command::cargo_bin(PRG)?.args(args).output().expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
     Ok(())
 }
 

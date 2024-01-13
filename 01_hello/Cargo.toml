@@ -7,3 +7,4 @@ edition = "2021"
 
 [dev-dependencies]
 assert_cmd = "2.0.12"
+pretty_assertions = "1.4.0"

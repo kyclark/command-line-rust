@@ -1,6 +1,7 @@
 use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
+use pretty_assertions::assert_eq;
 use rand::{distributions::Alphanumeric, Rng};
 use std::fs;
 use tempfile::NamedTempFile;
@@ -111,22 +112,28 @@ fn dies_bad_file() -> Result<()> {
 // HELPER FUNCTIONS
 fn run(test: &Test) -> Result<()> {
     let expected = fs::read_to_string(test.out)?;
-    Command::cargo_bin(PRG)?
+    let output = Command::cargo_bin(PRG)?
         .arg(test.input)
-        .assert()
-        .success()
-        .stdout(expected);
+        .output()
+        .expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
     Ok(())
 }
 
 // --------------------------------------------------
 fn run_count(test: &Test) -> Result<()> {
     let expected = fs::read_to_string(test.out_count)?;
-    Command::cargo_bin(PRG)?
+    let output = Command::cargo_bin(PRG)?
         .args([test.input, "-c"])
-        .assert()
-        .success()
-        .stdout(expected);
+        .output()
+        .expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
     Ok(())
 }
 
@@ -134,11 +141,14 @@ fn run_count(test: &Test) -> Result<()> {
 fn run_stdin(test: &Test) -> Result<()> {
     let input = fs::read_to_string(test.input)?;
     let expected = fs::read_to_string(test.out)?;
-    Command::cargo_bin(PRG)?
+    let output = Command::cargo_bin(PRG)?
         .write_stdin(input)
-        .assert()
-        .success()
-        .stdout(expected);
+        .output()
+        .expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
     Ok(())
 }
 
@@ -146,12 +156,15 @@ fn run_stdin(test: &Test) -> Result<()> {
 fn run_stdin_count(test: &Test) -> Result<()> {
     let input = fs::read_to_string(test.input)?;
     let expected = fs::read_to_string(test.out_count)?;
-    Command::cargo_bin(PRG)?
+    let output = Command::cargo_bin(PRG)?
         .arg("--count")
         .write_stdin(input)
-        .assert()
-        .success()
-        .stdout(expected);
+        .output()
+        .expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
     Ok(())
 }
 

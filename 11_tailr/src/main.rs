@@ -263,16 +263,21 @@ mod tests {
     use super::{
         count_lines_bytes, get_start_index, parse_num, TakeValue::*,
     };
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_count_lines_bytes() {
         let res = count_lines_bytes("tests/inputs/one.txt");
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), (1, 24));
+        let (lines, bytes) = res.unwrap();
+        assert_eq!(lines, 1);
+        assert_eq!(bytes, 24);
 
-        let res = count_lines_bytes("tests/inputs/ten.txt");
+        let res = count_lines_bytes("tests/inputs/twelve.txt");
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), (10, 49));
+        let (lines, bytes) = res.unwrap();
+        assert_eq!(lines, 12);
+        assert_eq!(bytes, 63);
     }
 
     #[test]
