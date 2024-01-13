@@ -143,6 +143,7 @@ fn mk_triple(mode: u32, owner: Owner) -> String {
 #[cfg(test)]
 mod test {
     use super::{find_files, format_mode, format_output, mk_triple, Owner};
+    use pretty_assertions::assert_eq;
     use std::path::PathBuf;
 
     #[test]

@@ -1,6 +1,7 @@
 use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
+use pretty_assertions::assert_eq;
 use rand::{distributions::Alphanumeric, Rng};
 use std::fs;
 
@@ -57,16 +58,6 @@ fn dies_bad_seed() -> Result<()> {
 }
 
 // --------------------------------------------------
-fn run(args: &[&str], expected: &'static str) -> Result<()> {
-    Command::cargo_bin(PRG)?
-        .args(args)
-        .assert()
-        .success()
-        .stdout(expected);
-    Ok(())
-}
-
-// --------------------------------------------------
 #[test]
 fn no_fortunes_found() -> Result<()> {
     run(&[EMPTY_DIR], "No fortunes found\n")
@@ -101,15 +92,30 @@ fn dir_seed_10() -> Result<()> {
 }
 
 // --------------------------------------------------
+fn run(args: &[&str], expected: &'static str) -> Result<()> {
+    let output = Command::cargo_bin(PRG)?.args(args).output().expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
+    Ok(())
+}
+
+// --------------------------------------------------
 fn run_outfiles(args: &[&str], out_file: &str, err_file: &str) -> Result<()> {
-    let out = fs::read_to_string(out_file)?;
-    let err = fs::read_to_string(err_file)?;
-    Command::cargo_bin(PRG)?
-        .args(args)
-        .assert()
-        .success()
-        .stderr(err)
-        .stdout(out);
+    let expected_out = fs::read_to_string(out_file)?;
+    let expected_err = fs::read_to_string(err_file)?;
+
+    let output = Command::cargo_bin(PRG)?.args(args).output().expect("fail");
+    assert!(output.status.success());
+
+    let stdout =
+        String::from_utf8(output.clone().stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected_out);
+
+    let stderr = String::from_utf8(output.stderr).expect("invalid UTF-8");
+    assert_eq!(stderr, expected_err);
+
     Ok(())
 }
 

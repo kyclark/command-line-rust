@@ -5,12 +5,13 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.79"
-clap = { version = "4.1.4", features = ["derive"] }
+clap = { version = "4.4.16", features = ["derive"] }
 regex = "1.10.2"
 walkdir = "2.4.0"
 
 [dev-dependencies]
 assert_cmd = "2.0.12"
 predicates = "3.0.4"
+pretty_assertions = "1.4.0"
 rand = "0.8.5"
 sys-info = "0.9.1"

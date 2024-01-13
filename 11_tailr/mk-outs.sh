@@ -28,7 +28,7 @@ for FILE in $ROOT/*.txt; do
     tail -c +2  $FILE > ${OUT_DIR}/${BASENAME}.c+2.out
 done
 
-ALL="$ROOT/ten.txt $ROOT/empty.txt $ROOT/one.txt $ROOT/three.txt $ROOT/two.txt"
+ALL="$ROOT/twelve.txt $ROOT/empty.txt $ROOT/one.txt $ROOT/three.txt $ROOT/two.txt"
 
 tail         $ALL > $OUT_DIR/all.out
 tail -n 0    $ALL > $OUT_DIR/all.n0.out

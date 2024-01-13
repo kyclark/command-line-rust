@@ -1,5 +1,5 @@
 use crate::TakeValue::*;
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use clap::Parser;
 use once_cell::sync::OnceCell;
 use regex::Regex;
@@ -11,7 +11,7 @@ use std::{
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
 /// Rust version of `tail`
-struct Config {
+struct Args {
     /// Input file(s)
     #[arg(required = true)]
     files: Vec<String>,
@@ -39,29 +39,29 @@ enum TakeValue {
 
 // --------------------------------------------------
 fn main() {
-    if let Err(e) = run(Config::parse()) {
+    if let Err(e) = run(Args::parse()) {
         eprintln!("{e}");
         std::process::exit(1);
     }
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    let lines = parse_num(config.lines)
+fn run(args: Args) -> Result<()> {
+    let lines = parse_num(args.lines)
         .map_err(|e| anyhow!("illegal line count -- {e}"))?;
 
-    let bytes = config
+    let bytes = args
         .bytes
         .map(parse_num)
         .transpose()
         .map_err(|e| anyhow!("illegal byte count -- {e}"))?;
 
-    let num_files = config.files.len();
-    for (file_num, filename) in config.files.iter().enumerate() {
+    let num_files = args.files.len();
+    for (file_num, filename) in args.files.iter().enumerate() {
         match File::open(filename) {
             Err(err) => eprintln!("{filename}: {err}"),
             Ok(file) => {
-                if !config.quiet && num_files > 1 {
+                if !args.quiet && num_files > 1 {
                     println!(
                         "{}==> {} <==",
                         if file_num > 0 { "\n" } else { "" },
@@ -91,18 +91,22 @@ fn parse_num(val: String) -> Result<TakeValue> {
     match num_re.captures(&val) {
         Some(caps) => {
             let sign = caps.get(1).map_or("-", |m| m.as_str());
-            let num = format!("{}{}", sign, caps.get(2).unwrap().as_str());
-            if let Ok(val) = num.parse() {
-                if sign == "+" && val == 0 {
+            let signed_num =
+                format!("{}{}", sign, caps.get(2).unwrap().as_str());
+
+            if let Ok(num) = signed_num.parse() {
+                if sign == "+" && num == 0 {
                     Ok(PlusZero)
                 } else {
-                    Ok(TakeNum(val))
+                    Ok(TakeNum(num))
                 }
             } else {
-                Err(anyhow!(val))
+                bail!(val)
+                //Err(anyhow!(val))
             }
         }
-        _ => Err(anyhow!(val)),
+        //_ => Err(anyhow!(val)),
+        _ => bail!(val),
     }
 }
 
@@ -221,16 +225,21 @@ mod tests {
     use super::{
         count_lines_bytes, get_start_index, parse_num, TakeValue::*,
     };
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_count_lines_bytes() {
         let res = count_lines_bytes("tests/inputs/one.txt");
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), (1, 24));
+        let (lines, bytes) = res.unwrap();
+        assert_eq!(lines, 1);
+        assert_eq!(bytes, 24);
 
-        let res = count_lines_bytes("tests/inputs/ten.txt");
+        let res = count_lines_bytes("tests/inputs/twelve.txt");
         assert!(res.is_ok());
-        assert_eq!(res.unwrap(), (10, 49));
+        let (lines, bytes) = res.unwrap();
+        assert_eq!(lines, 12);
+        assert_eq!(bytes, 63);
     }
 
     #[test]

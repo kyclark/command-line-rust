@@ -158,6 +158,7 @@ fn find_files(paths: &[String], recursive: bool) -> Vec<Result<String>> {
 #[cfg(test)]
 mod tests {
     use super::{find_files, find_lines};
+    use pretty_assertions::assert_eq;
     use rand::{distributions::Alphanumeric, Rng};
     use regex::{Regex, RegexBuilder};
     use std::io::Cursor;

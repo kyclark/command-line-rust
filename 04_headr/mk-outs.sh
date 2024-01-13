@@ -16,7 +16,7 @@ for FILE in $INPUTS/*.txt; do
 done
 
 ALL="$INPUTS/empty.txt $INPUTS/one.txt $INPUTS/two.txt $INPUTS/three.txt \
-    $INPUTS/ten.txt"
+    $INPUTS/twelve.txt"
 head      $ALL > $OUT_DIR/all.out
 head -n 2 $ALL > $OUT_DIR/all.n2.out
 head -n 4 $ALL > $OUT_DIR/all.n4.out

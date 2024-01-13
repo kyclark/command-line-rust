@@ -8,3 +8,4 @@ authors = [ "Ken Youens-Clark <kyclark@gmail.com>" ]
 
 [dev-dependencies]
 assert_cmd = "2.0.12"
+pretty_assertions = "1.4.0"

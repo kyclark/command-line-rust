@@ -1,6 +1,7 @@
 use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
+use pretty_assertions::assert_eq;
 use rand::{distributions::Alphanumeric, Rng};
 use std::fs;
 
@@ -63,7 +64,7 @@ fn dies_bad_digit_field() -> Result<()> {
     let bad = random_string();
     dies(
         &[CSV, "-f", &bad],
-        &format!("illegal list value: \"{}\"", &bad),
+        &format!(r#"illegal list value: "{}""#, &bad),
     )
 }
 
@@ -73,7 +74,7 @@ fn dies_bad_digit_bytes() -> Result<()> {
     let bad = random_string();
     dies(
         &[CSV, "-b", &bad],
-        &format!("illegal list value: \"{}\"", &bad),
+        &format!(r#"illegal list value: "{}""#, &bad),
     )
 }
 
@@ -83,7 +84,7 @@ fn dies_bad_digit_chars() -> Result<()> {
     let bad = random_string();
     dies(
         &[CSV, "-c", &bad],
-        &format!("illegal list value: \"{}\"", &bad),
+        &format!(r#"illegal list value: "{}""#, &bad),
     )
 }
 
@@ -92,7 +93,7 @@ fn dies_bad_digit_chars() -> Result<()> {
 fn dies_empty_delimiter() -> Result<()> {
     dies(
         &[CSV, "-f", "1", "-d", ""],
-        "--delim \"\" must be a single byte",
+        r#"--delim "" must be a single byte"#,
     )
 }
 
@@ -101,7 +102,7 @@ fn dies_empty_delimiter() -> Result<()> {
 fn dies_bad_delimiter() -> Result<()> {
     dies(
         &[CSV, "-f", "1", "-d", ",,"],
-        "--delim \",,\" must be a single byte",
+        r#"--delim ",," must be a single byte"#,
     )
 }
 
@@ -147,13 +148,12 @@ fn dies_chars_bytes() -> Result<()> {
 
 // --------------------------------------------------
 fn run(args: &[&str], expected_file: &str) -> Result<()> {
-    println!("expected {}", &expected_file);
     let expected = fs::read_to_string(expected_file)?;
-    Command::cargo_bin(PRG)?
-        .args(args)
-        .assert()
-        .success()
-        .stdout(expected);
+    let output = Command::cargo_bin(PRG)?.args(args).output().expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
     Ok(())
 }
 
@@ -161,11 +161,11 @@ fn run(args: &[&str], expected_file: &str) -> Result<()> {
 fn run_lossy(args: &[&str], expected_file: &str) -> Result<()> {
     let contents = fs::read(expected_file)?;
     let expected = String::from_utf8_lossy(&contents);
-    Command::cargo_bin(PRG)?
-        .args(args)
-        .assert()
-        .success()
-        .stdout(predicate::str::contains(expected));
+    let output = Command::cargo_bin(PRG)?.args(args).output().expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
     Ok(())
 }
 

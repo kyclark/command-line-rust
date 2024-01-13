@@ -1,4 +1,4 @@
-==> tests/inputs/ten.txt <==
+==> tests/inputs/twelve.txt <==
 ee
 four
 five
@@ -7,6 +7,8 @@ seven
 eight
 nine
 ten
+eleven
+twelve
 
 ==> tests/inputs/empty.txt <==
 

@@ -1,6 +1,7 @@
 use anyhow::Result;
 use assert_cmd::Command;
 use predicates::prelude::*;
+use pretty_assertions::assert_eq;
 use rand::{distributions::Alphanumeric, Rng};
 use std::fs;
 
@@ -53,11 +54,12 @@ fn skips_bad_file() -> Result<()> {
 // --------------------------------------------------
 fn run(args: &[&str], expected_file: &str) -> Result<()> {
     let expected = fs::read_to_string(expected_file)?;
-    Command::cargo_bin(PRG)?
-        .args(args)
-        .assert()
-        .success()
-        .stdout(expected);
+    let output = Command::cargo_bin(PRG)?.args(args).output().expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
+
     Ok(())
 }
 
@@ -69,12 +71,15 @@ fn run_stdin(
 ) -> Result<()> {
     let input = fs::read_to_string(input_file)?;
     let expected = fs::read_to_string(expected_file)?;
-    Command::cargo_bin(PRG)?
-        .args(args)
+    let output = Command::cargo_bin(PRG)?
         .write_stdin(input)
-        .assert()
-        .success()
-        .stdout(expected);
+        .args(args)
+        .output()
+        .expect("fail");
+    assert!(output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
     Ok(())
 }
 

@@ -214,6 +214,7 @@ fn extract_chars(line: &str, char_pos: &[Range<usize>]) -> String {
 mod unit_tests {
     use super::{extract_bytes, extract_chars, extract_fields, parse_pos};
     use csv::StringRecord;
+    use pretty_assertions::assert_eq;
 
     #[test]
     fn test_parse_pos() {

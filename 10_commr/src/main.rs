@@ -7,13 +7,6 @@ use std::{
     io::{self, BufRead, BufReader},
 };
 
-#[derive(Debug)]
-enum Column<'a> {
-    Col1(&'a str),
-    Col2(&'a str),
-    Col3(&'a str),
-}
-
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
 /// Rust version of `comm`
@@ -47,6 +40,13 @@ struct Args {
     delimiter: String,
 }
 
+#[derive(Debug)]
+enum Column<'a> {
+    Col1(&'a str),
+    Col2(&'a str),
+    Col3(&'a str),
+}
+
 // --------------------------------------------------
 fn main() {
     if let Err(e) = run(Args::parse()) {
@@ -61,7 +61,7 @@ fn run(args: Args) -> Result<()> {
     let file2 = &args.file2;
 
     if file1 == "-" && file2 == "-" {
-        bail!("Both input files cannot be STDIN (\"-\")");
+        bail!(r#"Both input files cannot be STDIN ("-")"#);
     }
 
     let case = |line: String| {
