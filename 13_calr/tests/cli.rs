@@ -48,33 +48,46 @@ fn dies_invalid_year() -> Result<()> {
 // --------------------------------------------------
 #[test]
 fn dies_month_0() -> Result<()> {
-    Command::cargo_bin(PRG)?
+    let output = Command::cargo_bin(PRG)?
         .args(["-m", "0"])
-        .assert()
-        .failure()
-        .stderr(r#"month "0" not in the range 1 through 12\n"#);
+        .output()
+        .expect("fail");
+    assert!(!output.status.success());
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, "");
+
+    let stderr = String::from_utf8(output.stderr).expect("invalid UTF-8");
+    assert_eq!(stderr.trim(), r#"month "0" not in the range 1 through 12"#);
+
     Ok(())
 }
 
 // --------------------------------------------------
 #[test]
 fn dies_month_13() -> Result<()> {
-    Command::cargo_bin(PRG)?
+    let output = Command::cargo_bin(PRG)?
         .args(["-m", "13"])
-        .assert()
-        .failure()
-        .stderr(r#"month "13" not in the range 1 through 12\n"#);
+        .output()
+        .expect("fail");
+    assert!(!output.status.success());
+
+    let stderr = String::from_utf8(output.stderr).expect("invalid UTF-8");
+    assert_eq!(stderr.trim(), r#"month "13" not in the range 1 through 12"#);
     Ok(())
 }
 
 // --------------------------------------------------
 #[test]
 fn dies_invalid_month() -> Result<()> {
-    Command::cargo_bin(PRG)?
+    let output = Command::cargo_bin(PRG)?
         .args(["-m", "foo"])
-        .assert()
-        .failure()
-        .stderr(r#"Invalid month "foo"\n"#);
+        .output()
+        .expect("fail");
+    assert!(!output.status.success());
+
+    let stderr = String::from_utf8(output.stderr).expect("invalid UTF-8");
+    assert_eq!(stderr.trim(), r#"Invalid month "foo""#);
     Ok(())
 }
 
