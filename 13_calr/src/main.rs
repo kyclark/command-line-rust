@@ -94,7 +94,7 @@ fn parse_month(month: &str) -> Result<u32> {
             if (1..=12).contains(&num) {
                 Ok(num)
             } else {
-                bail!(r#"month "{month}" not in the range 1 through 12"#);
+                bail!(r#"month "{month}" not in the range 1 through 12"#)
             }
         }
         _ => {

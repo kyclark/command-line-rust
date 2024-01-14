@@ -102,10 +102,8 @@ fn parse_num(val: String) -> Result<TakeValue> {
                 }
             } else {
                 bail!(val)
-                //Err(anyhow!(val))
             }
         }
-        //_ => Err(anyhow!(val)),
         _ => bail!(val),
     }
 }
