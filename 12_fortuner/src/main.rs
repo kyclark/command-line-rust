@@ -14,7 +14,7 @@ use walkdir::WalkDir;
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
 /// Rust version of `fortune`
-struct Config {
+struct Args {
     /// Input files or directories
     #[arg()]
     sources: Vec<String>,
@@ -40,46 +40,50 @@ struct Fortune {
 
 // --------------------------------------------------
 fn main() {
-    if let Err(e) = run(Config::parse()) {
+    if let Err(e) = run(Args::parse()) {
         eprintln!("{e}");
         std::process::exit(1);
     }
 }
 
 // --------------------------------------------------
-fn run(config: Config) -> Result<()> {
-    let pattern = config
+fn run(args: Args) -> Result<()> {
+    let pattern = args
         .pattern
         .map(|val: String| {
             RegexBuilder::new(val.as_str())
-                .case_insensitive(config.insensitive)
+                .case_insensitive(args.insensitive)
                 .build()
                 .map_err(|_| anyhow!(r#"Invalid --pattern "{val}""#))
         })
         .transpose()?;
 
-    let files = find_files(&config.sources)?;
+    let files = find_files(&args.sources)?;
     let fortunes = read_fortunes(&files)?;
 
-    if let Some(pattern) = pattern {
-        let mut prev_source = None;
-        for fortune in fortunes
-            .iter()
-            .filter(|fortune| pattern.is_match(&fortune.text))
-        {
-            if prev_source.as_ref().map_or(true, |s| s != &fortune.source) {
-                eprintln!("({})\n%", fortune.source);
-                prev_source = Some(fortune.source.clone());
+    match pattern {
+        Some(pattern) => {
+            let mut prev_source = None;
+            for fortune in fortunes
+                .iter()
+                .filter(|fortune| pattern.is_match(&fortune.text))
+            {
+                if prev_source.as_ref().map_or(true, |s| s != &fortune.source)
+                {
+                    eprintln!("({})\n%", fortune.source);
+                    prev_source = Some(fortune.source.clone());
+                }
+                println!("{}\n%", fortune.text);
             }
-            println!("{}\n%", fortune.text);
         }
-    } else {
-        println!(
-            "{}",
-            pick_fortune(&fortunes, config.seed)
-                .or_else(|| Some("No fortunes found".to_string()))
-                .unwrap()
-        );
+        _ => {
+            println!(
+                "{}",
+                pick_fortune(&fortunes, args.seed)
+                    .or_else(|| Some("No fortunes found".to_string()))
+                    .unwrap()
+            );
+        }
     }
 
     Ok(())

@@ -50,9 +50,8 @@ fn run(args: Args) -> Result<()> {
             Ok(mut file) => {
                 if num_files > 1 {
                     println!(
-                        "{}==> {} <==",
+                        "{}==> {filename} <==",
                         if file_num > 0 { "\n" } else { "" },
-                        &filename
                     );
                 }
 

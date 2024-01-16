@@ -5,6 +5,7 @@ use std::io::{self, BufRead, BufReader};
 
 #[derive(Debug, Parser)]
 #[command(author, version, about)]
+/// Rust version of `wc`
 struct Args {
     /// Input file(s)
     #[arg(value_name = "FILE", default_value = "-")]
