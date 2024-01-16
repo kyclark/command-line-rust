@@ -33,7 +33,7 @@ fn get_args() -> Args {
     let matches = Command::new("wcr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust wc")
+        .about("Rust version of `wc`")
         .arg(
             Arg::new("files")
                 .value_name("FILE")

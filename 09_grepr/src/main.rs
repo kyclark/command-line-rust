@@ -20,18 +20,18 @@ struct Args {
 
 // --------------------------------------------------
 fn main() {
-    if let Err(e) = get_args().and_then(run) {
+    if let Err(e) = run(get_args()) {
         eprintln!("{e}");
         std::process::exit(1);
     }
 }
 
 // --------------------------------------------------
-fn get_args() -> Result<Args> {
+fn get_args() -> Args {
     let matches = Command::new("grepr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust grep")
+        .about("Rust version of `grep`")
         .arg(
             Arg::new("pattern")
                 .value_name("PATTERN")
@@ -75,7 +75,7 @@ fn get_args() -> Result<Args> {
         )
         .get_matches();
 
-    Ok(Args {
+    Args {
         pattern: matches.get_one("pattern").cloned().unwrap(),
         files: matches
             .get_many("files")
@@ -86,7 +86,7 @@ fn get_args() -> Result<Args> {
         recursive: matches.get_flag("recursive"),
         count: matches.get_flag("count"),
         invert: matches.get_flag("invert"),
-    })
+    }
 }
 
 // --------------------------------------------------

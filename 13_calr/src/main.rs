@@ -4,13 +4,6 @@ use chrono::{Datelike, Local, NaiveDate};
 use clap::{Arg, ArgAction, Command};
 use itertools::izip;
 
-//#[derive(Debug)]
-//struct Args {
-//    month: Option<u32>,
-//    year: i32,
-//    today: NaiveDate,
-//}
-
 #[derive(Debug)]
 struct Args {
     year: Option<i32>,
@@ -47,7 +40,7 @@ fn get_args() -> Args {
     let matches = Command::new("calr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust cal")
+        .about("Rust version of `cal`")
         .arg(
             Arg::new("year")
                 .value_name("YEAR")

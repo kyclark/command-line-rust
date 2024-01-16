@@ -44,7 +44,7 @@ fn get_args() -> Args {
     let matches = Command::new("findr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust find")
+        .about("Rust version of `find`")
         .arg(
             Arg::new("paths")
                 .value_name("PATH")

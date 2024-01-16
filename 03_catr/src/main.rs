@@ -23,7 +23,7 @@ fn get_args() -> Args {
     let matches = Command::new("catr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust cat")
+        .about("Rust version of `cat`")
         .arg(
             Arg::new("files")
                 .value_name("FILE")
@@ -65,17 +65,17 @@ fn run(args: Args) -> Result<()> {
         match open(&filename) {
             Err(e) => eprintln!("{filename}: {e}"),
             Ok(file) => {
-                let mut last_num = 0;
+                let mut prev_num = 0;
                 for (line_num, line_result) in file.lines().enumerate() {
                     let line = line_result?;
                     if args.number_lines {
-                        println!("{:6}\t{}", line_num + 1, line);
+                        println!("{:6}\t{line}", line_num + 1);
                     } else if args.number_nonblank_lines {
                         if line.is_empty() {
                             println!();
                         } else {
-                            last_num += 1;
-                            println!("{last_num:6}\t{line}");
+                            prev_num += 1;
+                            println!("{prev_num:6}\t{line}");
                         }
                     } else {
                         println!("{line}");

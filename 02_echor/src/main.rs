@@ -4,7 +4,7 @@ fn main() {
     let matches = Command::new("echor")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust echo")
+        .about("Rust version of `echo`")
         .arg(
             Arg::new("text")
                 .value_name("TEXT")

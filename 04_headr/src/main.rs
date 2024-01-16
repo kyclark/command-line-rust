@@ -23,7 +23,7 @@ fn get_args() -> Args {
     let matches = Command::new("headr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust head")
+        .about("Rust version of `head`")
         .arg(
             Arg::new("lines")
                 .short('n')
@@ -72,9 +72,8 @@ fn run(args: Args) -> Result<()> {
             Ok(mut file) => {
                 if num_files > 1 {
                     println!(
-                        "{}==> {} <==",
+                        "{}==> {filename} <==",
                         if file_num > 0 { "\n" } else { "" },
-                        &filename
                     );
                 }
 

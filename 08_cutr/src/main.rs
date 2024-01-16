@@ -30,18 +30,18 @@ enum Extract {
 
 // --------------------------------------------------
 fn main() {
-    if let Err(e) = get_args().and_then(run) {
+    if let Err(e) = run(get_args()) {
         eprintln!("{e}");
         std::process::exit(1);
     }
 }
 
 // --------------------------------------------------
-fn get_args() -> Result<Args> {
+fn get_args() -> Args {
     let matches = Command::new("cutr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust cut")
+        .about("Rust version of `cut`")
         .arg(
             Arg::new("files")
                 .value_name("FILE")
@@ -87,7 +87,7 @@ fn get_args() -> Result<Args> {
         )
         .get_matches();
 
-    Ok(Args {
+    Args {
         files: matches
             .get_many("files")
             .expect("files required")
@@ -97,7 +97,7 @@ fn get_args() -> Result<Args> {
         fields: matches.get_one("fields").cloned(),
         bytes: matches.get_one("bytes").cloned(),
         chars: matches.get_one("chars").cloned(),
-    })
+    }
 }
 
 // --------------------------------------------------

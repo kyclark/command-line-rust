@@ -28,7 +28,7 @@ fn get_args() -> Args {
     let matches = Command::new("lsr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust ls")
+        .about("Rust version of `ls`")
         .arg(
             Arg::new("paths")
                 .value_name("PATH")

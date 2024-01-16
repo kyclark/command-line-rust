@@ -2,7 +2,7 @@ use anyhow::{anyhow, bail, Result};
 use clap::{Arg, ArgAction, Command};
 use rand::prelude::SliceRandom;
 use rand::{rngs::StdRng, SeedableRng};
-use regex::{Regex, RegexBuilder};
+use regex::RegexBuilder;
 use std::{
     ffi::OsStr,
     fs::{self, File},
@@ -14,7 +14,8 @@ use walkdir::WalkDir;
 #[derive(Debug)]
 struct Args {
     sources: Vec<String>,
-    pattern: Option<Regex>,
+    pattern: Option<String>,
+    insensitive: bool,
     seed: Option<u64>,
 }
 
@@ -26,18 +27,18 @@ struct Fortune {
 
 // --------------------------------------------------
 fn main() {
-    if let Err(e) = get_args().and_then(run) {
+    if let Err(e) = run(get_args()) {
         eprintln!("{e}");
         std::process::exit(1);
     }
 }
 
 // --------------------------------------------------
-fn get_args() -> Result<Args> {
+fn get_args() -> Args {
     let matches = Command::new("fortuner")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust fortune")
+        .about("Rust version of `fortune`")
         .arg(
             Arg::new("sources")
                 .value_name("FILE")
@@ -69,52 +70,56 @@ fn get_args() -> Result<Args> {
         )
         .get_matches();
 
-    let pattern = matches
-        .get_one("pattern")
-        .cloned()
-        .map(|val: String| {
-            RegexBuilder::new(val.as_str())
-                .case_insensitive(matches.get_flag("insensitive"))
-                .build()
-                .map_err(|_| anyhow!(r#"Invalid --pattern "{val}""#))
-        })
-        .transpose()?;
-
-    Ok(Args {
+    Args {
         sources: matches
             .get_many("sources")
             .expect("sources required")
             .cloned()
             .collect(),
         seed: matches.get_one("seed").cloned(),
-        pattern,
-    })
+        pattern: matches.get_one("pattern").cloned(),
+        insensitive: matches.get_flag("insensitive"),
+    }
 }
 
 // --------------------------------------------------
 fn run(args: Args) -> Result<()> {
+    let pattern = args
+        .pattern
+        .map(|val: String| {
+            RegexBuilder::new(val.as_str())
+                .case_insensitive(args.insensitive)
+                .build()
+                .map_err(|_| anyhow!(r#"Invalid --pattern "{val}""#))
+        })
+        .transpose()?;
+
     let files = find_files(&args.sources)?;
     let fortunes = read_fortunes(&files)?;
 
-    if let Some(pattern) = args.pattern {
-        let mut prev_source = None;
-        for fortune in fortunes
-            .iter()
-            .filter(|fortune| pattern.is_match(&fortune.text))
-        {
-            if prev_source.as_ref().map_or(true, |s| s != &fortune.source) {
-                eprintln!("({})\n%", fortune.source);
-                prev_source = Some(fortune.source.clone());
+    match pattern {
+        Some(pattern) => {
+            let mut prev_source = None;
+            for fortune in fortunes
+                .iter()
+                .filter(|fortune| pattern.is_match(&fortune.text))
+            {
+                if prev_source.as_ref().map_or(true, |s| s != &fortune.source)
+                {
+                    eprintln!("({})\n%", fortune.source);
+                    prev_source = Some(fortune.source.clone());
+                }
+                println!("{}\n%", fortune.text);
             }
-            println!("{}\n%", fortune.text);
         }
-    } else {
-        println!(
-            "{}",
-            pick_fortune(&fortunes, args.seed)
-                .or_else(|| Some("No fortunes found".to_string()))
-                .unwrap()
-        );
+        _ => {
+            println!(
+                "{}",
+                pick_fortune(&fortunes, args.seed)
+                    .or_else(|| Some("No fortunes found".to_string()))
+                    .unwrap()
+            );
+        }
     }
 
     Ok(())

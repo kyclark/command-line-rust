@@ -11,8 +11,8 @@ use std::{
 #[derive(Debug)]
 struct Args {
     files: Vec<String>,
-    lines: TakeValue,
-    bytes: Option<TakeValue>,
+    lines: String,
+    bytes: Option<String>,
     quiet: bool,
 }
 
@@ -26,18 +26,18 @@ enum TakeValue {
 
 // --------------------------------------------------
 fn main() {
-    if let Err(e) = get_args().and_then(run) {
+    if let Err(e) = run(get_args()) {
         eprintln!("{e}");
         std::process::exit(1);
     }
 }
 
 // --------------------------------------------------
-fn get_args() -> Result<Args> {
+fn get_args() -> Args {
     let matches = Command::new("tailr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust tail")
+        .about("Rust version of `tail`")
         .arg(
             Arg::new("files")
                 .value_name("FILE")
@@ -70,34 +70,29 @@ fn get_args() -> Result<Args> {
         )
         .get_matches();
 
-    let lines = matches
-        .get_one("lines")
-        .cloned()
-        .map(|v: String| parse_num(v))
-        .transpose()
-        .map_err(|e| anyhow!("illegal line count -- {e}"))?;
-
-    let bytes = matches
-        .get_one("bytes")
-        .cloned()
-        .map(|v: String| parse_num(v))
-        .transpose()
-        .map_err(|e| anyhow!("illegal byte count -- {e}"))?;
-
-    Ok(Args {
+    Args {
         files: matches
             .get_many("files")
             .expect("files required")
             .cloned()
             .collect(),
-        lines: lines.unwrap(),
-        bytes,
+        lines: matches.get_one("lines").cloned().unwrap(),
+        bytes: matches.get_one("bytes").cloned(),
         quiet: matches.get_flag("quiet"),
-    })
+    }
 }
 
 // --------------------------------------------------
 fn run(args: Args) -> Result<()> {
+    let lines = parse_num(args.lines)
+        .map_err(|e| anyhow!("illegal line count -- {e}"))?;
+
+    let bytes = args
+        .bytes
+        .map(parse_num)
+        .transpose()
+        .map_err(|e| anyhow!("illegal byte count -- {e}"))?;
+
     let num_files = args.files.len();
     for (file_num, filename) in args.files.iter().enumerate() {
         match File::open(filename) {
@@ -113,10 +108,10 @@ fn run(args: Args) -> Result<()> {
 
                 let (total_lines, total_bytes) = count_lines_bytes(filename)?;
                 let file = BufReader::new(file);
-                if let Some(num_bytes) = &args.bytes {
+                if let Some(num_bytes) = &bytes {
                     print_bytes(file, num_bytes, total_bytes)?;
                 } else {
-                    print_lines(file, &args.lines, total_lines)?;
+                    print_lines(file, &lines, total_lines)?;
                 }
             }
         }

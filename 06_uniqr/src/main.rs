@@ -25,7 +25,7 @@ fn get_args() -> Args {
     let matches = Command::new("uniqr")
         .version("0.1.0")
         .author("Ken Youens-Clark <kyclark@gmail.com>")
-        .about("Rust uniq")
+        .about("Rust version of `uniq`")
         .arg(
             Arg::new("in_file")
                 .value_name("IN_FILE")
