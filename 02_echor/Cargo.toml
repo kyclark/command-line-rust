@@ -9,6 +9,6 @@ clap = { version = "4.4.16", features = ["derive"] }
 
 [dev-dependencies]
 anyhow = "1.0.79"
-assert_cmd = "2.0.12"
+assert_cmd = "2.0.13"
 predicates = "3.0.4"
 pretty_assertions = "1.4.0"
