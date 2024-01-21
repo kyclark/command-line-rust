@@ -6,5 +6,5 @@ edition = "2021"
 [dependencies]
 
 [dev-dependencies]
-assert_cmd = "2.0.12"
+assert_cmd = "2.0.13"
 pretty_assertions = "1.4.0"
