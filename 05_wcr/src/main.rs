@@ -73,11 +73,7 @@ fn get_args() -> Args {
         .get_matches();
 
     Args {
-        files: matches
-            .get_many("files")
-            .expect("files required")
-            .cloned()
-            .collect(),
+        files: matches.get_many("files").unwrap().cloned().collect(),
         lines: matches.get_flag("lines"),
         words: matches.get_flag("words"),
         bytes: matches.get_flag("bytes"),
