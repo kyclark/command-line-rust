@@ -20,11 +20,8 @@ fn main() {
         )
         .get_matches();
 
-    let text: Vec<String> = matches
-        .get_many("text")
-        .expect("text is required")
-        .cloned()
-        .collect();
+    let text: Vec<String> =
+        matches.get_many("text").unwrap().cloned().collect();
 
     let omit_newline = matches.get_flag("omit_newline");
 

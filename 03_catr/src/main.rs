@@ -49,11 +49,7 @@ fn get_args() -> Args {
         .get_matches();
 
     Args {
-        files: matches
-            .get_many("files")
-            .expect("files required")
-            .cloned()
-            .collect(),
+        files: matches.get_many("files").unwrap().cloned().collect(),
         number_lines: matches.get_flag("number"),
         number_nonblank_lines: matches.get_flag("number_nonblank"),
     }
@@ -66,8 +62,8 @@ fn run(args: Args) -> Result<()> {
             Err(e) => eprintln!("{filename}: {e}"),
             Ok(file) => {
                 let mut prev_num = 0;
-                for (line_num, line_result) in file.lines().enumerate() {
-                    let line = line_result?;
+                for (line_num, line) in file.lines().enumerate() {
+                    let line = line?;
                     if args.number_lines {
                         println!("{:6}\t{line}", line_num + 1);
                     } else if args.number_nonblank_lines {

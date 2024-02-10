@@ -54,7 +54,7 @@ fn skips_bad_file() -> Result<()> {
 // --------------------------------------------------
 fn run(args: &[&str], expected_file: &str) -> Result<()> {
     let expected = fs::read_to_string(expected_file)?;
-    let output = Command::cargo_bin(PRG)?.args(args).output().expect("fail");
+    let output = Command::cargo_bin(PRG)?.args(args).output().unwrap();
     assert!(output.status.success());
 
     let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
@@ -75,7 +75,7 @@ fn run_stdin(
         .write_stdin(input)
         .args(args)
         .output()
-        .expect("fail");
+        .unwrap();
     assert!(output.status.success());
 
     let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
