@@ -173,12 +173,12 @@ fn run_outfile(test: &Test) -> Result<()> {
     let expected = fs::read_to_string(test.out)?;
     let outfile = NamedTempFile::new()?;
     let outpath = &outfile.path().to_str().unwrap();
+
     Command::cargo_bin(PRG)?
         .args([test.input, outpath])
         .assert()
         .success()
         .stdout("");
-
     let contents = fs::read_to_string(outpath)?;
     assert_eq!(&expected, &contents);
 
