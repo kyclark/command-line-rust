@@ -1,4 +1,4 @@
-use crate::Extract::*;
+//use crate::Extract::*;
 use anyhow::{anyhow, bail, Result};
 use clap::Parser;
 use csv::{ReaderBuilder, StringRecord, WriterBuilder};
@@ -22,31 +22,23 @@ struct Args {
     #[arg(short, long, value_name = "DELIMITER", default_value = "\t")]
     delimiter: String,
 
+    #[command(flatten)]
+    extract: ArgsExtract,
+}
+
+#[derive(Debug, clap::Args)]
+#[group(required = true, multiple = false)]
+struct ArgsExtract {
     /// Selected fields
-    #[arg(
-        short,
-        long,
-        value_name = "FIELDS",
-        conflicts_with_all(["bytes", "chars"])
-    )]
+    #[arg(short, long, value_name = "FIELDS")]
     fields: Option<String>,
 
     /// Selected bytes
-    #[arg(
-        short,
-        long,
-        value_name = "BYTES", 
-        conflicts_with_all(["fields", "chars"])
-    )]
+    #[arg(short, long, value_name = "BYTES")]
     bytes: Option<String>,
 
     /// Selected chars
-    #[arg(
-        short,
-        long,
-        value_name = "CHARS",
-        conflicts_with_all(["fields", "bytes"])
-    )]
+    #[arg(short, long, value_name = "CHARS")]
     chars: Option<String>,
 }
 
@@ -75,22 +67,27 @@ fn run(args: Args) -> Result<()> {
     }
     let delimiter: u8 = *delim_bytes.first().unwrap();
 
-    let extract =
-        if let Some(fields) = args.fields.map(parse_pos).transpose()? {
-            Fields(fields)
-        } else if let Some(bytes) = args.bytes.map(parse_pos).transpose()? {
-            Bytes(bytes)
-        } else if let Some(chars) = args.chars.map(parse_pos).transpose()? {
-            Chars(chars)
-        } else {
-            bail!("Must have --fields, --bytes, or --chars");
-        };
+    let extract = if let Some(fields) =
+        args.extract.fields.map(parse_pos).transpose()?
+    {
+        Extract::Fields(fields)
+    } else if let Some(bytes) =
+        args.extract.bytes.map(parse_pos).transpose()?
+    {
+        Extract::Bytes(bytes)
+    } else if let Some(chars) =
+        args.extract.chars.map(parse_pos).transpose()?
+    {
+        Extract::Chars(chars)
+    } else {
+        unreachable!("Must have --fields, --bytes, or --chars");
+    };
 
     for filename in &args.files {
         match open(filename) {
             Err(err) => eprintln!("{filename}: {err}"),
             Ok(file) => match &extract {
-                Fields(field_pos) => {
+                Extract::Fields(field_pos) => {
                     let mut reader = ReaderBuilder::new()
                         .delimiter(delimiter)
                         .has_headers(false)
@@ -106,12 +103,12 @@ fn run(args: Args) -> Result<()> {
                         ))?;
                     }
                 }
-                Bytes(byte_pos) => {
+                Extract::Bytes(byte_pos) => {
                     for line in file.lines() {
                         println!("{}", extract_bytes(&line?, byte_pos));
                     }
                 }
-                Chars(char_pos) => {
+                Extract::Chars(char_pos) => {
                     for line in file.lines() {
                         println!("{}", extract_chars(&line?, char_pos));
                     }
