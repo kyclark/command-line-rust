@@ -7,7 +7,6 @@ use std::{
     io::{self, BufRead, BufReader},
 };
 
-#[derive(Debug)]
 enum Column<'a> {
     Col1(&'a str),
     Col2(&'a str),

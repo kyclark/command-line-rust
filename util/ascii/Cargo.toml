@@ -8,3 +8,4 @@ transpose = "0.2.2"
 
 [dev-dependencies]
 assert_cmd = "2.0.13"
+pretty_assertions = "1.4.0"
