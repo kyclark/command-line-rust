@@ -9,8 +9,7 @@ fn main() {
         .iter()
         .map(|i| {
             format!(
-                "{:3}: {}",
-                i,
+                "{i:3}: {}",
                 if *i == 127 {
                     "DEL".to_string()
                 } else {
