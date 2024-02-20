@@ -40,7 +40,6 @@ struct Args {
     delimiter: String,
 }
 
-#[derive(Debug)]
 enum Column<'a> {
     Col1(&'a str),
     Col2(&'a str),
