@@ -1,5 +1,5 @@
 use crate::TakeValue::*;
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, bail, Result};
 use clap::{Arg, ArgAction, Command};
 use once_cell::sync::OnceCell;
 use regex::Regex;
@@ -71,11 +71,7 @@ fn get_args() -> Args {
         .get_matches();
 
     Args {
-        files: matches
-            .get_many("files")
-            .expect("files required")
-            .cloned()
-            .collect(),
+        files: matches.get_many("files").unwrap().cloned().collect(),
         lines: matches.get_one("lines").cloned().unwrap(),
         bytes: matches.get_one("bytes").cloned(),
         quiet: matches.get_flag("quiet"),
@@ -100,9 +96,8 @@ fn run(args: Args) -> Result<()> {
             Ok(file) => {
                 if !args.quiet && num_files > 1 {
                     println!(
-                        "{}==> {} <==",
+                        "{}==> {filename} <==",
                         if file_num > 0 { "\n" } else { "" },
-                        filename
                     );
                 }
 
@@ -128,7 +123,7 @@ fn parse_num(val: String) -> Result<TakeValue> {
     match num_re.captures(&val) {
         Some(caps) => {
             let sign = caps.get(1).map_or("-", |m| m.as_str());
-            let num = format!("{}{}", sign, caps.get(2).unwrap().as_str());
+            let num = format!("{sign}{}", caps.get(2).unwrap().as_str());
             if let Ok(val) = num.parse() {
                 if sign == "+" && val == 0 {
                     Ok(PlusZero)
@@ -136,10 +131,10 @@ fn parse_num(val: String) -> Result<TakeValue> {
                     Ok(TakeNum(val))
                 }
             } else {
-                Err(anyhow!(val))
+                bail!(val)
             }
         }
-        _ => Err(anyhow!(val)),
+        _ => bail!(val),
     }
 }
 
