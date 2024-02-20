@@ -75,11 +75,7 @@ fn get_args() -> Args {
         .get_matches();
 
     Args {
-        paths: matches
-            .get_many("paths")
-            .expect("paths required")
-            .cloned()
-            .collect(),
+        paths: matches.get_many("paths").unwrap().cloned().collect(),
         names: matches
             .get_many("names")
             .unwrap_or_default()

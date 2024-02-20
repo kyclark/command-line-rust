@@ -55,12 +55,10 @@ fn dies(args: &[&str], expected: &str) -> Result<()> {
 // --------------------------------------------------
 #[test]
 fn dies_not_enough_args() -> Result<()> {
-    // Note this test differs from the "derive" test because
-    // I use clap's ArgGroup for these fields, hence the error
-    // message is different.
     dies(
         &[CSV],
-        "cutr <--fields <FIELDS>|--bytes <BYTES>|--chars <CHARS>> <FILE>",
+        "the following required arguments were not provided:\n  \
+        <--fields <FIELDS>|--bytes <BYTES>|--chars <CHARS>>",
     )
 }
 

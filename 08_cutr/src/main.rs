@@ -14,6 +14,11 @@ use std::{
 struct Args {
     files: Vec<String>,
     delimiter: String,
+    extract: ArgsExtract,
+}
+
+#[derive(Debug)]
+struct ArgsExtract {
     fields: Option<String>,
     bytes: Option<String>,
     chars: Option<String>,
@@ -44,10 +49,9 @@ fn get_args() -> Args {
         .about("Rust version of `cut`")
         .arg(
             Arg::new("files")
-                .value_name("FILE")
+                .value_name("FILES")
                 .help("Input file(s)")
-                .num_args(1..)
-                .required(true)
+                .num_args(0..)
                 .default_value("-"),
         )
         .arg(
@@ -80,7 +84,7 @@ fn get_args() -> Args {
                 .help("Selected characters"),
         )
         .group(
-            ArgGroup::new("group")
+            ArgGroup::new("extract")
                 .args(["fields", "bytes", "chars"])
                 .required(true)
                 .multiple(false),
@@ -88,15 +92,13 @@ fn get_args() -> Args {
         .get_matches();
 
     Args {
-        files: matches
-            .get_many("files")
-            .expect("files required")
-            .cloned()
-            .collect(),
+        files: matches.get_many("files").unwrap().cloned().collect(),
         delimiter: matches.get_one("delimiter").cloned().unwrap(),
-        fields: matches.get_one("fields").cloned(),
-        bytes: matches.get_one("bytes").cloned(),
-        chars: matches.get_one("chars").cloned(),
+        extract: ArgsExtract {
+            fields: matches.get_one("fields").cloned(),
+            bytes: matches.get_one("bytes").cloned(),
+            chars: matches.get_one("chars").cloned(),
+        },
     }
 }
 
@@ -108,16 +110,21 @@ fn run(args: Args) -> Result<()> {
     }
     let delimiter: u8 = *delim_bytes.first().unwrap();
 
-    let extract =
-        if let Some(fields) = args.fields.map(parse_pos).transpose()? {
-            Fields(fields)
-        } else if let Some(bytes) = args.bytes.map(parse_pos).transpose()? {
-            Bytes(bytes)
-        } else if let Some(chars) = args.chars.map(parse_pos).transpose()? {
-            Chars(chars)
-        } else {
-            bail!("Must have --fields, --bytes, or --chars");
-        };
+    let extract = if let Some(fields) =
+        args.extract.fields.map(parse_pos).transpose()?
+    {
+        Fields(fields)
+    } else if let Some(bytes) =
+        args.extract.bytes.map(parse_pos).transpose()?
+    {
+        Bytes(bytes)
+    } else if let Some(chars) =
+        args.extract.chars.map(parse_pos).transpose()?
+    {
+        Chars(chars)
+    } else {
+        bail!("Must have --fields, --bytes, or --chars");
+    };
 
     for filename in &args.files {
         match open(filename) {

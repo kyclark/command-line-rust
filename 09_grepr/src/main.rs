@@ -77,11 +77,7 @@ fn get_args() -> Args {
 
     Args {
         pattern: matches.get_one("pattern").cloned().unwrap(),
-        files: matches
-            .get_many("files")
-            .expect("files required")
-            .cloned()
-            .collect(),
+        files: matches.get_many("files").unwrap().cloned().collect(),
         insensitive: matches.get_flag("insensitive"),
         recursive: matches.get_flag("recursive"),
         count: matches.get_flag("count"),

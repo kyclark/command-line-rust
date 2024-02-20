@@ -42,6 +42,13 @@ fn get_args() -> Args {
                 .num_args(1..),
         )
         .arg(
+            Arg::new("lines")
+                .short('l')
+                .long("lines")
+                .action(ArgAction::SetTrue)
+                .help("Show line count"),
+        )
+        .arg(
             Arg::new("words")
                 .short('w')
                 .long("words")
@@ -62,13 +69,6 @@ fn get_args() -> Args {
                 .action(ArgAction::SetTrue)
                 .help("Show character count")
                 .conflicts_with("bytes"),
-        )
-        .arg(
-            Arg::new("lines")
-                .short('l')
-                .long("lines")
-                .action(ArgAction::SetTrue)
-                .help("Show line count"),
         )
         .get_matches();
 
