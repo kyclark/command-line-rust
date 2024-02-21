@@ -63,9 +63,8 @@ fn run(args: Args) -> Result<()> {
             Ok(file) => {
                 if !args.quiet && num_files > 1 {
                     println!(
-                        "{}==> {} <==",
+                        "{}==> {filename} <==",
                         if file_num > 0 { "\n" } else { "" },
-                        filename
                     );
                 }
 
@@ -92,7 +91,7 @@ fn parse_num(val: String) -> Result<TakeValue> {
         Some(caps) => {
             let sign = caps.get(1).map_or("-", |m| m.as_str());
             let signed_num =
-                format!("{}{}", sign, caps.get(2).unwrap().as_str());
+                format!("{sign}{}", caps.get(2).unwrap().as_str());
 
             if let Ok(num) = signed_num.parse() {
                 if sign == "+" && num == 0 {
@@ -116,7 +115,7 @@ fn parse_num(val: String) -> Result<TakeValue> {
 // One day in the future we will be able to say
 // val.starts_with(['+', '-'].as_slice())
 // but array_methods are currently an unstable nightly feature.
-//fn parse_num(val: &str) -> Result<TakeValue> {
+//fn parse_num(val: String) -> Result<TakeValue> {
 //    let signs: &[char] = &['+', '-'];
 //    let res = val
 //        .starts_with(signs)
@@ -131,7 +130,7 @@ fn parse_num(val: String) -> Result<TakeValue> {
 //                Ok(TakeNum(num))
 //            }
 //        }
-//        _ => Err(From::from(val)),
+//        _ => bail!(val),
 //    }
 //}
 

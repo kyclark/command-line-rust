@@ -33,6 +33,18 @@ fn gen_bad_file() -> String {
 
 // --------------------------------------------------
 #[test]
+fn dies_not_enough_args() -> Result<()> {
+    let expected = "the following required arguments were not provided:\n  \
+        <FILE>...";
+    Command::cargo_bin(PRG)?
+        .assert()
+        .failure()
+        .stderr(predicate::str::is_match(expected)?);
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
 fn dies_bad_file() -> Result<()> {
     let bad = gen_bad_file();
     let expected = format!("{bad}: .* [(]os error 2[)]");
@@ -41,6 +53,18 @@ fn dies_bad_file() -> Result<()> {
         .assert()
         .failure()
         .stderr(predicate::str::is_match(expected)?);
+    Ok(())
+}
+
+// --------------------------------------------------
+#[test]
+fn dies_bad_pattern() -> Result<()> {
+    let expected = r#"Invalid --pattern "*""#;
+    Command::cargo_bin(PRG)?
+        .args(["--pattern", "*", LITERATURE])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains(expected));
     Ok(())
 }
 

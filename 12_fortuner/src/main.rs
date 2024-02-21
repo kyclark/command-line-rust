@@ -16,7 +16,7 @@ use walkdir::WalkDir;
 /// Rust version of `fortune`
 struct Args {
     /// Input files or directories
-    #[arg()]
+    #[arg(required(true), value_name = "FILE")]
     sources: Vec<String>,
 
     /// Pattern
@@ -123,7 +123,6 @@ fn read_fortunes(paths: &[PathBuf]) -> Result<Vec<Fortune>> {
     for path in paths {
         let basename =
             path.file_name().unwrap().to_string_lossy().into_owned();
-
         let file = File::open(path)
             .map_err(|e| anyhow!("{}: {e}", path.to_string_lossy()))?;
 
