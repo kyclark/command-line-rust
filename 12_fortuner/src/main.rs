@@ -71,11 +71,7 @@ fn get_args() -> Args {
         .get_matches();
 
     Args {
-        sources: matches
-            .get_many("sources")
-            .expect("sources required")
-            .cloned()
-            .collect(),
+        sources: matches.get_many("sources").unwrap().cloned().collect(),
         seed: matches.get_one("seed").cloned(),
         pattern: matches.get_one("pattern").cloned(),
         insensitive: matches.get_flag("insensitive"),
@@ -159,7 +155,6 @@ fn read_fortunes(paths: &[PathBuf]) -> Result<Vec<Fortune>> {
     for path in paths {
         let basename =
             path.file_name().unwrap().to_string_lossy().into_owned();
-
         let file = File::open(path)
             .map_err(|e| anyhow!("{}: {e}", path.to_string_lossy()))?;
 
