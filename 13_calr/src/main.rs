@@ -74,7 +74,7 @@ fn get_args() -> Args {
 // --------------------------------------------------
 fn run(args: Args) -> Result<()> {
     let today = Local::now().date_naive();
-    let mut month = args.month.map(|v| parse_month(&v)).transpose()?;
+    let mut month = args.month.map(parse_month).transpose()?;
     let mut year = args.year;
 
     if args.show_current_year {
@@ -114,7 +114,7 @@ fn run(args: Args) -> Result<()> {
 }
 
 // --------------------------------------------------
-fn parse_month(month: &str) -> Result<u32> {
+fn parse_month(month: String) -> Result<u32> {
     match month.parse() {
         Ok(num) => {
             if (1..=12).contains(&num) {
@@ -224,33 +224,33 @@ mod tests {
 
     #[test]
     fn test_parse_month() {
-        let res = parse_month("1");
+        let res = parse_month("1".to_string());
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), 1u32);
 
-        let res = parse_month("12");
+        let res = parse_month("12".to_string());
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), 12u32);
 
-        let res = parse_month("jan");
+        let res = parse_month("jan".to_string());
         assert!(res.is_ok());
         assert_eq!(res.unwrap(), 1u32);
 
-        let res = parse_month("0");
+        let res = parse_month("0".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
             r#"month "0" not in the range 1 through 12"#
         );
 
-        let res = parse_month("13");
+        let res = parse_month("13".to_string());
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err().to_string(),
             r#"month "13" not in the range 1 through 12"#
         );
 
-        let res = parse_month("foo");
+        let res = parse_month("foo".to_string());
         assert!(res.is_err());
         assert_eq!(res.unwrap_err().to_string(), r#"Invalid month "foo""#);
     }
