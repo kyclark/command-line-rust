@@ -34,7 +34,7 @@ fn get_args() -> Args {
                 .value_name("PATH")
                 .help("Files and/or directories")
                 .default_value(".")
-                .num_args(1..),
+                .num_args(0..),
         )
         .arg(
             Arg::new("long")
@@ -53,11 +53,7 @@ fn get_args() -> Args {
         .get_matches();
 
     Args {
-        paths: matches
-            .get_many("paths")
-            .expect("paths required")
-            .cloned()
-            .collect(),
+        paths: matches.get_many("paths").unwrap().cloned().collect(),
         long: matches.get_flag("long"),
         show_hidden: matches.get_flag("all"),
     }

@@ -39,7 +39,7 @@ fn get_args() -> Args {
                 .value_name("FILE")
                 .help("Input file(s)")
                 .default_value("-")
-                .num_args(1..),
+                .num_args(0..),
         )
         .arg(
             Arg::new("lines")

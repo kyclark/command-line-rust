@@ -46,7 +46,7 @@ fn get_args() -> Args {
             Arg::new("files")
                 .value_name("FILE")
                 .help("Input file(s)")
-                .num_args(1..)
+                .num_args(0..)
                 .default_value("-"),
         )
         .get_matches();
