@@ -42,14 +42,12 @@ fn get_args() -> Args {
             Arg::new("file1")
                 .value_name("FILE1")
                 .help("Input file 1")
-                .num_args(1)
                 .required(true),
         )
         .arg(
             Arg::new("file2")
                 .value_name("FILE2")
                 .help("Input file 2")
-                .num_args(1)
                 .required(true),
         )
         .arg(
