@@ -1,7 +1,7 @@
 use anyhow::{anyhow, bail, Result};
 use clap::Parser;
 use rand::prelude::SliceRandom;
-use rand::{rngs::StdRng, SeedableRng};
+use rand::{rngs::StdRng, RngCore, SeedableRng};
 use regex::RegexBuilder;
 use std::{
     ffi::OsStr,
@@ -146,13 +146,12 @@ fn read_fortunes(paths: &[PathBuf]) -> Result<Vec<Fortune>> {
 
 // --------------------------------------------------
 fn pick_fortune(fortunes: &[Fortune], seed: Option<u64>) -> Option<String> {
-    if let Some(val) = seed {
-        let mut rng = StdRng::seed_from_u64(val);
-        fortunes.choose(&mut rng).map(|f| f.text.to_string())
-    } else {
-        let mut rng = rand::thread_rng();
-        fortunes.choose(&mut rng).map(|f| f.text.to_string())
-    }
+    let mut rng: Box<dyn RngCore> = match seed {
+        Some(val) => Box::new(StdRng::seed_from_u64(val)),
+        _ => Box::new(rand::thread_rng()),
+    };
+
+    fortunes.choose(&mut rng).map(|f| f.text.to_string())
 }
 
 // --------------------------------------------------
