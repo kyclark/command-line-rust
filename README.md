@@ -1,10 +1,12 @@
 # Command-Line Rust: A Project-Based Primer for Writing Rust CLIs
 
-![Rust](rust.jpg)
+This is the code repository for the [_Command-Line Rust_](https://learning.oreilly.com/library/view/command-line-rust/9781098109424/) (O'Reilly, 2022/2024, ISBN 9781098109417) 
 
-This is the code repository for the O'Reilly book [_Command-Line Rust_](https://learning.oreilly.com/library/view/command-line-rust/9781098109424/) (ISBN 9781098109417) by Ken Youens-Clark.
-The "main" branch has the original source code using version 2.33 of the `clap` crate, which was the latest version while I was writing the book.
-The "clap_v4" branch has been updated to use the builder pattern of `clap` version 4 along with clippy suggestions as of Rust 1.67.
+## Author
+
+Ken Youens-Clark <kyclark@gmail.com>
+
+## Synopsis
 
 For several consecutive years, Rust has been voted "most loved programming language" in Stack Overflow's annual developer survey. This open source systems programming language is now used for everything from game engines and operating systems to browser components and virtual reality simulation engines. But Rust is also an incredibly complex language with a notoriously difficult learning curve.
 
@@ -19,3 +21,16 @@ Discover how to:
 * Write programs that fail gracefully
 * Parse raw and delimited text
 * Use and control randomness
+
+## Git Branches
+
+The book was originally published in 2022, when the `clap` (command-line argument parser) crate was a v2.33.
+The book was updated in 2024 to use `clap` v4, which has two patterns for parsing, _builder_ (similar to the original v2.33 code) and _derive_.
+The branches are organized as follows:
+
+* `main`: Contains the `clap` v4 _derive_ pattern
+* `clap_v4_builder`: Contains the `clap` v4 _builder_ pattern
+* `clap_v2`: Contains the original programs from the 2022 version of the book that use `clap` v2.33
+
+![Rust](rust.jpg)
+
