@@ -17,6 +17,6 @@ cp -r tests "$DEST"
 cd "$DEST"
 
 echo "Creating symlink"
-(cd $DEST/tests/inputs/d && rm -f b.csv && ln -s ../a/b.csv .)
+(cd $DEST/tests/inputs/d && rm -f b.csv && ln -s ../a/b/b.csv .)
 
 echo "Done."
